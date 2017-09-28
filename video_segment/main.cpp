@@ -23,7 +23,7 @@ using namespace std;
 int mode;
 double thresholdvalue, differencegrow;
 Point g_pt;
-vector<Point> seedvektor;
+//vector<Point> seedvektor;
 Point regioncenter ;
 
 Mat firstFrame;
@@ -40,7 +40,7 @@ clock_t  clockBegin, clockEnd;
 #define WINDOW_NAME " point marking "
 
 //----- global function
-void on_MouseHandle(int event, int x, int y, int flags, void* param);
+//void on_MouseHandle(int event, int x, int y, int flags, void* param);
 void DrawLine( Mat& img, Point pt );
 Mat RegionGrow(Mat MatIn, Mat MatGrowCur, double iGrowJudge, vector<Point> seedset);
 double differenceValue(Mat MatIn, Point oneseed, Point nextseed, int DIR[][2], double rowofDIR, double B, double G, double R );
@@ -50,14 +50,77 @@ Point centerpoint(vector<Point> seedtogetherBackup);
 
 class initalseed
 {
+  
+private:
+    static void on_MouseHandle(int event, int x, int y, int flags, void* param);
+    void on_Mouse(int event, int x, int y, int flags);
     
 public:
     Mat MatInBackup = firstFrame.clone();
     
+    vector<Point> initialseedvektor;
+    
     //void initalseed();
     void modechoose(int x, Mat firstframe, Mat MatGrowCur);
-    
 };
+
+void initalseed :: on_MouseHandle(int event, int x, int y, int flags, void* param)
+{
+    Mat & image = *(Mat*) param;
+    if( x < 0 || x >= image.cols || y < 0 || y >= image.rows ){
+        return;
+    }
+    // Check for null pointer in userdata and handle the error
+    initalseed* temp = reinterpret_cast<initalseed*>(param);
+    temp->on_Mouse(event, x, y, flags);
+    
+    Scalar colorvalue = image.at<Vec3b>(Point(x, y));
+    //Vec3b colorvalue = image.at<Vec3b>(Point(x, y));
+    cout<<"at("<<x<<","<<y<<") pixel value: " << colorvalue <<endl;
+    
+    //调用函数进行绘制
+    DrawLine( image, Point(x, y));//画线
+}
+
+void MyClass::on_Mouse(int event, int x, int y)
+{
+    switch (event)
+    {
+        case CV_EVENT_LBUTTONDOWN:
+            //your code here
+            break;
+        case CV_EVENT_MOUSEMOVE:
+            //your code here
+            break;
+        case CV_EVENT_LBUTTONUP:
+            //your code here
+            break;  
+    }  
+}
+
+void initalseed :: on_Mouse(int event, int x, int y, int flags)
+{
+    
+    //Mat & image = *(Mat*) param;
+    //Mat *im = reinterpret_cast<Mat*>(param);
+    
+    //mouse ist not in window 处理鼠标不在窗口中的情况
+//    if( x < 0 || x >= image.cols || y < 0 || y >= image.rows ){
+//        return;
+//    }
+    
+    if (event == EVENT_LBUTTONDOWN)
+        
+    {
+        
+        //g_pt = Point(x, y);
+        
+
+        
+        initialseedvektor.push_back(Point(x, y));
+        
+    }
+}
 
 void initalseed :: modechoose(int x, Mat firstframe, Mat MatGrowCur)
 {
@@ -82,7 +145,7 @@ void initalseed :: modechoose(int x, Mat firstframe, Mat MatGrowCur)
                     {   // mark the growing seeds
                         
                         g_pt = Point(j, i);
-                        seedvektor.push_back(g_pt);
+                        initialseedvektor.push_back(g_pt);
                         //cout << "g_pt: " << g_pt << "\n" << endl;
                         MatGrowCur.at<Vec3b>(i,j)= firstFrame.at<Vec3b>(i,j);  //255: white
                     }
@@ -97,7 +160,7 @@ void initalseed :: modechoose(int x, Mat firstframe, Mat MatGrowCur)
             
             // setting foe mouse
             namedWindow( WINDOW_NAME );
-            setMouseCallback(WINDOW_NAME,on_MouseHandle,(void*)&MatInBackup);
+            setMouseCallback(WINDOW_NAME, initalseed :: on_MouseHandle,(void*)&MatInBackup);
             
             while(1)
             {
@@ -109,10 +172,10 @@ void initalseed :: modechoose(int x, Mat firstframe, Mat MatGrowCur)
             
             //initialize the seeds
             //initialize  MatGrowCur (image for orinigal seeds before region growing)
-            for(size_t i=0;i<seedvektor.size();i++)
+            for(size_t i=0;i<initialseedvektor.size();i++)
             {
-                cout << seedvektor[i] <<endl;
-                MatGrowCur.at<Vec3b>(seedvektor[i]) = firstFrame.at<Vec3b>(seedvektor[i]);
+                cout << initialseedvektor[i] <<endl;
+                MatGrowCur.at<Vec3b>(initialseedvektor[i]) = firstFrame.at<Vec3b>(initialseedvektor[i]);
             }
             
             break;
@@ -651,34 +714,34 @@ Point centerpoint(vector<Point> seedtogetherBackup){
 
 
 ///--------------  on_MouseHandle   funciton----------
-void on_MouseHandle(int event, int x, int y, int flags, void* param)
-{
-    
-    Mat & image = *(Mat*) param;
-    //Mat *im = reinterpret_cast<Mat*>(param);
-    
-    //mouse ist not in window 处理鼠标不在窗口中的情况
-    if( x < 0 || x >= image.cols || y < 0 || y >= image.rows ){
-        return;
-    }
-    
-    if (event == EVENT_LBUTTONDOWN)
-        
-    {
-        
-        g_pt = Point(x, y);
-        
-        Scalar colorvalue = image.at<Vec3b>(Point(x, y));
-        //Vec3b colorvalue = image.at<Vec3b>(Point(x, y));
-        cout<<"at("<<x<<","<<y<<") pixel value: " << colorvalue <<endl;
-        
-        //调用函数进行绘制
-        DrawLine( image, g_pt );//画线
-        
-        seedvektor.push_back(g_pt);
-        
-    }
-}
+//void on_MouseHandle(int event, int x, int y, int flags, void* param)
+//{
+//    
+//    Mat & image = *(Mat*) param;
+//    //Mat *im = reinterpret_cast<Mat*>(param);
+//    
+//    //mouse ist not in window 处理鼠标不在窗口中的情况
+//    if( x < 0 || x >= image.cols || y < 0 || y >= image.rows ){
+//        return;
+//    }
+//    
+//    if (event == EVENT_LBUTTONDOWN)
+//        
+//    {
+//        
+//        //g_pt = Point(x, y);
+//        
+//        Scalar colorvalue = image.at<Vec3b>(Point(x, y));
+//        //Vec3b colorvalue = image.at<Vec3b>(Point(x, y));
+//        cout<<"at("<<x<<","<<y<<") pixel value: " << colorvalue <<endl;
+//        
+//        //调用函数进行绘制
+//        DrawLine( image, Point(x, y));//画线
+//        
+//        seedvektor.push_back(Point(x, y));
+//        
+//    }
+//}
 
 //-----------------------------------other function -----------
 
