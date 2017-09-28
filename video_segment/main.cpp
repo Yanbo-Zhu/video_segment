@@ -29,7 +29,7 @@ Point regioncenter ;
 Mat firstFrame;
 //Mat frame;
 //Mat MatOut;
-Mat MatGrowCur;
+// Mat MatGrowCur;
 //Mat MatGrowTemp;
 //int iJudge;
 vector<Mat> channels;
@@ -42,13 +42,14 @@ clock_t  clockBegin, clockEnd;
 //----- global function
 //void on_MouseHandle(int event, int x, int y, int flags, void* param);
 void DrawLine( Mat& img, Point pt );
-Mat RegionGrow(Mat MatIn, Mat MatGrowCur, double iGrowJudge, vector<Point> seedset);
+//Mat RegionGrow(Mat MatIn, Mat MatGrowCur, double iGrowJudge, vector<Point> seedset);
+Mat RegionGrow(Mat MatIn, double iGrowJudge, vector<Point> seedset);
 double differenceValue(Mat MatIn, Point oneseed, Point nextseed, int DIR[][2], double rowofDIR, double B, double G, double R );
 Point centerpoint(vector<Point> seedtogetherBackup);
 //void Countijudge(Mat Temp, int *pointerijudge);
 //-------------------------------
 
-class initalseed
+class Initalseed
 {
   
 private:
@@ -58,20 +59,31 @@ private:
 public:
     Mat MatInBackup = firstFrame.clone();
     
+    //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
+    
     vector<Point> initialseedvektor;
     
     //void initalseed();
-    void modechoose(int x, Mat firstframe, Mat MatGrowCur);
+    void modechoose(int x, Mat firstframe);
+    void drawpoint(Mat firstFrame, vector<Point> initialseedvektor);
+    
+    //Initalseed(Mat x, Mat y);
 };
 
-void initalseed :: on_MouseHandle(int event, int x, int y, int flags, void* param)
+//Initalseed(Mat x, Mat y)
+//{
+//    MatInBackup = x;
+//    MatGrowCur = y;
+//}
+
+void Initalseed :: on_MouseHandle(int event, int x, int y, int flags, void* param)
 {
     Mat & image = *(Mat*) param;
     if( x < 0 || x >= image.cols || y < 0 || y >= image.rows ){
         return;
     }
     // Check for null pointer in userdata and handle the error
-    initalseed* temp = reinterpret_cast<initalseed*>(param);
+    Initalseed* temp = reinterpret_cast<Initalseed*>(param);
     temp->on_Mouse(event, x, y, flags);
     
     Scalar colorvalue = image.at<Vec3b>(Point(x, y));
@@ -82,23 +94,23 @@ void initalseed :: on_MouseHandle(int event, int x, int y, int flags, void* para
     DrawLine( image, Point(x, y));//画线
 }
 
-void MyClass::on_Mouse(int event, int x, int y)
-{
-    switch (event)
-    {
-        case CV_EVENT_LBUTTONDOWN:
-            //your code here
-            break;
-        case CV_EVENT_MOUSEMOVE:
-            //your code here
-            break;
-        case CV_EVENT_LBUTTONUP:
-            //your code here
-            break;  
-    }  
-}
+//void MyClass::on_Mouse(int event, int x, int y)
+//{
+//    switch (event)
+//    {
+//        case CV_EVENT_LBUTTONDOWN:
+//            //your code here
+//            break;
+//        case CV_EVENT_MOUSEMOVE:
+//            //your code here
+//            break;
+//        case CV_EVENT_LBUTTONUP:
+//            //your code here
+//            break;  
+//    }  
+//}
 
-void initalseed :: on_Mouse(int event, int x, int y, int flags)
+void Initalseed :: on_Mouse(int event, int x, int y, int flags)
 {
     
     //Mat & image = *(Mat*) param;
@@ -112,20 +124,35 @@ void initalseed :: on_Mouse(int event, int x, int y, int flags)
     if (event == EVENT_LBUTTONDOWN)
         
     {
-        
         //g_pt = Point(x, y);
-        
-
-        
         initialseedvektor.push_back(Point(x, y));
-        
+        //cout<<"at( row: "<< x <<", column: "<<y<<" )"<<endl;
     }
 }
 
-void initalseed :: modechoose(int x, Mat firstframe, Mat MatGrowCur)
+void Initalseed :: drawpoint(Mat firstFrame, vector<Point> initialseedvektor)
 {
+    for(size_t i=0; i<initialseedvektor.size();i++)
+    {
+    
+    Scalar colorvalue = firstFrame.at<Vec3b>(initialseedvektor[i]);
+    //Vec3b colorvalue = image.at<Vec3b>(Point(x, y));
+    cout<< initialseedvektor[i] << " pixel value: " << colorvalue <<endl;
+    //调用函数进行绘制
+    DrawLine( firstFrame, initialseedvektor[i]); //画线
+    }
+    
+    imshow ("firstFrame with initialseedvektor" , firstFrame);
+    waitKey(10);
+}
+
+void Initalseed :: modechoose(int x, Mat firstFrame)
+{
+    //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
+    //Mat MatInBackup = firstFrame.clone();
+    
     switch (x) {
-            
+         
             //tap 1, choose seeds by entrying the threshold value
         case 1:
             
@@ -147,7 +174,7 @@ void initalseed :: modechoose(int x, Mat firstframe, Mat MatGrowCur)
                         g_pt = Point(j, i);
                         initialseedvektor.push_back(g_pt);
                         //cout << "g_pt: " << g_pt << "\n" << endl;
-                        MatGrowCur.at<Vec3b>(i,j)= firstFrame.at<Vec3b>(i,j);  //255: white
+                        //MatGrowCur.at<Vec3b>(i,j)= firstFrame.at<Vec3b>(i,j);  //255: white
                     }
                 }
             }
@@ -160,11 +187,14 @@ void initalseed :: modechoose(int x, Mat firstframe, Mat MatGrowCur)
             
             // setting foe mouse
             namedWindow( WINDOW_NAME );
-            setMouseCallback(WINDOW_NAME, initalseed :: on_MouseHandle,(void*)&MatInBackup);
+            setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle,(void*)&MatInBackup);
+            //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle,this);
+
             
             while(1)
             {
                 imshow( WINDOW_NAME, MatInBackup);
+                //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle,this);
                 if( waitKey( 10 ) == 27 ) break;//按下ESC键，程序退出
             }
             
@@ -175,7 +205,7 @@ void initalseed :: modechoose(int x, Mat firstframe, Mat MatGrowCur)
             for(size_t i=0;i<initialseedvektor.size();i++)
             {
                 cout << initialseedvektor[i] <<endl;
-                MatGrowCur.at<Vec3b>(initialseedvektor[i]) = firstFrame.at<Vec3b>(initialseedvektor[i]);
+                //MatGrowCur.at<Vec3b>(initialseedvektor[i]) = firstFrame.at<Vec3b>(initialseedvektor[i]);
             }
             
             break;
@@ -188,12 +218,12 @@ void initalseed :: modechoose(int x, Mat firstframe, Mat MatGrowCur)
             //seedvektor.push_back(Point(439,221)); // white window
             
             // ascend video ascend_5-50m
-            seedvektor.push_back(Point(581,33)); // white window
+            initialseedvektor.push_back(Point(581,33)); // white window
             
-            for(size_t i=0; i<seedvektor.size();i++)
+            for(size_t i=0; i<initialseedvektor.size();i++)
             {
-                cout << seedvektor[i]  << endl;
-                MatGrowCur.at<Vec3b>(seedvektor[i]) = firstFrame.at<Vec3b>(seedvektor[i]);
+                cout << initialseedvektor[i]  << endl;
+                //MatGrowCur.at<Vec3b>(initialseedvektor[i]) = firstFrame.at<Vec3b>(initialseedvektor[i]);
             }
             
             break;
@@ -201,6 +231,11 @@ void initalseed :: modechoose(int x, Mat firstframe, Mat MatGrowCur)
         default:
             break;
     }
+    
+    
+    
+    
+    
 }
 
 
@@ -209,8 +244,8 @@ int main( )
     //【1】读入视频
     VideoCapture vc;
     //vc.open( "/Users/zhu/Desktop/source/Rotation_descend_20_10m_small.mp4");
-    //vc.open( "/Users/zhu/Desktop/source/ascend_5-50m.mp4");
-    vc.open( "/Users/zhu/Desktop/source/Rotation_50m.mp4");
+    vc.open( "/Users/zhu/Desktop/source/ascend_5-50m.mp4");
+    //vc.open( "/Users/zhu/Desktop/source/Rotation_50m.mp4");
     
     
     if (!vc.isOpened())
@@ -230,6 +265,7 @@ int main( )
     
 //-----------------------------finding first seed point---------------
     //Mat firstFrame;
+    Mat firstFrame;
     vc.read(firstFrame);
     imshow("first frame",firstFrame);
     waitKey(10);
@@ -240,15 +276,16 @@ int main( )
     
     Mat Matfinal (firstFrame.size(),CV_8UC3,Scalar(0,0,0));
     
-    Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
+    //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
     
     //imshow("play video", firstFrame);  //显示当前帧
     
     cout<<"plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points" <<endl;
     cin >> mode;
     
-    initalseed M;
-    M.modechoose(mode, firstFrame, MatGrowCur);
+    Initalseed M;
+    M.modechoose(mode, firstFrame);
+    M.drawpoint(firstFrame, M.initialseedvektor);
     
 //    switch (mode) {
 //            
@@ -366,13 +403,17 @@ int main( )
         imshow("gaussian filtered image ", frame);
         //waitKey(10);
         
-        MatOut = RegionGrow(frame, MatGrowCur, differencegrow, seedvektor);
+        //imshow("M.MatGrowCur", M.MatGrowCur);
+        //waitKey(0);
+        
+        //MatOut = RegionGrow(frame, M.MatGrowCur, differencegrow, M.initialseedvektor);
+        MatOut = RegionGrow(frame, differencegrow, M.initialseedvektor);
+        
+         M.initialseedvektor.clear();
+         M.initialseedvektor.push_back(regioncenter);
         
         imshow("Segments image", MatOut);
         
-        seedvektor.clear();
-        seedvektor.push_back(regioncenter);
-        cout<<"regioncenter: " << regioncenter <<endl;
         
         //initialize  MatGrowCur (image for orinigal seeds before region growing)
 //        for(size_t i=0;i<seedvektor.size();i++)
@@ -518,14 +559,22 @@ int main( )
 
 ///----------  RegionGrowing function------------------------------
 
-Mat RegionGrow(Mat MatIn, Mat MatGrownow, double iGrowJudge, vector<Point> seedset) //iGrowPoint: seeds 为种子点的判断条件，iGrowJudge: growing condition 为生长条件
+Mat RegionGrow(Mat MatIn, double iGrowJudge, vector<Point> seedset) //iGrowPoint: seeds 为种子点的判断条件，iGrowJudge: growing condition 为生长条件
 {
     
     //Mat MatGrowOld(MatIn.size(),CV_8UC3,Scalar(0,0,0));
     //Mat MatGrownext(MatIn.size(),CV_8UC3,Scalar(0,0,0));
     //Mat MatGrowTemp(MatIn.size(),CV_8UC3,Scalar(0,0,0));
+    //Mat MatGrownow(MatIn.size(),CV_8UC3,Scalar(0,0,0));
     Mat Segment(MatIn.size(),CV_8UC3,Scalar(0,0,0));
     Mat MatLabel(MatIn.size(),CV_8UC1,Scalar(0));
+    
+    Mat MatGrownow(MatIn.size(),CV_8UC3,Scalar(0,0,0));
+    for(size_t i=0;i<seedset.size();i++)
+    {
+        //cout << initialseedvektor[i] <<endl;
+        MatGrownow.at<Vec3b>(seedset[i]) = MatGrownow.at<Vec3b>(seedset[i]);
+    }
     
     vector<Point> seedtogether = seedset;
     
@@ -607,8 +656,11 @@ Mat RegionGrow(Mat MatIn, Mat MatGrownow, double iGrowJudge, vector<Point> seeds
     }
     //cout << "seedtogether.size:" << seedtogether.size() << endl;
     regioncenter  = centerpoint(seedtogether);
+    cout<<"regioncenter: " << regioncenter <<endl;
     seedtogether.clear();
+    
 
+    
     return Segment;
 }
 
