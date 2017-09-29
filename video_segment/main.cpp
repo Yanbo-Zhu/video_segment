@@ -16,6 +16,8 @@
 #include "opencv2/videoio.hpp"
 #include <opencv2/opencv.hpp>
 
+#include "INITIALSEED.hpp"
+
 using namespace cv;
 using namespace std;
 
@@ -37,7 +39,7 @@ vector<Mat> channelsMatIn;
 clock_t  clockBegin, clockEnd;
 //-------
 
-#define WINDOW_NAME " point marking "
+//#define WINDOW_NAME " point marking "
 
 //----- global function
 //void on_MouseHandle(int event, int x, int y, int flags, void* param);
@@ -49,194 +51,6 @@ Point centerpoint(vector<Point> seedtogetherBackup);
 //void Countijudge(Mat Temp, int *pointerijudge);
 //-------------------------------
 
-class Initalseed
-{
-  
-private:
-    static void on_MouseHandle(int event, int x, int y, int flags, void* param);
-    void on_Mouse(int event, int x, int y, int flags);
-    
-public:
-    Mat MatInBackup = firstFrame.clone();
-    
-    //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
-    
-    vector<Point> initialseedvektor;
-    
-    //void initalseed();
-    void modechoose(int x, Mat firstframe);
-    void drawpoint(Mat firstFrame, vector<Point> initialseedvektor);
-    
-    //Initalseed(Mat x, Mat y);
-};
-
-//Initalseed(Mat x, Mat y)
-//{
-//    MatInBackup = x;
-//    MatGrowCur = y;
-//}
-
-void Initalseed :: on_MouseHandle(int event, int x, int y, int flags, void* param)
-{
-    Mat & image = *(Mat*) param;
-    if( x < 0 || x >= image.cols || y < 0 || y >= image.rows ){
-        return;
-    }
-    // Check for null pointer in userdata and handle the error
-    Initalseed* temp = reinterpret_cast<Initalseed*>(param);
-    temp->on_Mouse(event, x, y, flags);
-    
-    Scalar colorvalue = image.at<Vec3b>(Point(x, y));
-    //Vec3b colorvalue = image.at<Vec3b>(Point(x, y));
-    cout<<"at("<<x<<","<<y<<") pixel value: " << colorvalue <<endl;
-    
-    //调用函数进行绘制
-    DrawLine( image, Point(x, y));//画线
-}
-
-//void MyClass::on_Mouse(int event, int x, int y)
-//{
-//    switch (event)
-//    {
-//        case CV_EVENT_LBUTTONDOWN:
-//            //your code here
-//            break;
-//        case CV_EVENT_MOUSEMOVE:
-//            //your code here
-//            break;
-//        case CV_EVENT_LBUTTONUP:
-//            //your code here
-//            break;  
-//    }  
-//}
-
-void Initalseed :: on_Mouse(int event, int x, int y, int flags)
-{
-    
-    //Mat & image = *(Mat*) param;
-    //Mat *im = reinterpret_cast<Mat*>(param);
-    
-    //mouse ist not in window 处理鼠标不在窗口中的情况
-//    if( x < 0 || x >= image.cols || y < 0 || y >= image.rows ){
-//        return;
-//    }
-    
-    if (event == EVENT_LBUTTONDOWN)
-        
-    {
-        //g_pt = Point(x, y);
-        initialseedvektor.push_back(Point(x, y));
-        //cout<<"at( row: "<< x <<", column: "<<y<<" )"<<endl;
-    }
-}
-
-void Initalseed :: drawpoint(Mat firstFrame, vector<Point> initialseedvektor)
-{
-    for(size_t i=0; i<initialseedvektor.size();i++)
-    {
-    
-    Scalar colorvalue = firstFrame.at<Vec3b>(initialseedvektor[i]);
-    //Vec3b colorvalue = image.at<Vec3b>(Point(x, y));
-    cout<< initialseedvektor[i] << " pixel value: " << colorvalue <<endl;
-    //调用函数进行绘制
-    DrawLine( firstFrame, initialseedvektor[i]); //画线
-    }
-    
-    imshow ("firstFrame with initialseedvektor" , firstFrame);
-    waitKey(10);
-}
-
-void Initalseed :: modechoose(int x, Mat firstFrame)
-{
-    //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
-    //Mat MatInBackup = firstFrame.clone();
-    
-    switch (x) {
-         
-            //tap 1, choose seeds by entrying the threshold value
-        case 1:
-            
-            cout<< "plaese give the value for threshold value (seed condition):" <<endl;
-            cin >> thresholdvalue;
-            
-            //initialize the seeds 初始化原始种子点
-            for(int i=0;i<firstFrame.rows;i++)
-            {
-                for(int j=0;j<firstFrame.cols;j++)
-                {
-                    double averageonepoint = (firstFrame.at<Vec3b>(i,j)[0]+ firstFrame.at<Vec3b>(i,j)[1] + firstFrame.at<Vec3b>(i,j)[2])*1.0/3;
-                    
-                    //printf("averageonepoint = %f\n",averageonepoint);
-                    
-                    if(averageonepoint >= thresholdvalue)//选取种子点，自己更改
-                    {   // mark the growing seeds
-                        
-                        g_pt = Point(j, i);
-                        initialseedvektor.push_back(g_pt);
-                        //cout << "g_pt: " << g_pt << "\n" << endl;
-                        //MatGrowCur.at<Vec3b>(i,j)= firstFrame.at<Vec3b>(i,j);  //255: white
-                    }
-                }
-            }
-            
-            break;
-            
-        case 2:
-            
-            // tap 2, choose seeds by clicking in orignal image
-            
-            // setting foe mouse
-            namedWindow( WINDOW_NAME );
-            setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle,(void*)&MatInBackup);
-            //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle,this);
-
-            
-            while(1)
-            {
-                imshow( WINDOW_NAME, MatInBackup);
-                //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle,this);
-                if( waitKey( 10 ) == 27 ) break;//按下ESC键，程序退出
-            }
-            
-            destroyWindow(WINDOW_NAME);
-            
-            //initialize the seeds
-            //initialize  MatGrowCur (image for orinigal seeds before region growing)
-            for(size_t i=0;i<initialseedvektor.size();i++)
-            {
-                cout << initialseedvektor[i] <<endl;
-                //MatGrowCur.at<Vec3b>(initialseedvektor[i]) = firstFrame.at<Vec3b>(initialseedvektor[i]);
-            }
-            
-            break;
-            
-        case 3:
-            //tap 3 , set seeds by using default position of points
-            
-            // descend video Rotation_descend_20_10m_small
-            //seedvektor.push_back(Point(677, 280)); // white boot
-            //seedvektor.push_back(Point(439,221)); // white window
-            
-            // ascend video ascend_5-50m
-            initialseedvektor.push_back(Point(581,33)); // white window
-            
-            for(size_t i=0; i<initialseedvektor.size();i++)
-            {
-                cout << initialseedvektor[i]  << endl;
-                //MatGrowCur.at<Vec3b>(initialseedvektor[i]) = firstFrame.at<Vec3b>(initialseedvektor[i]);
-            }
-            
-            break;
-            
-        default:
-            break;
-    }
-    
-    
-    
-    
-    
-}
 
 
 int main( )
@@ -383,7 +197,7 @@ int main( )
         //若视频播放完成，退出循环
         if (frame.empty())
         {
-            waitKey(0);
+            //waitKey(0);
             break;
         }
 
@@ -456,7 +270,9 @@ int main( )
     vc.release();
     cout << "Video playing over " << endl;
     
-    system("pause");
+    
+    waitKey(0);
+    //system("pause");
 
     return 0;
     
@@ -797,11 +613,12 @@ Point centerpoint(vector<Point> seedtogetherBackup){
 
 //-----------------------------------other function -----------
 
-void DrawLine( Mat &img, Point pt )
-{
-    RNG rng(time(0));
-    line(img, pt, pt, Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255)),6,8,0); //随机颜色
-    
-}
+//void DrawLine( Mat &img, Point pt )
+//{
+//    RNG rng(time(0));
+//    //line(img, pt, pt, Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255)),6,8,0); //随机颜色
+//    line(img, pt, pt, Scalar(0,0,255),6,8,0); //随机颜色
+//
+//}
 
 

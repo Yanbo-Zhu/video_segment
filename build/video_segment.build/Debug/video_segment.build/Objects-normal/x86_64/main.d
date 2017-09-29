@@ -122,4 +122,5 @@ dependencies: \
   /usr/local/include/opencv2/videostab/fast_marching_inl.hpp \
   /usr/local/include/opencv2/videostab/deblurring.hpp \
   /usr/local/include/opencv2/videostab/wobble_suppression.hpp \
-  /usr/local/include/opencv2/videostab/ring_buffer.hpp
+  /usr/local/include/opencv2/videostab/ring_buffer.hpp \
+  /Users/zhu/Desktop/opencv_project/video_segment/video_segment/INITIALSEED.hpp
