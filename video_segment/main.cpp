@@ -155,12 +155,8 @@ int main( )
         imshow("Segments image", MatOut);
         
         
-        //initialize  MatGrowCur (image for orinigal seeds before region growing)
-//        for(size_t i=0;i<seedvektor.size();i++)
-//        {
-//            MatGrowCur.at<Vec3b>(seedvektor[i]) = firstFrame.at<Vec3b>(seedvektor[i]);
-//        }
         
+        //
         Matfinal = frame.clone();
         
         for(size_t i=0;i<seedtogether.size();i++)
