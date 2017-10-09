@@ -8,7 +8,7 @@
 
 #include "INITIALSEED.hpp"
 
-//Initalseed(Mat x, Mat y)
+//Initalseed(Mat x, Mat y) constructor function
 //{
 //    MatInBackup = x;
 //    MatGrowCur = y;
@@ -123,7 +123,6 @@ void Initalseed :: modechoose(int x, Mat firstFrame)
                         
                         g_pt = Point(j, i);
                         initialseedvektor.push_back(g_pt);
-                        //cout << "g_pt: " << g_pt << "\n" << endl;
                         //MatGrowCur.at<Vec3b>(i,j)= firstFrame.at<Vec3b>(i,j);  //255: white
                     }
                 }
@@ -134,9 +133,8 @@ void Initalseed :: modechoose(int x, Mat firstFrame)
         case 2:
             
             // tap 2, choose seeds by clicking in orignal image
-#define WINDOW_NAME " point marking "
-            //while(1)
-            //{
+            #define WINDOW_NAME " point marking "
+            
             // setting foe mouse
             namedWindow( WINDOW_NAME );
             //imshow( WINDOW_NAME, MatInBackup);
@@ -155,7 +153,6 @@ void Initalseed :: modechoose(int x, Mat firstFrame)
             destroyWindow(WINDOW_NAME);
             
             //initialize the seeds
-            //initialize  MatGrowCur (image for orinigal seeds before region growing)
             for(size_t i=0;i<initialseedvektor.size();i++)
             {
                 cout << initialseedvektor[i] <<endl;
@@ -185,9 +182,6 @@ void Initalseed :: modechoose(int x, Mat firstFrame)
         default:
             break;
     }
-    
-    
-    
     
     
 }

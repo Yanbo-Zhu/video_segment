@@ -37,6 +37,7 @@ Mat firstFrame;
 vector<Mat> channels;
 vector<Mat> channelsMatIn;
 clock_t  clockBegin, clockEnd;
+vector<Point> seedtogether;
 //-------
 
 //#define WINDOW_NAME " point marking "
@@ -45,7 +46,7 @@ clock_t  clockBegin, clockEnd;
 //void on_MouseHandle(int event, int x, int y, int flags, void* param);
 void DrawLine( Mat& img, Point pt );
 //Mat RegionGrow(Mat MatIn, Mat MatGrowCur, double iGrowJudge, vector<Point> seedset);
-Mat RegionGrow(Mat MatIn, double iGrowJudge, vector<Point> seedset);
+Mat RegionGrow(Mat MatIn, Mat MatBlur ,double iGrowJudge, vector<Point> seedset);
 double differenceValue(Mat MatIn, Point oneseed, Point nextseed, int DIR[][2], double rowofDIR, double B, double G, double R );
 Point centerpoint(vector<Point> seedtogetherBackup);
 //void Countijudge(Mat Temp, int *pointerijudge);
@@ -101,83 +102,6 @@ int main( )
     M.modechoose(mode, firstFrame);
     M.drawpoint(firstFrame, M.initialseedvektor);
     
-//    switch (mode) {
-//            
-//            //tap 1, choose seeds by entrying the threshold value
-//        case 1:
-//            
-//            cout<< "plaese give the value for threshold value (seed condition):" <<endl;
-//            cin >> thresholdvalue;
-//            
-//            //initialize the seeds 初始化原始种子点
-//            for(int i=0;i<firstFrame.rows;i++)
-//            {
-//                for(int j=0;j<firstFrame.cols;j++)
-//                {
-//                    double averageonepoint = (firstFrame.at<Vec3b>(i,j)[0]+ firstFrame.at<Vec3b>(i,j)[1] + firstFrame.at<Vec3b>(i,j)[2])*1.0/3;
-//                    
-//                    //printf("averageonepoint = %f\n",averageonepoint);
-//                    
-//                    if(averageonepoint >= thresholdvalue)//选取种子点，自己更改
-//                    {   // mark the growing seeds
-//                        
-//                        g_pt = Point(j, i);
-//                        seedvektor.push_back(g_pt);
-//                        //cout << "g_pt: " << g_pt << "\n" << endl;
-//                        MatGrowCur.at<Vec3b>(i,j)= firstFrame.at<Vec3b>(i,j);  //255: white
-//                    }
-//                }
-//            }
-//            
-//            break;
-//            
-//        case 2:
-//            
-//            // tap 2, choose seeds by clicking in orignal image
-//            
-//            // setting foe mouse
-//            namedWindow( WINDOW_NAME );
-//            setMouseCallback(WINDOW_NAME,on_MouseHandle,(void*)&MatInBackup);
-//            
-//            while(1)
-//            {
-//                imshow( WINDOW_NAME, MatInBackup);
-//                if( waitKey( 10 ) == 27 ) break;//按下ESC键，程序退出
-//            }
-//            
-//            destroyWindow(WINDOW_NAME);
-//            
-//            //initialize the seeds
-//            //initialize  MatGrowCur (image for orinigal seeds before region growing)
-//            for(size_t i=0;i<seedvektor.size();i++)
-//            {
-//                cout << seedvektor[i] <<endl;
-//                MatGrowCur.at<Vec3b>(seedvektor[i]) = firstFrame.at<Vec3b>(seedvektor[i]);
-//            }
-//            
-//            break;
-//            
-//        case 3:
-//            //tap 3 , set seeds by using default position of points
-//            
-//            // descend video Rotation_descend_20_10m_small
-//            //seedvektor.push_back(Point(677, 280)); // white boot
-//            //seedvektor.push_back(Point(439,221)); // white window
-//            
-//            // ascend video ascend_5-50m
-//            seedvektor.push_back(Point(581,33)); // white window
-//            
-//            for(size_t i=0; i<seedvektor.size();i++)
-//            {
-//                cout << seedvektor[i]  << endl;
-//                MatGrowCur.at<Vec3b>(seedvektor[i]) = firstFrame.at<Vec3b>(seedvektor[i]);
-//            }
-//            
-//            break;
-//            
-//        default:
-//            break;
-//    }
 
 //------------------------------- Start to apply Segmentation-method in Video
     
@@ -210,18 +134,20 @@ int main( )
         int indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
         printf("indexFrame: %d \n", indexFrame);
         
-        imshow("play video", frame);  //显示当前帧
+        //imshow("play video", frame);  //显示当前帧
         
-        GaussianBlur(frame, frame, Size( 3, 3),0,0);
+        Mat frame_Blur;
         
-        imshow("gaussian filtered image ", frame);
+        GaussianBlur(frame, frame_Blur, Size( 3, 3),0,0);
+        
+        //imshow("gaussian filtered image ", frame);
         //waitKey(10);
         
         //imshow("M.MatGrowCur", M.MatGrowCur);
         //waitKey(0);
         
-        //MatOut = RegionGrow(frame, M.MatGrowCur, differencegrow, M.initialseedvektor);
-        MatOut = RegionGrow(frame, differencegrow, M.initialseedvektor);
+        MatOut = RegionGrow(frame, frame_Blur , differencegrow, M.initialseedvektor);
+        
         
          M.initialseedvektor.clear();
          M.initialseedvektor.push_back(regioncenter);
@@ -235,25 +161,36 @@ int main( )
 //            MatGrowCur.at<Vec3b>(seedvektor[i]) = firstFrame.at<Vec3b>(seedvektor[i]);
 //        }
         
-        // split to channel
-        Mat RedChannel;
-        Mat RedChannelMatIn;
+        Matfinal = frame.clone();
         
-        split(MatOut,channels);//分离色彩通道
+        for(size_t i=0;i<seedtogether.size();i++)
+        {
+            Matfinal.at<Vec3b>(seedtogether[i]) = Vec3b(0,0,255);
+        }
         
-        RedChannel = channels.at(2).clone();
         
-        split(frame,channelsMatIn);//分离色彩通道
         
-        RedChannelMatIn = channelsMatIn.at(2).clone();
+//        // split to channel
+//        Mat RedChannel;
+//        Mat RedChannelMatIn;
+//        
+//        split(MatOut,channels);//分离色彩通道
+//        
+//        RedChannel = channels.at(2).clone();
+//        
+//        split(frame,channelsMatIn);//分离色彩通道
+//        
+//        RedChannelMatIn = channelsMatIn.at(2).clone();
+//        
+//        addWeighted(RedChannelMatIn,0.80, RedChannel, 20.0 ,0, RedChannelMatIn);
+//        
+//        RedChannelMatIn.copyTo(channelsMatIn.at(2));
+//        
+//        //  merge to channel
+//        
+//        merge (channelsMatIn, Matfinal);
+//        
         
-        addWeighted(RedChannelMatIn,0.81, RedChannel, 20.0 ,0, RedChannelMatIn);
-        
-        RedChannelMatIn.copyTo(channelsMatIn.at(2));
-        
-        //  merge to channel
-        
-        merge (channelsMatIn, Matfinal);
         imshow("final image", Matfinal);
         
         
@@ -375,7 +312,7 @@ int main( )
 
 ///----------  RegionGrowing function------------------------------
 
-Mat RegionGrow(Mat MatIn, double iGrowJudge, vector<Point> seedset) //iGrowPoint: seeds 为种子点的判断条件，iGrowJudge: growing condition 为生长条件
+Mat RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vector<Point> seedset) //iGrowPoint: seeds 为种子点的判断条件，iGrowJudge: growing condition 为生长条件
 {
     
     //Mat MatGrowOld(MatIn.size(),CV_8UC3,Scalar(0,0,0));
@@ -385,14 +322,17 @@ Mat RegionGrow(Mat MatIn, double iGrowJudge, vector<Point> seedset) //iGrowPoint
     Mat Segment(MatIn.size(),CV_8UC3,Scalar(0,0,0));
     Mat MatLabel(MatIn.size(),CV_8UC1,Scalar(0));
     
+    // intialize MatGrownow
     Mat MatGrownow(MatIn.size(),CV_8UC3,Scalar(0,0,0));
+    
     for(size_t i=0;i<seedset.size();i++)
     {
         //cout << initialseedvektor[i] <<endl;
-        MatGrownow.at<Vec3b>(seedset[i]) = MatGrownow.at<Vec3b>(seedset[i]);
+        MatGrownow.at<Vec3b>(seedset[i]) = MatIn.at<Vec3b>(seedset[i]);
     }
     
-    vector<Point> seedtogether = seedset;
+    seedtogether.clear();
+    seedtogether = seedset;
     
     //生长方向顺序数据
     int DIR[8][2]={{-1,-1},{-1,0},{-1,1},{0,-1},{0,1},{1,-1},{1,0},{1,1}};
@@ -406,76 +346,68 @@ Mat RegionGrow(Mat MatIn, double iGrowJudge, vector<Point> seedset) //iGrowPoint
     double R = 0.0;
     
     
-    B = MatIn.at<Vec3b>(seedset.back())[0];
-    G = MatIn.at<Vec3b>(seedset.back())[1];
-    R = MatIn.at<Vec3b>(seedset.back())[2];
+    B = MatBlur.at<Vec3b>(seedset.back())[0];
+    G = MatBlur.at<Vec3b>(seedset.back())[1];
+    R = MatBlur.at<Vec3b>(seedset.back())[2];
     
     //-----------------------------------------------------------------------
-    
-    while (!seedset.empty()) {
-        
-        Point oneseed = seedset.back(); //fetch one seed from seedvektor
-        
-        seedset.pop_back(); // delete this one seed from seedvektor
-        //seedtogether.clear();
-        
-        //cout << "size of seedset: " << seedset.size() << "\n" << endl;
-        
-        MatLabel.at<uchar>(oneseed) = 255;
-        
-        Segment.at<Vec3b>(oneseed) = MatIn.at<Vec3b>(oneseed);
-        
-        B = (B+MatIn.at<Vec3b>(oneseed)[0])/2.0;
-        G = (G+MatIn.at<Vec3b>(oneseed)[1])/2.0;
-        R = (R+MatIn.at<Vec3b>(oneseed)[2])/2.0;
-        
-        
-        for(int iNum=0 ; iNum< rowofDIR ; iNum++)
-        {
-            Point nextseed;
-            nextseed.x = oneseed.x + DIR[iNum][0];
-            nextseed.y = oneseed.y + DIR[iNum][1];
+        while (!seedset.empty()) {
             
-            // check if it is boundry points
+            Point oneseed = seedset.back(); //fetch one seed from seedvektor
             
-            //if(nextseed.x >0 && nextseed.x<(MatIn.cols-1) && nextseed.y>0 && nextseed.y<(MatIn.rows-1))
+            seedset.pop_back(); // delete this one seed from seedvektor
             
-            //if ( nextseed.x  >0 && nextseed.x  < (MatIn.cols-1) && nextseed.y <(MatIn.rows-1) && nextseed.y >0 )
-            //{
-            //cout << "inloop \n" << endl;
-            if (nextseed.x < 0 || nextseed.y < 0 || nextseed.x > (MatIn.cols-1) || (nextseed.y > MatIn.rows-1))
-                continue;
+            //cout << "size of seedset: " << seedset.size() << "\n" << endl;
             
-            if(MatLabel.at<uchar>(nextseed) != 255 )
+            MatLabel.at<uchar>(oneseed) = 255;
+            
+            Segment.at<Vec3b>(oneseed) = MatIn.at<Vec3b>(oneseed);
+            
+            B = (B+MatBlur.at<Vec3b>(oneseed)[0])/2.0;
+            G = (G+MatBlur.at<Vec3b>(oneseed)[1])/2.0;
+            R = (R+MatBlur.at<Vec3b>(oneseed)[2])/2.0;
+            
+            
+            for(int iNum=0 ; iNum< rowofDIR ; iNum++)
             {
+                Point nextseed;
+                nextseed.x = oneseed.x + DIR[iNum][0];
+                nextseed.y = oneseed.y + DIR[iNum][1];
                 
-                //int d = differenceValue(oneseed, nextseed, DIR, rowofDIR, B, G, R);
-                int d  = differenceValue(MatIn, oneseed, nextseed, DIR, rowofDIR, B, G, R);
+                // check if it is boundry points
                 
-                if( iGrowJudge >= d ) // growing conditions 生长条件，自己调整
+                //if(nextseed.x >0 && nextseed.x<(MatIn.cols-1) && nextseed.y>0 && nextseed.y<(MatIn.rows-1))
+                
+                //if ( nextseed.x  >0 && nextseed.x  < (MatIn.cols-1) && nextseed.y <(MatIn.rows-1) && nextseed.y >0 )
+                //{
+                //cout << "inloop \n" << endl;
+                if (nextseed.x < 0 || nextseed.y < 0 || nextseed.x > (MatIn.cols-1) || (nextseed.y > MatIn.rows-1))
+                    continue;
+                
+                if(MatLabel.at<uchar>(nextseed) != 255 )
                 {
-                    //cout << "inloop \n" << endl;
-                    seedset.push_back(nextseed);
                     
-                    seedtogether.push_back(nextseed);
+                    //int d = differenceValue(oneseed, nextseed, DIR, rowofDIR, B, G, R);
+                    int d  = differenceValue(MatBlur, oneseed, nextseed, DIR, rowofDIR, B, G, R);
                     
-                    MatGrownow.at<Vec3b>(nextseed) = MatIn.at<Vec3b>(nextseed);
-                    
-                    //imshow("MatGrownow image", MatGrownow);
-                    //waitKey(10);
+                    if( iGrowJudge >= d ) // growing conditions 生长条件，自己调整
+                    {
+                        seedset.push_back(nextseed);
+                        seedtogether.push_back(nextseed);
+                        MatGrownow.at<Vec3b>(nextseed) = MatIn.at<Vec3b>(nextseed);
+                    }
                 }
             }
+            
+            //imshow("MatGrownow", MatGrownow);
+            //waitKey(1);
         }
-        
-        //imshow("MatGrownow", MatGrownow);
-        //waitKey(1);
-    }
+    //----------------------------------------------------------------------------
+    
     //cout << "seedtogether.size:" << seedtogether.size() << endl;
     regioncenter  = centerpoint(seedtogether);
-    cout<<"regioncenter: " << regioncenter <<endl;
-    seedtogether.clear();
-    
-
+    //cout<<"regioncenter: " << regioncenter <<endl;
+    //seedtogether.clear();
     
     return Segment;
 }
@@ -611,14 +543,6 @@ Point centerpoint(vector<Point> seedtogetherBackup){
 //    }
 //}
 
-//-----------------------------------other function -----------
 
-//void DrawLine( Mat &img, Point pt )
-//{
-//    RNG rng(time(0));
-//    //line(img, pt, pt, Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255)),6,8,0); //随机颜色
-//    line(img, pt, pt, Scalar(0,0,255),6,8,0); //随机颜色
-//
-//}
 
 
