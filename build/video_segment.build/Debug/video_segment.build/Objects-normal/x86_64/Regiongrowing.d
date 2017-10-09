@@ -1,5 +1,6 @@
 dependencies: \
-  /Users/zhu/Desktop/opencv_project/video_segment/video_segment/main.cpp \
+  /Users/zhu/Desktop/opencv_project/video_segment/video_segment/Regiongrowing.cpp \
+  /Users/zhu/Desktop/opencv_project/video_segment/video_segment/Regiongrowing.hpp \
   /usr/local/include/opencv2/core/core.hpp \
   /usr/local/include/opencv2/core.hpp \
   /usr/local/include/opencv2/core/cvdef.h \
@@ -122,6 +123,4 @@ dependencies: \
   /usr/local/include/opencv2/videostab/fast_marching_inl.hpp \
   /usr/local/include/opencv2/videostab/deblurring.hpp \
   /usr/local/include/opencv2/videostab/wobble_suppression.hpp \
-  /usr/local/include/opencv2/videostab/ring_buffer.hpp \
-  /Users/zhu/Desktop/opencv_project/video_segment/video_segment/INITIALSEED.hpp \
-  /Users/zhu/Desktop/opencv_project/video_segment/video_segment/Regiongrowing.hpp
+  /usr/local/include/opencv2/videostab/ring_buffer.hpp

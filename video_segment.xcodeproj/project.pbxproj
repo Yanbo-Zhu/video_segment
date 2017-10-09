@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		A922A5071F7453E70072A454 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A922A5061F7453E70072A454 /* main.cpp */; };
 		A9847E301F7AB75A00C93A01 /* INITIALSEED.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A9847E2E1F7AB75A00C93A01 /* INITIALSEED.cpp */; };
+		A98CF8E51F8BEA9100BCFDD3 /* Regiongrowing.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A98CF8E31F8BEA9100BCFDD3 /* Regiongrowing.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -28,6 +29,8 @@
 		A922A5061F7453E70072A454 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		A9847E2E1F7AB75A00C93A01 /* INITIALSEED.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = INITIALSEED.cpp; sourceTree = "<group>"; };
 		A9847E2F1F7AB75A00C93A01 /* INITIALSEED.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = INITIALSEED.hpp; sourceTree = "<group>"; };
+		A98CF8E31F8BEA9100BCFDD3 /* Regiongrowing.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Regiongrowing.cpp; sourceTree = "<group>"; };
+		A98CF8E41F8BEA9100BCFDD3 /* Regiongrowing.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; path = Regiongrowing.hpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -63,6 +66,8 @@
 				A922A5061F7453E70072A454 /* main.cpp */,
 				A9847E2E1F7AB75A00C93A01 /* INITIALSEED.cpp */,
 				A9847E2F1F7AB75A00C93A01 /* INITIALSEED.hpp */,
+				A98CF8E31F8BEA9100BCFDD3 /* Regiongrowing.cpp */,
+				A98CF8E41F8BEA9100BCFDD3 /* Regiongrowing.hpp */,
 			);
 			path = video_segment;
 			sourceTree = "<group>";
@@ -126,6 +131,7 @@
 			files = (
 				A922A5071F7453E70072A454 /* main.cpp in Sources */,
 				A9847E301F7AB75A00C93A01 /* INITIALSEED.cpp in Sources */,
+				A98CF8E51F8BEA9100BCFDD3 /* Regiongrowing.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
