@@ -25,9 +25,10 @@ class Regiongrowing
     
 private:
     double differenceValue(Mat MatIn, Point oneseed, Point nextseed, int DIR[][2], double rowofDIR, double B, double G, double R);
+    Point centerpoint(vector<Point> seedtogetherBackup);
     
 public:
-    Point centerpoint(vector<Point> seedtogetherBackup);
+    
     Mat RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vector<Point> seedset);
     Point regioncenter ;
     vector<Point> seedtogether;

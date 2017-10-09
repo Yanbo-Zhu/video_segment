@@ -24,7 +24,7 @@ using namespace std;
 
 //-------global variable
 int mode;
-double thresholdvalue, differencegrow;
+double  differencegrow;
 Point g_pt;
 //vector<Point> seedvektor;
 //Point regioncenter ;
@@ -47,9 +47,9 @@ clock_t  clockBegin, clockEnd;
 //void on_MouseHandle(int event, int x, int y, int flags, void* param);
 void DrawLine( Mat& img, Point pt );
 //Mat RegionGrow(Mat MatIn, Mat MatGrowCur, double iGrowJudge, vector<Point> seedset);
-Mat RegionGrow(Mat MatIn, Mat MatBlur ,double iGrowJudge, vector<Point> seedset);
-double differenceValue(Mat MatIn, Point oneseed, Point nextseed, int DIR[][2], double rowofDIR, double B, double G, double R );
-Point centerpoint(vector<Point> seedtogetherBackup);
+//Mat RegionGrow(Mat MatIn, Mat MatBlur ,double iGrowJudge, vector<Point> seedset);
+//double differenceValue(Mat MatIn, Point oneseed, Point nextseed, int DIR[][2], double rowofDIR, double B, double G, double R );
+//Point centerpoint(vector<Point> seedtogetherBackup);
 //void Countijudge(Mat Temp, int *pointerijudge);
 //-------------------------------
 
@@ -156,19 +156,28 @@ int main( )
         
         MatOut = R1.RegionGrow(frame, frame_Blur , differencegrow, s1.initialseedvektor);
         
-        
          s1.initialseedvektor.clear();
          s1.initialseedvektor.push_back(R1.regioncenter);
         
-        imshow("Segments image", MatOut);
-        
-        //
         Matfinal = frame.clone();
         
         for(size_t i=0;i<R1.seedtogether.size();i++)
         {
             Matfinal.at<Vec3b>(R1.seedtogether[i]) = Vec3b(0,0,255);
         }
+        
+        
+//        Regiongrowing R2;
+//        
+//        MatOut = R2.RegionGrow(frame, frame_Blur , differencegrow, s2.initialseedvektor);
+//        
+//        s2.initialseedvektor.clear();
+//        s2.initialseedvektor.push_back(R2.regioncenter);
+//        
+//        for(size_t i=0;i<R2.seedtogether.size();i++)
+//        {
+//            Matfinal.at<Vec3b>(R2.seedtogether[i]) = Vec3b(0,0,255);
+//        }
         
         
 //        // split to channel
@@ -209,7 +218,6 @@ int main( )
     
     vc.release();
     cout << "Video playing over " << endl;
-    
     
     waitKey(0);
     //system("pause");
