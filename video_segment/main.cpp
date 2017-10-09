@@ -97,15 +97,20 @@ int main( )
     
     cout<<"plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points" <<endl;
     cin >> mode;
+
+    Initalseed  s1;
+    s1.modechoose(mode, firstFrame);
+    //s1.drawpoint(firstFrame, s1.initialseedvektor);
     
-    Initalseed M;
-    M.modechoose(mode, firstFrame);
-    M.drawpoint(firstFrame, M.initialseedvektor);
+    cout<<"plaese select initial seeds for object 2" <<endl;
+    Initalseed  s2;
+    s2.modechoose(mode, firstFrame);
+    
     
 
 //------------------------------- Start to apply Segmentation-method in Video
     
-    cout<< "please set the difference value for region growing"<<endl;
+    cout<< "please set the threshold value for region growing"<<endl;
     
     cin >> differencegrow;
     
@@ -146,11 +151,11 @@ int main( )
         //imshow("M.MatGrowCur", M.MatGrowCur);
         //waitKey(0);
         
-        MatOut = RegionGrow(frame, frame_Blur , differencegrow, M.initialseedvektor);
+        MatOut = RegionGrow(frame, frame_Blur , differencegrow, s1.initialseedvektor);
         
         
-         M.initialseedvektor.clear();
-         M.initialseedvektor.push_back(regioncenter);
+         s1.initialseedvektor.clear();
+         s1.initialseedvektor.push_back(regioncenter);
         
         imshow("Segments image", MatOut);
         
@@ -163,7 +168,6 @@ int main( )
         {
             Matfinal.at<Vec3b>(seedtogether[i]) = Vec3b(0,0,255);
         }
-        
         
         
 //        // split to channel
@@ -198,6 +202,8 @@ int main( )
         
         //if(keycode  == 27)  // 27 = ASCII ESC
             //stop=true;
+        
+        seedtogether.clear();
     }
     
     vc.release();
@@ -325,9 +331,10 @@ Mat RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vector<Point> seedset
     {
         //cout << initialseedvektor[i] <<endl;
         MatGrownow.at<Vec3b>(seedset[i]) = MatIn.at<Vec3b>(seedset[i]);
+        //seedtogether.push_back(seedset[i])
     }
     
-    seedtogether.clear();
+    
     seedtogether = seedset;
     
     //生长方向顺序数据
