@@ -24,6 +24,7 @@ using namespace std;
 
 //-------global variable
 int mode;
+int Segmentnum;
 double  differencegrow;
 Point g_pt;
 //vector<Point> seedvektor;
@@ -98,15 +99,28 @@ int main( )
     
     cout<<"plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points" <<endl;
     cin >> mode;
-
-    cout<<"plaese select initial seeds for object 1" <<endl;
-    Initalseed  s1;
-    s1.modechoose(mode, firstFrame);
-    //s1.drawpoint(firstFrame, s1.initialseedvektor);
     
-    cout<<"plaese select initial seeds for object 2" <<endl;
-    Initalseed  s2;
-    s2.modechoose(mode, firstFrame);
+    cout<<"how many initial segment do you want: " <<endl;
+    cin >> Segmentnum;
+    
+    Initalseed s[Segmentnum];
+    
+    for( int i=0; i<Segmentnum; i++)
+    {
+       printf("plaese select initial seeds for object %d \n", i+1);
+       s[i].modechoose(mode, firstFrame);
+
+    }
+    
+    
+//    cout<<"plaese select initial seeds for object 1" <<endl;
+//    //Initalseed  s[1];
+//    s[1].modechoose(mode, firstFrame);
+//    //s1.drawpoint(firstFrame, s1.initialseedvektor);
+//    
+//    cout<<"plaese select initial seeds for object 2" <<endl;
+//    Initalseed  s2;
+//    s2.modechoose(mode, firstFrame);
     
     
 
@@ -115,6 +129,14 @@ int main( )
     cout<< "please set the threshold value for region growing"<<endl;
     
     cin >> differencegrow;
+    
+    RNG rng(time(0));
+    Vec3b color[Segmentnum];
+    for( int i=0; i<Segmentnum; i++)
+    {
+        color[i] = Vec3b(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
+    }
+    
     
     bool stop(false);
     
@@ -153,32 +175,44 @@ int main( )
         //imshow("M.MatGrowCur", M.MatGrowCur);
         //waitKey(0);
         
-        Regiongrowing R1;
+        Regiongrowing R[Segmentnum];
         
-        MatOut = R1.RegionGrow(frame, frame_Blur , differencegrow, s1.initialseedvektor);
-        
-         s1.initialseedvektor.clear();
-         s1.initialseedvektor.push_back(R1.regioncenter);
+        //Regiongrowing R1;
         
         Matfinal = frame.clone();
         
-        for(size_t i=0;i<R1.seedtogether.size();i++)
+        for( int i=0; i<Segmentnum; i++)
         {
-            Matfinal.at<Vec3b>(R1.seedtogether[i]) = Vec3b(0,0,255);
+            MatOut = R[i].RegionGrow(frame, frame_Blur , differencegrow, s[i].initialseedvektor);
+            
+             s[i].initialseedvektor.clear();
+             s[i].initialseedvektor.push_back(R[i].regioncenter);
+            
+            
+            
+            for(size_t j=0;j<R[i].seedtogether.size();j++)
+            {
+                Matfinal.at<Vec3b>(R[i].seedtogether[j]) = color[i];
+            }
         }
         
+//        // dilate
+//        int elementSize  = 2;
+//        Mat element = getStructuringElement(MORPH_RECT, Size(2*elementSize+1,2*elementSize+1));
+//        dilate(Matfinal, Matfinal, element);
         
-        Regiongrowing R2;
         
-        MatOut = R2.RegionGrow(frame, frame_Blur , differencegrow, s2.initialseedvektor);
-        
-        s2.initialseedvektor.clear();
-        s2.initialseedvektor.push_back(R2.regioncenter);
-        
-        for(size_t i=0;i<R2.seedtogether.size();i++)
-        {
-            Matfinal.at<Vec3b>(R2.seedtogether[i]) = Vec3b(255,0,0);
-        }
+//        Regiongrowing R2;
+//        
+//        MatOut = R2.RegionGrow(frame, frame_Blur , differencegrow, s2.initialseedvektor);
+//        
+//        s2.initialseedvektor.clear();
+//        s2.initialseedvektor.push_back(R2.regioncenter);
+//        
+//        for(size_t i=0;i<R2.seedtogether.size();i++)
+//        {
+//            Matfinal.at<Vec3b>(R2.seedtogether[i]) = Vec3b(255,0,0);
+//        }
         
         
 //        // split to channel
