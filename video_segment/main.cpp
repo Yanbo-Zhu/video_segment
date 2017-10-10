@@ -223,7 +223,7 @@ int main( )
     //system("pause");
 
     return 0;
-    
+}
 
 //-------------------------------------- VideoWriter function ----------------
 //waitKey(0);
@@ -318,7 +318,7 @@ int main( )
 //    cout << "Finished writing" << endl;
     
     //return 0;
-}
+
 
 
 ///----------  RegionGrowing function------------------------------
