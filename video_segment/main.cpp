@@ -30,6 +30,7 @@ Point g_pt;
 //vector<Point> seedvektor;
 //Point regioncenter ;
 
+Mat FramewithCounter;
 Mat firstFrame;
 //Mat frame;
 //Mat MatOut;
@@ -47,6 +48,7 @@ clock_t  clockBegin, clockEnd;
 //----- global function
 //void on_MouseHandle(int event, int x, int y, int flags, void* param);
 void DrawLine( Mat& img, Point pt );
+void Counter (Mat MatOut , Mat currentFrame, Vec3b color);
 //Mat RegionGrow(Mat MatIn, Mat MatGrowCur, double iGrowJudge, vector<Point> seedset);
 //Mat RegionGrow(Mat MatIn, Mat MatBlur ,double iGrowJudge, vector<Point> seedset);
 //double differenceValue(Mat MatIn, Point oneseed, Point nextseed, int DIR[][2], double rowofDIR, double B, double G, double R );
@@ -180,6 +182,7 @@ int main( )
         //Regiongrowing R1;
         
         Matfinal = frame.clone();
+        FramewithCounter = frame.clone();
         
         for( int i=0; i<Segmentnum; i++)
         {
@@ -188,13 +191,24 @@ int main( )
              s[i].initialseedvektor.clear();
              s[i].initialseedvektor.push_back(R[i].regioncenter);
             
-            
+            Counter(MatOut, frame, color[i]);
             
             for(size_t j=0;j<R[i].seedtogether.size();j++)
             {
                 Matfinal.at<Vec3b>(R[i].seedtogether[j]) = color[i];
             }
+            
+            
         }
+        
+        // ----------------
+        
+
+        
+        //addWeighted(frame,1, result, 10 ,0, result);
+        
+        imshow("segment counter", FramewithCounter);
+        
         
 //        // dilate
 //        int elementSize  = 2;
@@ -236,7 +250,7 @@ int main( )
 //        merge (channelsMatIn, Matfinal);
 //        
         
-        imshow("final image", Matfinal);
+        //imshow("final image", Matfinal);
         
         
         //  define the stop-button and exit-button
@@ -259,10 +273,43 @@ int main( )
 
     return 0;
 }
+// -------
+void Counter (Mat MatOut , Mat currentFrame, Vec3b color)
+{
+    Mat MatoutGray;
+    //Mat FramewithCounter = currentFrame.clone();
+    //Mat result (MatOut.size(),CV_8UC3, Scalar(0,0,0));
+    //Mat result = zeros(MatOut.clone();
+    
+    // dilate MatOut
+    int elementSize  = 2;
+    Mat element = getStructuringElement(MORPH_RECT, Size(2*elementSize+1,2*elementSize+1));
+    dilate(MatOut, MatOut, element);
+    
+    cvtColor(MatOut,MatoutGray,CV_BGR2GRAY);
+    threshold(MatoutGray,MatoutGray,160,255,THRESH_BINARY);
+    
+    
+    vector<Vec4i> hierarchy;
+    vector<vector<Point> > contours;
+    findContours(MatoutGray, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+    
+    for (size_t i = 0; i < contours.size(); ++i)
+    {
+        // Calculate the area of each contour
+        double area = contourArea(contours[i]);
+        // Ignore contours that are too small or too large
+        if (area < 1e2 || 1e5 < area) continue;
+        // Draw each contour only for visualisation purposes
+        drawContours(FramewithCounter, contours, static_cast<int>(i), color, 2, 8, hierarchy, 0);
+        //drawContours(result, contours, -1, Scalar(0, 0, 255), 1, 8, hierarchy, 0);
+    }
+    //return FramewithCounter;
+}
 
 //-------------------------------------- VideoWriter function ----------------
 //waitKey(0);
-    
+
 //    VideoWriter vw; //(filename, fourcc, fps, frameSize[, isColor])
 //    vw.open( "./output1.avi", // 输出视频文件名
 //            CV_FOURCC('8', 'B', 'P', 'S'), //CV_FOURCC('S', 'V', 'Q', '3'), //(int)vc.get( CV_CAP_PROP_FOURCC ), // 也可设为CV_FOURCC_PROMPT，在运行时选取 //fourcc – 4-character code of codec used to compress the frames.
