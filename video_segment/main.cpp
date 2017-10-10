@@ -60,8 +60,8 @@ int main( )
     //【1】读入视频
     VideoCapture vc;
     //vc.open( "/Users/zhu/Desktop/source/Rotation_descend_20_10m_small.mp4");
-    vc.open( "/Users/zhu/Desktop/source/ascend_5-50m.mp4");
-    //vc.open( "/Users/zhu/Desktop/source/Rotation_50m.mp4");
+    //vc.open( "/Users/zhu/Desktop/source/ascend_5-50m.mp4");
+    vc.open( "/Users/zhu/Desktop/source/Rotation_50m.mp4");
     
     
     if (!vc.isOpened())
@@ -99,13 +99,14 @@ int main( )
     cout<<"plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points" <<endl;
     cin >> mode;
 
+    cout<<"plaese select initial seeds for object 1" <<endl;
     Initalseed  s1;
     s1.modechoose(mode, firstFrame);
     //s1.drawpoint(firstFrame, s1.initialseedvektor);
     
-//    cout<<"plaese select initial seeds for object 2" <<endl;
-//    Initalseed  s2;
-//    s2.modechoose(mode, firstFrame);
+    cout<<"plaese select initial seeds for object 2" <<endl;
+    Initalseed  s2;
+    s2.modechoose(mode, firstFrame);
     
     
 
@@ -167,17 +168,17 @@ int main( )
         }
         
         
-//        Regiongrowing R2;
-//        
-//        MatOut = R2.RegionGrow(frame, frame_Blur , differencegrow, s2.initialseedvektor);
-//        
-//        s2.initialseedvektor.clear();
-//        s2.initialseedvektor.push_back(R2.regioncenter);
-//        
-//        for(size_t i=0;i<R2.seedtogether.size();i++)
-//        {
-//            Matfinal.at<Vec3b>(R2.seedtogether[i]) = Vec3b(0,0,255);
-//        }
+        Regiongrowing R2;
+        
+        MatOut = R2.RegionGrow(frame, frame_Blur , differencegrow, s2.initialseedvektor);
+        
+        s2.initialseedvektor.clear();
+        s2.initialseedvektor.push_back(R2.regioncenter);
+        
+        for(size_t i=0;i<R2.seedtogether.size();i++)
+        {
+            Matfinal.at<Vec3b>(R2.seedtogether[i]) = Vec3b(255,0,0);
+        }
         
         
 //        // split to channel
