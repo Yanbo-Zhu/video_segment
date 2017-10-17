@@ -232,7 +232,10 @@
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = /usr/local/lib;
 				HEADER_SEARCH_PATHS = /usr/local/include;
-				LIBRARY_SEARCH_PATHS = "/Applications/software/opencv-3.3.0/build/lib";
+				LIBRARY_SEARCH_PATHS = (
+					"/Applications/software/opencv-3.3.0/build/lib",
+					"/Users/zhu/Documents/opencv-3.3.0/build/lib",
+				);
 				OTHER_LDFLAGS = (
 					"-lopencv_calib3d",
 					"-lopencv_core",
@@ -261,7 +264,10 @@
 			buildSettings = {
 				FRAMEWORK_SEARCH_PATHS = /usr/local/lib;
 				HEADER_SEARCH_PATHS = /usr/local/include;
-				LIBRARY_SEARCH_PATHS = "/Applications/software/opencv-3.3.0/build/lib";
+				LIBRARY_SEARCH_PATHS = (
+					"/Applications/software/opencv-3.3.0/build/lib",
+					"/Users/zhu/Documents/opencv-3.3.0/build/lib",
+				);
 				OTHER_LDFLAGS = (
 					"-lopencv_calib3d",
 					"-lopencv_core",

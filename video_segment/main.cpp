@@ -99,8 +99,10 @@ int main( )
     
     //imshow("play video", firstFrame);  //显示当前帧
     
-    cout<<"plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points" <<endl;
-    cin >> mode;
+    //cout<<"plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points" <<endl;
+    //cin >> mode;
+    cout<<"choose seeds by clicking in orignal image." <<endl;
+    mode = 2;
     
     cout<<"how many initial segment do you want: " <<endl;
     cin >> Segmentnum;
@@ -132,6 +134,7 @@ int main( )
     
     cin >> differencegrow;
     
+    // settung color for diffent segments
     RNG rng(time(0));
     Vec3b color[Segmentnum];
     for( int i=0; i<Segmentnum; i++)
@@ -193,7 +196,7 @@ int main( )
             
             Counter(MatOut, frame, color[i]);
             
-            for(size_t j=0;j<R[i].seedtogether.size();j++)
+            for(size_t j=0; j<R[i].seedtogether.size(); j++)
             {
                 Matfinal.at<Vec3b>(R[i].seedtogether[j]) = color[i];
             }

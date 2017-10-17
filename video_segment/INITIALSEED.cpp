@@ -68,7 +68,7 @@ void Initalseed :: on_Mouse(int event, int x, int y, int flags)
     {
         //g_pt = Point(x, y);
         initialseedvektor.push_back(Point(x, y));
-        cout<<"at( row: "<< x <<", column: "<<y<<" )"<<endl;
+        cout<<"at( row: "<< y <<", column: "<< x <<" )"<<endl;
     }
 }
 
