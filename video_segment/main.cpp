@@ -212,7 +212,6 @@ int main( )
         
         imshow("segment counter", FramewithCounter);
         
-        
 //        // dilate
 //        int elementSize  = 2;
 //        Mat element = getStructuringElement(MORPH_RECT, Size(2*elementSize+1,2*elementSize+1));
@@ -288,10 +287,15 @@ void Counter (Mat MatOut , Mat currentFrame, Vec3b color)
     int elementSize  = 2;
     Mat element = getStructuringElement(MORPH_RECT, Size(2*elementSize+1,2*elementSize+1));
     dilate(MatOut, MatOut, element);
+    erode(MatOut, MatOut, element);
+    //morphologyEx(MatOut, MatOut, MORPH_CLOSE, element)
+    
     
     cvtColor(MatOut,MatoutGray,CV_BGR2GRAY);
-    threshold(MatoutGray,MatoutGray,160,255,THRESH_BINARY);
+    imshow("MatoutGray", MatoutGray);
+    waitKey(10);
     
+    threshold(MatoutGray,MatoutGray,20,255,THRESH_BINARY);
     
     vector<Vec4i> hierarchy;
     vector<vector<Point> > contours;
