@@ -51,6 +51,7 @@ void DrawLine( Mat& img, Point pt );
 Mat Counter (Mat MatOut , Mat currentFrame, Vec3b color);
 void drawAxis(Mat&, Point, Point, Scalar, const float);
 double getOrientation(const vector<Point> &, Mat&);
+double pixeldistance(Point p1, Point p2);
 //Mat RegionGrow(Mat MatIn, Mat MatGrowCur, double iGrowJudge, vector<Point> seedset);
 //Mat RegionGrow(Mat MatIn, Mat MatBlur ,double iGrowJudge, vector<Point> seedset);
 //double differenceValue(Mat MatIn, Point oneseed, Point nextseed, int DIR[][2], double rowofDIR, double B, double G, double R );
@@ -169,7 +170,7 @@ int main( )
         }
         
         int indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
-        printf("indexFrame: %d \n", indexFrame);
+        printf("----------------IndexFrame: %d --------------\n", indexFrame);
         
         //imshow("play video", frame);  //显示当前帧
         
@@ -297,6 +298,7 @@ Mat Counter (Mat MatOut , Mat currentFrame, Vec3b color)
     
     for (size_t i = 0; i < contours.size(); ++i)
     {
+        //cout<< "contours.size()" << contours.size() <<endl;
         // Calculate the area of each contour
         double area = contourArea(contours[i]);
         // Ignore contours that are too small or too large
@@ -326,6 +328,8 @@ double getOrientation(const vector<Point> &pts, Mat &img)
     //Store the center of the object
     Point cntr = Point(static_cast<int>(pca_analysis.mean.at<double>(0, 0)),
                        static_cast<int>(pca_analysis.mean.at<double>(0, 1)));
+    
+    cout<< "center of the object: Row " << cntr.y << " Column: " << cntr.x << endl;
     //Store the eigenvalues and eigenvectors
     vector<Point2d> eigen_vecs(2);
     vector<double> eigen_val(2);
@@ -339,9 +343,15 @@ double getOrientation(const vector<Point> &pts, Mat &img)
     circle(img, cntr, 3, Scalar(255, 0, 255), 2);
     Point p1 = cntr + 0.02 * Point(static_cast<int>(eigen_vecs[0].x * eigen_val[0]), static_cast<int>(eigen_vecs[0].y * eigen_val[0]));
     Point p2 = cntr - 0.02 * Point(static_cast<int>(eigen_vecs[1].x * eigen_val[1]), static_cast<int>(eigen_vecs[1].y * eigen_val[1]));
-    drawAxis(img, cntr, p1, Scalar(0, 255, 0), 1);
-    drawAxis(img, cntr, p2, Scalar(255, 255, 0), 5);
+    
+   static vector<double> pixelabstand;
+    drawAxis(img, cntr, p1, Scalar(0, 255, 0), 1); // Green line long axis
+    drawAxis(img, cntr, p2, Scalar(255, 255, 0), 3); // light blue line . short axis
+    
+    double Ratio;
+    
     double angle = atan2(eigen_vecs[0].y, eigen_vecs[0].x); // orientation in radians
+    cout << "angle: " << angle << endl;
     return angle;
 }
 
@@ -350,13 +360,18 @@ void drawAxis(Mat& img, Point p, Point q, Scalar colour, const float scale = 0.2
 {
     double angle;
     double hypotenuse; //直角三角形的斜边
+    double twopointdistance;
     angle = atan2( (double) p.y - q.y, (double) p.x - q.x ); // angle in radians
     hypotenuse = sqrt( (double) (p.y - q.y) * (p.y - q.y) + (p.x - q.x) * (p.x - q.x));
-        double degrees = angle * 180 / CV_PI; // convert radians to degrees (0-180 range)
-        cout << "Degrees: " << abs(degrees - 180) << endl; // angle in 0-360 degrees range
+        //double degrees = angle * 180 / CV_PI; // convert radians to degrees (0-180 range)
+        //cout << "Degrees: " << abs(degrees - 180) << endl; // angle in 0-360 degrees range
     // Here we lengthen the arrow by a factor of scale
     q.x = (int) (p.x - scale * hypotenuse * cos(angle));
     q.y = (int) (p.y - scale * hypotenuse * sin(angle));
+    twopointdistance = pixeldistance(p, q);
+    
+    pixelabstand.push_back(twopointdistance);
+    
     line(img, p, q, colour, 1, CV_AA);
     // create the arrow hooks
     p.x = (int) (q.x + 9 * cos(angle + CV_PI / 4));
@@ -366,6 +381,16 @@ void drawAxis(Mat& img, Point p, Point q, Scalar colour, const float scale = 0.2
     p.y = (int) (q.y + 9 * sin(angle - CV_PI / 4));
     line(img, p, q, colour, 1, CV_AA);
 }
+
+double pixeldistance(Point p1, Point p2)
+{
+    //cout<< p1.x <<" "<< pv[1].x <<" "<< pv[0].y<<" "<<pv[1].y<<endl;
+    double a = p1.x - p2.x;
+    double b = p1.y - p2.y;
+    return (sqrt((a*a)+(b*b))); // a^2 not equal to a*a. a^2 has differnt meaning in Opencv
+    
+}
+
 
 
 //-------------------------------------- VideoWriter function ----------------
