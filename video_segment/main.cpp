@@ -49,7 +49,7 @@ clock_t  clockBegin, clockEnd;
 //void on_MouseHandle(int event, int x, int y, int flags, void* param);
 void DrawLine( Mat& img, Point pt );
 Mat Counter (Mat MatOut , Mat currentFrame, Vec3b color);
-void drawAxis(Mat&, Point, Point, Scalar, const float);
+double drawAxis(Mat&, Point, Point, Scalar, const float);
 double getOrientation(const vector<Point> &, Mat&);
 double pixeldistance(Point p1, Point p2);
 //Mat RegionGrow(Mat MatIn, Mat MatGrowCur, double iGrowJudge, vector<Point> seedset);
@@ -193,7 +193,7 @@ int main( )
         
         for( int i=0; i<Segmentnum; i++)
         {
-            printf("Objekt %d Information: \n", i+1);
+            printf("\n Objekt %d Information: \n", i+1);
             MatOut = R[i].RegionGrow(frame, frame_Blur , differencegrow, s[i].initialseedvektor);
             
              s[i].initialseedvektor.clear();
@@ -337,30 +337,42 @@ double getOrientation(const vector<Point> &pts, Mat &img)
     {
         eigen_vecs[i] = Point2d(pca_analysis.eigenvectors.at<double>(i, 0),
                                 pca_analysis.eigenvectors.at<double>(i, 1));
+        
         eigen_val[i] = pca_analysis.eigenvalues.at<double>(0, i);
     }
     // Draw the principal components
     circle(img, cntr, 3, Scalar(255, 0, 255), 2);
     Point p1 = cntr + 0.02 * Point(static_cast<int>(eigen_vecs[0].x * eigen_val[0]), static_cast<int>(eigen_vecs[0].y * eigen_val[0]));
+    cout<< "p1  Row:" << p1.y << "Column: " << p1.x <<endl;
     Point p2 = cntr - 0.02 * Point(static_cast<int>(eigen_vecs[1].x * eigen_val[1]), static_cast<int>(eigen_vecs[1].y * eigen_val[1]));
     
-   static vector<double> pixelabstand;
-    drawAxis(img, cntr, p1, Scalar(0, 255, 0), 1); // Green line long axis
-    drawAxis(img, cntr, p2, Scalar(255, 255, 0), 3); // light blue line . short axis
+    double pixelabstand[2];
+    pixelabstand[0] = drawAxis(img, cntr, p1, Scalar(0, 255, 0), 1); // Green line long axis
+    pixelabstand[1] = drawAxis(img, cntr, p2, Scalar(255, 255, 0), 3); // light blue line . short axis
     
     double Ratio;
+    //Ratio = pixelabstand[0]/ pixelabstand[1];
+    Ratio = eigen_val[0]/ eigen_val[1];
+    cout << "eigen_val[0]：" << eigen_val[0] <<endl;
+    cout<< "Ratio: " << Ratio <<endl;
     
-    double angle = atan2(eigen_vecs[0].y, eigen_vecs[0].x); // orientation in radians
-    cout << "angle: " << angle << endl;
+    //double angle = atan2(eigen_vecs[0].y, eigen_vecs[0].x); // orientation in radians
+    double angle = atan2( - (eigen_vecs[0].y), eigen_vecs[0].x); // orientation in radians
+    cout<< "Eigenvektor long axis \n  Vektor in Row: " << eigen_vecs[0].y << " Vektor in Column: " << eigen_vecs[0].x <<endl;
+    //cout << "angle: " << angle << endl; // notice the reference line
+    double degrees = angle * 180 / CV_PI; // convert radians to degrees (0-180 range)
+    cout << "Degrees: " << degrees << endl;
+    //cout << "Degrees: " << abs(degrees - 180) << endl; // angle in 0-360 degrees range
+    //cout << "angle: " << angle << endl;
     return angle;
 }
 
 
-void drawAxis(Mat& img, Point p, Point q, Scalar colour, const float scale = 0.2)
+double drawAxis(Mat& img, Point p, Point q, Scalar colour, const float scale = 0.2)
 {
     double angle;
     double hypotenuse; //直角三角形的斜边
-    double twopointdistance;
+    double twopixeldistance;
     angle = atan2( (double) p.y - q.y, (double) p.x - q.x ); // angle in radians
     hypotenuse = sqrt( (double) (p.y - q.y) * (p.y - q.y) + (p.x - q.x) * (p.x - q.x));
         //double degrees = angle * 180 / CV_PI; // convert radians to degrees (0-180 range)
@@ -368,9 +380,7 @@ void drawAxis(Mat& img, Point p, Point q, Scalar colour, const float scale = 0.2
     // Here we lengthen the arrow by a factor of scale
     q.x = (int) (p.x - scale * hypotenuse * cos(angle));
     q.y = (int) (p.y - scale * hypotenuse * sin(angle));
-    twopointdistance = pixeldistance(p, q);
-    
-    pixelabstand.push_back(twopointdistance);
+    twopixeldistance = pixeldistance(p, q);
     
     line(img, p, q, colour, 1, CV_AA);
     // create the arrow hooks
@@ -380,6 +390,8 @@ void drawAxis(Mat& img, Point p, Point q, Scalar colour, const float scale = 0.2
     p.x = (int) (q.x + 9 * cos(angle - CV_PI / 4));
     p.y = (int) (q.y + 9 * sin(angle - CV_PI / 4));
     line(img, p, q, colour, 1, CV_AA);
+    
+    return twopixeldistance;
 }
 
 double pixeldistance(Point p1, Point p2)
