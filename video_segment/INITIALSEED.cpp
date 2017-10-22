@@ -84,8 +84,8 @@ void Initalseed :: drawpoint(Mat firstFrame, vector<Point> initialseedvektor)
         DrawLine( firstFrame, initialseedvektor[i]); //画线
     }
     
-    imshow ("firstFrame with initialseedvektor" , firstFrame);
-    waitKey(10);
+    //imshow ("firstFrame with initialseedvektor" , firstFrame);
+    //waitKey(10);
 }
 
 void Initalseed :: DrawLine( Mat &img, Point pt )

@@ -63,9 +63,9 @@ int main( )
 {
     //【1】读入视频
     VideoCapture vc;
-    //vc.open( "/Users/zhu/Desktop/source/Rotation_descend_20_10m_small.mp4");
-    //vc.open( "/Users/zhu/Desktop/source/ascend_5-50m.mp4");
-    vc.open( "/Users/zhu/Desktop/source/Rotation_50m.mp4");
+    //vc.open( "/Users/yanbo/Desktop/source/Rotation_descend_20_10m_small.mp4");
+    //vc.open( "/Users/yanbo/Desktop/source/ascend_5-50m.mp4");
+    vc.open( "/Users/yanbo/Desktop/source/Rotation_50m.mp4");
     
     
     if (!vc.isOpened())
@@ -81,7 +81,6 @@ int main( )
     int Width = vc.get(CV_CAP_PROP_FRAME_WIDTH);
     int Height = vc.get(CV_CAP_PROP_FRAME_HEIGHT);
     printf("Fourcc: %d / indexFrame: %d / fps: %d / Frame_amount: %d / Width * Height : %d * %d \n", Fourcc ,indexFrame, FPS, FRAME_COUNT, Width, Height );
-    //cout<< Fourcc<< endl;
     
     
 //-----------------------------finding first seed point---------------
@@ -117,17 +116,6 @@ int main( )
        s[i].modechoose(mode, firstFrame);
 
     }
-    
-    
-//    cout<<"plaese select initial seeds for object 1" <<endl;
-//    //Initalseed  s[1];
-//    s[1].modechoose(mode, firstFrame);
-//    //s1.drawpoint(firstFrame, s1.initialseedvektor);
-//    
-//    cout<<"plaese select initial seeds for object 2" <<endl;
-//    Initalseed  s2;
-//    s2.modechoose(mode, firstFrame);
-    
     
 
 //------------------------------- Start to apply Segmentation-method in Video
@@ -199,6 +187,9 @@ int main( )
             
             FramewithCounter = C[i].FindCounter(MatOut, frame, color[i]);
             
+            imshow("segment counter", FramewithCounter);
+            waitKey(100);
+            
             for(size_t j=0; j<R[i].seedtogether.size(); j++)
             {
                 Matfinal.at<Vec3b>(R[i].seedtogether[j]) = color[i];
@@ -210,20 +201,8 @@ int main( )
         
         //addWeighted(frame,1, result, 10 ,0, result);
         
-        imshow("segment counter", FramewithCounter);
+        //imshow("segment counter", FramewithCounter);
         
-        
-//        Regiongrowing R2;
-//        
-//        MatOut = R2.RegionGrow(frame, frame_Blur , differencegrow, s2.initialseedvektor);
-//        
-//        s2.initialseedvektor.clear();
-//        s2.initialseedvektor.push_back(R2.regioncenter);
-//        
-//        for(size_t i=0;i<R2.seedtogether.size();i++)
-//        {
-//            Matfinal.at<Vec3b>(R2.seedtogether[i]) = Vec3b(255,0,0);
-//        }
         
         
 //        // split to channel
@@ -247,7 +226,7 @@ int main( )
 //        merge (channelsMatIn, Matfinal);
 //        
         
-        //imshow("final image", Matfinal);
+        imshow("final image", Matfinal);
         
         
         //  define the stop-button and exit-button
@@ -259,11 +238,10 @@ int main( )
         //if(keycode  == 27)  // 27 = ASCII ESC
             //stop=true;
         
-        //R1.seedtogether.clear();
     }
     
     vc.release();
-    cout << "Video playing over " << endl;
+    cout << "Video playing over" << endl;
     
     waitKey(0);
     //system("pause");
