@@ -87,8 +87,8 @@ int main( )
     //Mat firstFrame;
     Mat firstFrame;
     vc.read(firstFrame);
-    imshow("first frame",firstFrame);
-    waitKey(10);
+    //imshow("first frame",firstFrame);
+    //waitKey(10);
     
     //Mat MatInBackup = firstFrame.clone();
     
@@ -156,7 +156,7 @@ int main( )
         }
         
         int indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
-        printf("----------------IndexFrame: %d --------------\n", indexFrame);
+        printf("----------------------------IndexFrame: %d -----------------------\n", indexFrame);
         
         //imshow("play video", frame);  //显示当前帧
         
@@ -179,30 +179,28 @@ int main( )
         
         for( int i=0; i<Segmentnum; i++)
         {
-            printf("\nObjekt %d Information: \n", i+1);
+            printf("\n***********Objekt %d Information: \n", i+1);
             MatOut = R[i].RegionGrow(frame, frame_Blur , differencegrow, s[i].initialseedvektor);
             
              s[i].initialseedvektor.clear();
              s[i].initialseedvektor.push_back(R[i].regioncenter);
             
-            FramewithCounter = C[i].FindCounter(MatOut, frame, color[i]);
+            FramewithCounter = C[i].FindCounter(MatOut, FramewithCounter, color[i]);
             
-            imshow("segment counter", FramewithCounter);
-            waitKey(100);
+            //imshow("segment counter", FramewithCounter);
+            //waitKey(100);
             
             for(size_t j=0; j<R[i].seedtogether.size(); j++)
             {
                 Matfinal.at<Vec3b>(R[i].seedtogether[j]) = color[i];
             }
-            
-            
         }
         
         
         //addWeighted(frame,1, result, 10 ,0, result);
         
-        //imshow("segment counter", FramewithCounter);
-        
+        imshow("segment counter", FramewithCounter);
+        //waitKey(100);
         
         
 //        // split to channel
@@ -226,7 +224,7 @@ int main( )
 //        merge (channelsMatIn, Matfinal);
 //        
         
-        imshow("final image", Matfinal);
+        //imshow("final image", Matfinal);
         
         
         //  define the stop-button and exit-button
@@ -238,6 +236,8 @@ int main( )
         //if(keycode  == 27)  // 27 = ASCII ESC
             //stop=true;
         
+        //if (keycode > 0 )
+           // waitKey(0);
     }
     
     vc.release();

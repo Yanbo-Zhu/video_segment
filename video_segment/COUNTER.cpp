@@ -8,10 +8,10 @@
 
 #include "COUNTER.hpp"
 
-Mat Counter::FindCounter (Mat MatOut , Mat currentFrame, Vec3b color)
+Mat Counter::FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color)
 {
     Mat MatoutGray;
-    Mat FramemitCounter = currentFrame.clone();
+    //Mat FramemitCounter = currentFrame.clone();
     //Mat result (MatOut.size(),CV_8UC3, Scalar(0,0,0));
     //Mat result = zeros(MatOut.clone();
     
@@ -40,7 +40,7 @@ Mat Counter::FindCounter (Mat MatOut , Mat currentFrame, Vec3b color)
         // Draw each contour only for visualisation purposes
         drawContours(FramemitCounter, contours, static_cast<int>(i), color, 2, 8, hierarchy, 0);
         //drawContours(result, contours, -1, Scalar(0, 0, 255), 1, 8, hierarchy, 0);
-        //getOrientation(contours[i], FramemitCounter);
+        getOrientation(contours[i], FramemitCounter);
     }
     
     return FramemitCounter;
@@ -77,7 +77,7 @@ double Counter::getOrientation(const vector<Point> &pts, Mat &img)
     // Draw the principal components
     circle(img, cntr, 3, Scalar(255, 0, 255), 2);
     Point p1 = cntr + 0.02 * Point(static_cast<int>(eigen_vecs[0].x * eigen_val[0]), static_cast<int>(eigen_vecs[0].y * eigen_val[0]));
-    cout<< "p1  Row:" << p1.y << "   Column: " << p1.x <<endl;
+    //cout<< "p1  Row:" << p1.y << "   Column: " << p1.x <<endl;
     Point p2 = cntr - 0.02 * Point(static_cast<int>(eigen_vecs[1].x * eigen_val[1]), static_cast<int>(eigen_vecs[1].y * eigen_val[1]));
     
     double pixelabstand[2];
@@ -92,7 +92,7 @@ double Counter::getOrientation(const vector<Point> &pts, Mat &img)
     
     //double angle = atan2(eigen_vecs[0].y, eigen_vecs[0].x); // orientation in radians
     double angle = atan2( - (eigen_vecs[0].y), eigen_vecs[0].x); // orientation in radians
-    cout<< "Eigenvektor long axis \n  Vektor in Row-direction: " << eigen_vecs[0].y << " Vektor in Column-direction: " << eigen_vecs[0].x <<endl;
+    cout<< "Eigenvektor long axis::   Vektor in Row-direction: " << eigen_vecs[0].y << " / Vektor in Column-direction: " << eigen_vecs[0].x <<endl;
     //cout << "angle: " << angle << endl; // notice the reference line
     Degree = angle * 180 / CV_PI; // convert radians to degrees (0-180 range)
     cout << "Degrees: " << Degree << endl;

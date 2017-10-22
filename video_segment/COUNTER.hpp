@@ -31,7 +31,7 @@ private:
     double pixeldistance(Point p1, Point p2);
     
 public:
-    Mat FindCounter (Mat MatOut , Mat currentFrame, Vec3b color);
+    Mat FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color);
     double Ratio ;
     double Degree;
 };

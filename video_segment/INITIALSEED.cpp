@@ -146,8 +146,8 @@ void Initalseed :: modechoose(int x, Mat firstFrame)
             {
                 imshow( WINDOW_NAME, MatInBackup);
                 //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle,this);
-                if( waitKey( 10 ) == 27 ) break;//按下ESC键，程序退出
-                
+                //if( waitKey( 10 ) == 27 ) break;//按下ESC键，程序退出
+                if( waitKey( 10 ) == 13 ) break;
             }
             
             destroyWindow(WINDOW_NAME);
