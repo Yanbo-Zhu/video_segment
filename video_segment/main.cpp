@@ -87,6 +87,8 @@ int main( )
     //Mat firstFrame;
     Mat firstFrame;
     vc.read(firstFrame);
+    vc.set(CV_CAP_PROP_POS_FRAMES, 1);
+    
     //imshow("first frame",firstFrame);
     //waitKey(10);
     
@@ -110,10 +112,20 @@ int main( )
     
     Initalseed s[Segmentnum];
     
+    // settung color for diffent segments
+    RNG rng(time(0));
+    Vec3b color[Segmentnum];
+    for( int i=0; i<Segmentnum; i++)
+    {
+        color[i] = Vec3b(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
+    }
+    
+    
     for( int i=0; i<Segmentnum; i++)
     {
        printf("Plaese select initial seeds for object %d \n", i+1);
        s[i].modechoose(mode, firstFrame);
+       s[i].drawpoint(firstFrame, s[i].initialseedvektor, color[i]);
 
     }
     
@@ -124,20 +136,16 @@ int main( )
     
     cin >> differencegrow;
     
-    // settung color for diffent segments
-    RNG rng(time(0));
-    Vec3b color[Segmentnum];
-    for( int i=0; i<Segmentnum; i++)
-    {
-        color[i] = Vec3b(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
-    }
-    
+
     
     bool stop(false);
     
     while(!stop)
     {
         Mat frame;//定义一个Mat变量，用于存储每一帧的图像
+        
+        int indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
+        printf("----------------------------IndexFrame: %d -----------------------\n", indexFrame);
 
         bool bSuccess = vc.read(frame); // read a new frame from video
         
@@ -155,8 +163,7 @@ int main( )
             break;
         }
         
-        int indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
-        printf("----------------------------IndexFrame: %d -----------------------\n", indexFrame);
+       
         
         //imshow("play video", frame);  //显示当前帧
         

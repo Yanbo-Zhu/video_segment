@@ -24,7 +24,7 @@ class Initalseed
 private:
     static void on_MouseHandle(int event, int x, int y, int flags, void* param);
     void on_Mouse(int event, int x, int y, int flags);
-    void DrawLine( Mat &img, Point pt );
+    void DrawLine( Mat &img, Point pt, Vec3b color  );
     double thresholdvalue, differencegrow;
     Point g_pt;
     
@@ -36,7 +36,7 @@ public:
     vector<Point> initialseedvektor;
     
     void modechoose(int x, Mat firstframe);
-    void drawpoint(Mat firstFrame, vector<Point> initialseedvektor);
+    void drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Vec3b color);
     
     //void initalseed();
     //Initalseed(Mat x, Mat y);

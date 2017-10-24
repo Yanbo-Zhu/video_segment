@@ -33,6 +33,7 @@ private:
 public:
     Mat FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color);
     double Ratio ;
+    vector<double> Eigenvalue;
     double Degree;
 };
 

@@ -72,27 +72,33 @@ void Initalseed :: on_Mouse(int event, int x, int y, int flags)
     }
 }
 
-void Initalseed :: drawpoint(Mat firstFrame, vector<Point> initialseedvektor)
+void Initalseed :: drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Vec3b color)
 {
     for(size_t i=0; i<initialseedvektor.size();i++)
     {
         
         Scalar colorvalue = firstFrame.at<Vec3b>(initialseedvektor[i]);
         //Vec3b colorvalue = image.at<Vec3b>(Point(x, y));
-        cout<< initialseedvektor[i] << " pixel value: " << colorvalue <<endl;
+        printf("Seed %d: (Row: %d, Column: %d) / ",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
+        cout << " pixel value: " << colorvalue <<endl;
         //调用函数进行绘制
-        DrawLine( firstFrame, initialseedvektor[i]); //画线
+        DrawLine( firstFrame, initialseedvektor[i], color); //画线
+        imshow("Frame with inital point", firstFrame);
+        waitKey(10);
     }
     
     //imshow ("firstFrame with initialseedvektor" , firstFrame);
     //waitKey(10);
 }
 
-void Initalseed :: DrawLine( Mat &img, Point pt )
+void Initalseed :: DrawLine( Mat &img, Point pt, Vec3b color )
 {
-    RNG rng(time(0));
+    //RNG rng(time(0));
     //line(img, pt, pt, Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255)),6,8,0); //随机颜色
-    line(img, pt, pt, Scalar(0,0,255),6,8,0); //随机颜色
+    int thickness = 6;
+    int lineType = 8;
+    line(img, pt, pt, color,thickness,lineType,0);
+    //line(img, pt, pt, Scalar(0,0,255),thickness,lineType,0); //随机颜色
     
 }
 
@@ -155,7 +161,8 @@ void Initalseed :: modechoose(int x, Mat firstFrame)
             //initialize the seeds
             for(size_t i=0;i<initialseedvektor.size();i++)
             {
-                cout << initialseedvektor[i] <<endl;
+                printf("Seed %d: (Row: %d, Column: %d)\n ",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
+                //cout << initialseedvektor[i] <<endl;
                 //MatGrowCur.at<Vec3b>(initialseedvektor[i]) = firstFrame.at<Vec3b>(initialseedvektor[i]);
             }
             
@@ -173,7 +180,7 @@ void Initalseed :: modechoose(int x, Mat firstFrame)
             
             for(size_t i=0; i<initialseedvektor.size();i++)
             {
-                cout << initialseedvektor[i]  << endl;
+                printf("Seed %d: (Row: %d, Column: %d)\n ",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
                 //MatGrowCur.at<Vec3b>(initialseedvektor[i]) = firstFrame.at<Vec3b>(initialseedvektor[i]);
             }
             
