@@ -15,7 +15,6 @@
 //}
 
 
-
 void Initalseed :: on_MouseHandle(int event, int x, int y, int flags, void* param)
 {
     
@@ -83,12 +82,11 @@ void Initalseed :: drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Ve
         cout << " pixel value: " << colorvalue <<endl;
         //调用函数进行绘制
         DrawLine( firstFrame, initialseedvektor[i], color); //画线
-        imshow("Frame with inital point", firstFrame);
-        waitKey(10);
+
     }
     
-    //imshow ("firstFrame with initialseedvektor" , firstFrame);
-    //waitKey(10);
+    imshow ("firstFrame with initialseedvektor" , firstFrame);
+    waitKey(10);
 }
 
 void Initalseed :: DrawLine( Mat &img, Point pt, Vec3b color )
@@ -153,7 +151,7 @@ void Initalseed :: modechoose(int x, Mat firstFrame)
                 imshow( WINDOW_NAME, MatInBackup);
                 //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle,this);
                 //if( waitKey( 10 ) == 27 ) break;//按下ESC键，程序退出
-                if( waitKey( 10 ) == 13 ) break;
+                if( waitKey( 10 ) == 13 ) break; // 按下 enter 键
             }
             
             destroyWindow(WINDOW_NAME);
@@ -161,9 +159,9 @@ void Initalseed :: modechoose(int x, Mat firstFrame)
             //initialize the seeds
             for(size_t i=0;i<initialseedvektor.size();i++)
             {
-                printf("Seed %d: (Row: %d, Column: %d)\n ",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
+                printf("Seed %d: (Row: %d, Column: %d)\n",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
                 //cout << initialseedvektor[i] <<endl;
-                //MatGrowCur.at<Vec3b>(initialseedvektor[i]) = firstFrame.at<Vec3b>(initialseedvektor[i]);
+               
             }
             
             break;
@@ -180,7 +178,7 @@ void Initalseed :: modechoose(int x, Mat firstFrame)
             
             for(size_t i=0; i<initialseedvektor.size();i++)
             {
-                printf("Seed %d: (Row: %d, Column: %d)\n ",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
+                printf("Seed %d: (Row: %d, Column: %d)\n",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
                 //MatGrowCur.at<Vec3b>(initialseedvektor[i]) = firstFrame.at<Vec3b>(initialseedvektor[i]);
             }
             

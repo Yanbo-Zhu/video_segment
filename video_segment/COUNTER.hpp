@@ -12,6 +12,7 @@
 #include <iostream>
 #include "stdio.h"
 #include <time.h> //time_t time()  clock_t clock()
+#include  <vector>
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -29,12 +30,17 @@ private:
     double drawAxis(Mat&, Point, Point, Scalar, const float);
     double getOrientation(const vector<Point> &, Mat&);
     double pixeldistance(Point p1, Point p2);
+
     
 public:
     Mat FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color);
-    double Ratio ;
-    vector<double> Eigenvalue;
+    double Ratio;
+    double EWlong;
+    double EWshort;
+    
+    //vector <vector<double> >Eigenvaluevector(2);
     double Degree;
+
 };
 
 #endif /* COUNTER_hpp */

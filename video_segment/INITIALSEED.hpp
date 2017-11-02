@@ -14,6 +14,7 @@
 #include "opencv2/videoio.hpp"
 #include <opencv2/opencv.hpp>
 #include <stdio.h>
+#include "vector"
 
 using namespace cv;
 using namespace std;
@@ -25,7 +26,7 @@ private:
     static void on_MouseHandle(int event, int x, int y, int flags, void* param);
     void on_Mouse(int event, int x, int y, int flags);
     void DrawLine( Mat &img, Point pt, Vec3b color  );
-    double thresholdvalue, differencegrow;
+    double thresholdvalue;
     Point g_pt;
     
 public:
@@ -34,12 +35,15 @@ public:
     //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
     
     vector<Point> initialseedvektor;
+    double differencegrow;
     
     void modechoose(int x, Mat firstframe);
     void drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Vec3b color);
     
     //void initalseed();
     //Initalseed(Mat x, Mat y);
+    vector < vector<double> >data;
+    //vector<double> C;
 };
 
 

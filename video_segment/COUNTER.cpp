@@ -8,6 +8,8 @@
 
 #include "COUNTER.hpp"
 
+vector <double> Ratiovecktor;
+
 Mat Counter::FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color)
 {
     Mat MatoutGray;
@@ -43,6 +45,7 @@ Mat Counter::FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color)
         getOrientation(contours[i], FramemitCounter);
     }
     
+    
     return FramemitCounter;
 }
 
@@ -74,6 +77,12 @@ double Counter::getOrientation(const vector<Point> &pts, Mat &img)
         
         eigen_val[i] = pca_analysis.eigenvalues.at<double>(0, i);
     }
+    
+    cout << "eigen_val[0]：" << eigen_val[0] <<endl;
+    EWlong = eigen_val[0];
+    cout << "eigen_val[1]：" << eigen_val[1] <<endl;
+    EWshort = eigen_val[1];
+    
     // Draw the principal components
     circle(img, cntr, 3, Scalar(255, 0, 255), 2);
     Point p1 = cntr + 0.02 * Point(static_cast<int>(eigen_vecs[0].x * eigen_val[0]), static_cast<int>(eigen_vecs[0].y * eigen_val[0]));
@@ -81,18 +90,16 @@ double Counter::getOrientation(const vector<Point> &pts, Mat &img)
     Point p2 = cntr - 0.02 * Point(static_cast<int>(eigen_vecs[1].x * eigen_val[1]), static_cast<int>(eigen_vecs[1].y * eigen_val[1]));
     
     double pixelabstand[2];
-    pixelabstand[0] = drawAxis(img, cntr, p1, Scalar(0, 255, 0), 1); // Green line long axis
-    pixelabstand[1] = drawAxis(img, cntr, p2, Scalar(255, 255, 0), 3); // light blue line . short axis
+    pixelabstand[0] = drawAxis(img, cntr, p1, Scalar(0, 255, 0), 1); // Green line. long axis
+    pixelabstand[1] = drawAxis(img, cntr, p2, Scalar(255, 255, 0), 3); // lightly blue line . short axis
     
-    //double Ratio;
     //Ratio = pixelabstand[0]/ pixelabstand[1];
     Ratio = eigen_val[0]/ eigen_val[1];
-    cout << "eigen_val[0]：" << eigen_val[0] <<endl;
     cout<< "Ratio: " << Ratio <<endl;
     
     //double angle = atan2(eigen_vecs[0].y, eigen_vecs[0].x); // orientation in radians
     double angle = atan2( - (eigen_vecs[0].y), eigen_vecs[0].x); // orientation in radians
-    cout<< "Eigenvektor long axis::   Vektor in Row-direction: " << eigen_vecs[0].y << " / Vektor in Column-direction: " << eigen_vecs[0].x <<endl;
+    //cout<< "Eigenvektor long axis::   Vektor in Row-direction: " << eigen_vecs[0].y << " / Vektor in Column-direction: " << eigen_vecs[0].x <<endl;
     //cout << "angle: " << angle << endl; // notice the reference line
     Degree = angle * 180 / CV_PI; // convert radians to degrees (0-180 range)
     cout << "Degrees: " << Degree << endl;
@@ -114,6 +121,7 @@ double Counter::drawAxis(Mat& img, Point p, Point q, Scalar colour, const float 
     // Here we lengthen the arrow by a factor of scale
     q.x = (int) (p.x - scale * hypotenuse * cos(angle));
     q.y = (int) (p.y - scale * hypotenuse * sin(angle));
+    
     twopixeldistance = pixeldistance(p, q);
     
     line(img, p, q, colour, 1, CV_AA);
