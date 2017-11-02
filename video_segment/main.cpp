@@ -48,7 +48,7 @@ clock_t  clockBegin, clockEnd;
 
 //----- global function
 //void on_MouseHandle(int event, int x, int y, int flags, void* param);
-void DrawLine( Mat& img, Point pt );
+//void DrawLine( Mat& img, Point pt );
 
 //Mat RegionGrow(Mat MatIn, Mat MatGrowCur, double iGrowJudge, vector<Point> seedset);
 //Mat RegionGrow(Mat MatIn, Mat MatBlur ,double iGrowJudge, vector<Point> seedset);
@@ -67,9 +67,9 @@ int main( )
     VideoCapture vc;
    
     
-    //vc.open( "/Users/yanbo/Desktop/source/Rotation_50m.mp4");
+    vc.open( "/Users/yanbo/Desktop/source/Rotation_50m.mp4");
     //vc.open( "/Users/yanbo/Desktop/source/80_10_descend_rotation.mp4");
-    vc.open( "/Users/yanbo/Desktop/source/5-70.mp4");
+    //vc.open( "/Users/yanbo/Desktop/source/5-70.mp4");
     
     
     if (!vc.isOpened())
@@ -89,7 +89,7 @@ int main( )
 //-------------------------------------- VideoWriter function ----------------
     
     VideoWriter vw; //(filename, fourcc, fps, frameSize[, isColor])
-    vw.open( "./output1.avi", // 输出视频文件名
+    vw.open( "/Users/yanbo/Desktop/output1.avi", // 输出视频文件名
             CV_FOURCC('8', 'B', 'P', 'S'), //CV_FOURCC('S', 'V', 'Q', '3'), //(int)vc.get( CV_CAP_PROP_FOURCC ), // 也可设为CV_FOURCC_PROMPT，在运行时选取 //fourcc – 4-character code of codec used to compress the frames.
             (double)vc.get( CV_CAP_PROP_FPS ), // 视频帧率
             Size( (int)vc.get( CV_CAP_PROP_FRAME_WIDTH ),
@@ -174,6 +174,7 @@ int main( )
         //若视频播放完成，退出循环
         if (frame.empty())
         {
+            cout << "video play over  " <<endl;
             //waitKey(0);
             break;
         }
