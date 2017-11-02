@@ -67,8 +67,8 @@ int main( )
     VideoCapture vc;
    
     
-    vc.open( "/Users/yanbo/Desktop/source/Rotation_50m.mp4");
-    //vc.open( "/Users/yanbo/Desktop/source/80_10_descend_rotation.mp4");
+    //vc.open( "/Users/yanbo/Desktop/source/Rotation_50m.mp4");
+    vc.open( "/Users/yanbo/Desktop/source/80_10_descend_rotation.mp4");
     //vc.open( "/Users/yanbo/Desktop/source/5-70.mp4");
     
     
@@ -102,8 +102,6 @@ int main( )
         return 1;
     }
     
-    
-
     
 //-----------------------------finding first seed point---------------
     //Mat firstFrame;
@@ -326,9 +324,42 @@ int main( )
     vw.release();
     cout << "Video playing over" << endl;
     
-    waitKey(0);
     //system("pause");
+    waitKey(0);
+    
+/****************** read the written video */
+    
+    VideoCapture vc2;
+    vc2.open( "/Users/yanbo/Desktop/output1.avi");
 
+    if (!vc2.isOpened())
+    {
+        cout << "Failed to open a video device or video file!\n" << endl;
+        return 1;
+    }
+
+    //【2】循环显示每一帧
+    while(1)
+    {
+        Mat frame;//定义一个Mat变量，用于存储每一帧的图像
+
+
+        bool bSuccess = vc2.read(frame); // read a new frame from video
+
+        if (!bSuccess) //if not success, break loop
+        {
+            cout << "ERROR: Cannot read a frame from output.avi" << endl;
+            break;
+        }
+
+        imshow("play the written video", frame);  //显示当前帧
+        waitKey(1);  //延时1ms
+    }
+
+    vc2.release();
+    cout << "The written video plays over" << endl;
+    
+    
     return 0;
 }
 
