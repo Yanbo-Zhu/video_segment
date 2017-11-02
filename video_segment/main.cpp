@@ -67,8 +67,9 @@ int main( )
     VideoCapture vc;
    
     
-    vc.open( "/Users/yanbo/Desktop/source/Rotation_50m.mp4");
+    //vc.open( "/Users/yanbo/Desktop/source/Rotation_50m.mp4");
     //vc.open( "/Users/yanbo/Desktop/source/80_10_descend_rotation.mp4");
+    vc.open( "/Users/yanbo/Desktop/source/5-70.mp4");
     
     
     if (!vc.isOpened())
@@ -85,6 +86,24 @@ int main( )
     int Height = vc.get(CV_CAP_PROP_FRAME_HEIGHT);
     printf("Fourcc: %d / indexFrame: %d / fps: %d / Frame_amount: %d / Width * Height : %d * %d \n", Fourcc ,indexFrame, FPS, FRAME_COUNT, Width, Height );
     
+//-------------------------------------- VideoWriter function ----------------
+    
+    VideoWriter vw; //(filename, fourcc, fps, frameSize[, isColor])
+    vw.open( "./output1.avi", // 输出视频文件名
+            CV_FOURCC('8', 'B', 'P', 'S'), //CV_FOURCC('S', 'V', 'Q', '3'), //(int)vc.get( CV_CAP_PROP_FOURCC ), // 也可设为CV_FOURCC_PROMPT，在运行时选取 //fourcc – 4-character code of codec used to compress the frames.
+            (double)vc.get( CV_CAP_PROP_FPS ), // 视频帧率
+            Size( (int)vc.get( CV_CAP_PROP_FRAME_WIDTH ),
+                 (int)vc.get( CV_CAP_PROP_FRAME_HEIGHT ) ), // 视频大小
+            true ); // 是否输出彩色视频
+    
+    if (!vw.isOpened())
+    {
+        cout << "Failed to write the video! \n" << endl;
+        return 1;
+    }
+    
+    
+
     
 //-----------------------------finding first seed point---------------
     //Mat firstFrame;
@@ -150,7 +169,7 @@ int main( )
         printf("\n----------------------------IndexFrame: %d -----------------------", indexFrame);
 
         bool bSuccess = vc.read(frame); // read a new frame from video
-        imshow("frame", frame);
+        //imshow("frame", frame);
         
         //若视频播放完成，退出循环
         if (frame.empty())
@@ -258,6 +277,7 @@ int main( )
         imshow ("segment", Matfinal);
         imshow("segment counter", FramewithCounter);
         
+        vw << FramewithCounter;
         //addWeighted(frame,1, result, 10 ,0, result);
         
         
@@ -290,7 +310,7 @@ int main( )
         
         //  define the stop-button and exit-button
         //waitKey(10);  //延时10ms
-        int keycode = waitKey(100);
+        int keycode = waitKey(1);
         if(keycode  == ' ')   //32是空格键的ASCII值
             waitKey(0);
         
@@ -302,6 +322,7 @@ int main( )
     }
     
     vc.release();
+    vw.release();
     cout << "Video playing over" << endl;
     
     waitKey(0);

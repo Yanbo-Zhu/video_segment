@@ -15,6 +15,7 @@
 #include <opencv2/opencv.hpp>
 #include <stdio.h>
 #include "vector"
+#include <iostream>
 
 using namespace cv;
 using namespace std;
