@@ -159,8 +159,6 @@ int main( )
     
     //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
     
-    //imshow("play video", firstFrame);  //显示当前帧
-    
     //cout<<"plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points" <<endl;
     //cin >> mode;
     cout<<"Choose seeds by clicking in orignal image." <<endl;
@@ -193,12 +191,11 @@ int main( )
     
 //------------------------------- Start to apply Segmentation-method in Video
     
-
-    
     bool stop(false);
     bool threshold_notchange(true);
     Mat frame_backup;
     int indexFrame = 0;
+    bool bSuccess;
     
     while(!stop)
     {
@@ -208,31 +205,30 @@ int main( )
         if (threshold_notchange){
             indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
             printf("\n----------------------------IndexFrame: %d ----------------------- \n ", indexFrame);
-            
-            bool bSuccess = vc.read(frame); // read a new frame from video
-            //imshow("frame", frame);
+            bSuccess = vc.read(frame); // read a new frame from video
             frame_backup = frame.clone();
         }
     
         else{
             printf("\n----------------------------IndexFrame: %d ----------------------- \n ", indexFrame);
             frame = frame_backup.clone();
+            bSuccess = true;
         }
         
         
         //若视频播放完成，退出循环
         if (frame.empty())
         {
-            cout << "video play over/ in loop " <<endl;
+            cout << "video play over/ in loop" <<endl;
             //waitKey(0);
             break;
         }
 
-//        if (!bSuccess) //if not success, break loop
-//        {
-//            cout << "ERROR: Cannot read a frame from video" << endl;
-//            break;
-//        }
+        if (!bSuccess) //if not success, break loop
+        {
+            cout << "ERROR: Cannot read a frame from video" << endl;
+            break;
+        }
         
         Mat frame_Blur;
         
@@ -240,7 +236,6 @@ int main( )
         
         Regiongrowing R[Segmentnum];
         Counter C[Segmentnum];
-        //Regiongrowing R1;
         
         Matfinal = frame.clone();
         Mat FramewithCounter = frame.clone();
@@ -338,23 +333,42 @@ int main( )
         imshow ("segment", Matfinal);
         imshow("segment counter", FramewithCounter);
         
+//----------------- add the text(frame index number) to written video frame
+//        string text = "Frame" ;
+//        string time_str;
+//        char ctime[10];
+//        sprintf(ctime, "%d",indexFrame);
+//        time_str=ctime;
+//        text.append(time_str);
+//        Point pt(50,100);
+//        Scalar color = CV_RGB(0,255,255);
+//        putText(FramewithCounter,text,pt, CV_FONT_HERSHEY_DUPLEX,1.0f,color);
         
-        string text = "Frame" ;
+
+        std::string text = "Frame";
         string time_str;
         char ctime[10];
-        sprintf(ctime, "%d",indexFrame);
+        sprintf(ctime, " %d",indexFrame);
         time_str=ctime;
         text.append(time_str);
-        Point pt(50,100);
-        Scalar color = CV_RGB(0,255,255);
-        putText(FramewithCounter,text,pt, CV_FONT_HERSHEY_DUPLEX,1.0f,color);
         
+        int font_face = cv::FONT_HERSHEY_COMPLEX;
+        double font_scale = 1;
+        int thickness = 2;
+        int baseline;
+        //获取文本框的长宽
+        Size text_size = getTextSize(text, font_face, font_scale, thickness, &baseline);
+        
+        //将文本框居中绘制
+        Point origin;  //文字在图像中的左下角 坐标 Bottom-left corner of the text string
+        origin.x = FramewithCounter.cols / 2 - text_size.width / 2;
+        origin.y = FramewithCounter.rows / 2 + text_size.height / 2;
+        Scalar color = CV_RGB(255,0,0);
+        putText(FramewithCounter, text, origin, font_face, font_scale, color, thickness, 8, 0);
+        //    putText(image,text,origin,CV_FONT_HERSHEY_DUPLEX,1.0f,Scalar(0, 255, 255));
+        
+        //vw.write(frame);
         vw << FramewithCounter;
-        //addWeighted(frame,1, result, 10 ,0, result);
-        
-        
-        //waitKey(100);
-        
         
 //        // split to channel
 //        Mat RedChannel;
@@ -377,12 +391,14 @@ int main( )
 //        merge (channelsMatIn, Matfinal);
 //        
         
+        
+        
         //imshow("final image", Matfinal);
         
         
-        //  define the stop-button and exit-button
-        //waitKey(10);  //延时10ms
-        int keycode = waitKey(0);
+//-------------define the stop-button and exit-button
+        
+        int keycode = waitKey(10); // equal to  waitKey(10);  //延时10ms
         if(keycode  == ' '){   //32是空格键的ASCII值
             waitKey(0); }
         
@@ -395,142 +411,60 @@ int main( )
     
 
     cout << "Video playing over" << endl;
-    
+    cout << endl;
     vc.release();
     vw.release();
+    destroyAllWindows();
     
     //system("pause");
     //waitKey(0);
     
-///****************** play the written video */
-//
-//    VideoCapture vc2;
-//    vc2.open( "/Users/yanbo/Desktop/output1.mov");
-//
-//    if (!vc2.isOpened())
-//    {
-//        cout << "Failed to open a video device or video file!\n" << endl;
-//        return 1;
-//    }
-//
-//    //【2】循环显示每一帧
-//    while(1)
-//    {
-//        Mat frame;//定义一个Mat变量，用于存储每一帧的图像
-//
-//
-//        bool bSuccess = vc2.read(frame); // read a new frame from video
-//
-//        if (!bSuccess) //if not success, break loop
-//        {
-//            cout << "ERROR: Cannot read a frame from output.avi" << endl;
-//            break;
-//        }
-//
-//        imshow("play the written video", frame);  //显示当前帧
-//        waitKey(1);  //延时1ms
-//    }
-//
-//    vc2.release();
-//    cout << "The written video plays over" << endl;
+/****************** play the written video */
+
+    VideoCapture vc2;
+    vc2.open( "/Users/yanbo/Desktop/source/output/output1.mov");
+
+    if (!vc2.isOpened())
+    {
+        cout << "Failed to open a video device or video file!\n" << endl;
+        return 1;
+    }
+
+    //【2】循环显示每一帧
+    while(1)
+    {
+        Mat frame;//定义一个Mat变量，用于存储每一帧的图像
+        
+        bool bSuccess = vc2.read(frame); // read a new frame from video
+        int indexFrame = vc2.get(CV_CAP_PROP_POS_FRAMES);
+        //cout<< "indexFrame" << indexFrame <<endl;
+        
+        if (frame.empty())
+        {
+            cout << "video play over/ in loop " <<endl;
+            //waitKey(0);
+            break;
+        }
+        
+        if (!bSuccess) //if not success, break loop
+        {
+            
+            cout << "ERROR: Cannot read a frame "<< indexFrame <<" from output.avi" << endl;
+            break;
+        }
+
+        imshow("The written video", frame);  //显示当前帧
+        waitKey(1);  //延时1ms
+    }
+
+    vc2.release();
+    cout << "The written video plays over" << endl;
     
     
     return 0;
 }
 
-//-------------------------------------- VideoWriter function ----------------
-//waitKey(0);
 
-//    VideoWriter vw; //(filename, fourcc, fps, frameSize[, isColor])
-//    vw.open( "./output1.avi", // 输出视频文件名
-//            CV_FOURCC('8', 'B', 'P', 'S'), //CV_FOURCC('S', 'V', 'Q', '3'), //(int)vc.get( CV_CAP_PROP_FOURCC ), // 也可设为CV_FOURCC_PROMPT，在运行时选取 //fourcc – 4-character code of codec used to compress the frames.
-//            (double)vc.get( CV_CAP_PROP_FPS ), // 视频帧率
-//            Size( (int)vc.get( CV_CAP_PROP_FRAME_WIDTH ),
-//                 (int)vc.get( CV_CAP_PROP_FRAME_HEIGHT ) ), // 视频大小
-//            true ); // 是否输出彩色视频
-//    
-//    //vw << frame;
-//    //vw.release(); // vokler 加入的 释放空间 消除buffer 影响
-//    
-//    /** 如果成功打开输出视频文件 */
-//    
-//    if ( vw.isOpened() )
-//    {
-//        while ( 1 ) //reclyce every frame
-//        {
-//            /** 读取当前视频帧 */
-//            Mat frame;
-//            
-//            
-//            bool bSuccess = vc.read(frame); // read a new frame from video
-//            
-//            if (!bSuccess) //if not success, break loop
-//            {
-//                cout << "ERROR+ZHU: Cannot read a frame from video file" << endl;
-//                break;
-//            }
-//            
-//            //vc >> frame;
-//            
-//            /** 若视频读取完毕，跳出循环 */
-//            //                    if ( frame.empty() )
-//            //                    {
-//            //                        break;
-//            //                    }
-//            
-//            /** 将视频写入文件 */
-//            vw << frame;
-//            //vw.write(frame);
-//            
-//            imshow("MyVideo", frame);
-//            waitKey(1);
-//            
-//        }
-//    }
-//    
-//    
-//    /** 手动释放视频捕获资源 */
-//    vc.release();
-//    vw.release();
-//    
-//    
-//    destroyAllWindows();
-//    
-//    
-//    /** read the written video */
-//    //【1】读入视频
-//    VideoCapture vc2;
-//    vc2.open( "/Users/zhu/Desktop/opencv_project/video_process_basic/build/Debug/output1.avi");
-//    
-//    if (!vc2.isOpened())
-//    {
-//        cout << "Failed to open a video device or video file!\n" << endl;
-//        return 1;
-//    }
-//    
-//    //【2】循环显示每一帧
-//    while(1)
-//    {
-//        Mat frame;//定义一个Mat变量，用于存储每一帧的图像
-//        
-//        
-//        bool bSuccess = vc2.read(frame); // read a new frame from video
-//        
-//        if (!bSuccess) //if not success, break loop
-//        {
-//            cout << "ERROR+ZHU: Cannot read a frame from output.avi" << endl;
-//            break;
-//        }
-//        
-//        imshow("play video", frame);  //显示当前帧
-//        waitKey(1);  //延时1ms
-//    }
-//    
-//    
-//    vc2.release();
-//    cout << "Finished writing" << endl;
-    
-    //return 0;
 
 
 
