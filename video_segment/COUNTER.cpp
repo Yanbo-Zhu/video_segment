@@ -78,9 +78,9 @@ double Counter::getOrientation(const vector<Point> &pts, Mat &img)
         eigen_val[i] = pca_analysis.eigenvalues.at<double>(0, i);
     }
     
-    cout << "eigen_val[0]：" << eigen_val[0] <<endl;
+    //cout << "eigen_val[0]：" << eigen_val[0] <<endl;
     EWlong = eigen_val[0];
-    cout << "eigen_val[1]：" << eigen_val[1] <<endl;
+    //cout << "eigen_val[1]：" << eigen_val[1] <<endl;
     EWshort = eigen_val[1];
     
     // Draw the principal components
@@ -95,14 +95,14 @@ double Counter::getOrientation(const vector<Point> &pts, Mat &img)
     
     //Ratio = pixelabstand[0]/ pixelabstand[1];
     Ratio = eigen_val[0]/ eigen_val[1];
-    cout<< "Ratio: " << Ratio <<endl;
+    //cout<< "Ratio: " << Ratio <<endl;
     
     //double angle = atan2(eigen_vecs[0].y, eigen_vecs[0].x); // orientation in radians
     double angle = atan2( - (eigen_vecs[0].y), eigen_vecs[0].x); // orientation in radians
     //cout<< "Eigenvektor long axis::   Vektor in Row-direction: " << eigen_vecs[0].y << " / Vektor in Column-direction: " << eigen_vecs[0].x <<endl;
     //cout << "angle: " << angle << endl; // notice the reference line
     Degree = angle * 180 / CV_PI; // convert radians to degrees (0-180 range)
-    cout << "Degrees: " << Degree << endl;
+    //cout << "Degrees: " << Degree << endl;
     //cout << "Degrees: " << abs(degrees - 180) << endl; // angle in 0-360 degrees range
     //cout << "angle: " << angle << endl;
     return angle;
