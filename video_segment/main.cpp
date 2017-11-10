@@ -272,8 +272,7 @@ int main( )
                 s[i].data[2].push_back(C[i].Ratio);
                 s[i].initialseedvektor.clear();
                 s[i].initialseedvektor.push_back(R[i].regioncenter);
-                 break;
-                
+                break;
             }
            
             //cout<<"s[i].data[0].back(): "<<s[i].data[0].back() <<"  C[i].EWlong: "<<  C[i].EWlong <<endl;
@@ -291,12 +290,12 @@ int main( )
                 printf("!!!!!!!!!!!Update the thereshlod value for R-growing becasue scale varies largely \n");
                 
                 if ( ScaleDifference > 0.2)
-                    s[i].differencegrow = s[i].differencegrow - 0.05;
+                    s[i].differencegrow = s[i].differencegrow - 0.04;
                 
                 else
-                    s[i].differencegrow = s[i].differencegrow + 0.05;
+                    s[i].differencegrow = s[i].differencegrow + 0.04;
                 
-                printf("new differencegrow: %f \n", s[i].differencegrow);
+                printf("New differencegrow: %f \n", s[i].differencegrow);
                 
                 //vc.set(CV_CAP_PROP_POS_FRAMES, indexFrame);
                 threshold_notchange = false;
@@ -321,15 +320,16 @@ int main( )
                 threshold_notchange = true;
             }
             
-            vector<double>::iterator find;
-            find = find(s[i].RGThreshold.begin(), s[i].RGThreshold.end(), newdifferencegrow);
-            if(find == s[i].RGThreshold.end()){
-                cout << "New RG_Threshlod ist not available in RG_Threshlod vector" << endl;
-                s[i].RGThreshold.push_back(newdifferencegrow);
-            }
-            else {
-                cout << "New RG_Threshlod ist already available in RG_Threshlod vector" << endl;
-            }
+//            vector<double>::iterator find;
+//            find = find(s[i].RGThreshold.begin(), s[i].RGThreshold.end(), newdifferencegrow);
+//            if(find == s[i].RGThreshold.end()){
+//                cout << "New RG_Threshlod ist not available in RG_Threshlod vector" << endl;
+//                s[i].RGThreshold.push_back(newdifferencegrow);
+//                s[i].differencegrow = newdifferencegrow;
+//            }
+//            else {
+//                cout << "New RG_Threshlod ist already available in RG_Threshlod vector" << endl;
+//            }
             
 //            vector<double>::iterator iter;
 //            vector<double>::iterator iter2;
