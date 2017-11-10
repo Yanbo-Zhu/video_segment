@@ -37,6 +37,7 @@ public:
     
     vector<Point> initialseedvektor;
     double differencegrow;
+    vector<double> RGThreshold;
     
     void modechoose(int x, Mat firstframe);
     void drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Vec3b color);

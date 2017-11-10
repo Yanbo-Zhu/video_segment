@@ -207,14 +207,21 @@ int main( )
         
         Mat frame;//定义一个Mat变量，用于存储每一帧的图像
         
-        if (threshold_notchange){
+        if (threshold_notchange){    // if threshold for this frame did not change, read the next frame
             indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
             printf("\n----------------------------IndexFrame: %d ----------------------- \n ", indexFrame);
             bSuccess = vc.read(frame); // read a new frame from video
             frame_backup = frame.clone();
+            
+            for( int i=0; i<Segmentnum; i++)
+            {
+                s[i].RGThreshold.clear();
+                s[i].RGThreshold.push_back(s[i].differencegrow);
+            }
+            
         }
     
-        else{
+        else{   // if threshold for this frame  changed , ald read the same frame
             printf("\n----------------------------IndexFrame: %d ----------------------- \n ", indexFrame);
             frame = frame_backup.clone();
             bSuccess = true;
@@ -265,59 +272,64 @@ int main( )
                 s[i].data[2].push_back(C[i].Ratio);
                 s[i].initialseedvektor.clear();
                 s[i].initialseedvektor.push_back(R[i].regioncenter);
-                 cout<< "in loop" << endl;
                  break;
                 
             }
-            
            
-                //cout<<"s[i].data[0].back(): "<<s[i].data[0].back() <<"  C[i].EWlong: "<<  C[i].EWlong <<endl;
-                double scale = ( (C[i].EWlong/s[i].data[0].back()) + (C[i].EWshort/s[i].data[1].back()) )/2 ;
-                //cout<< "EWlong[indexFrame-1] " << EWlong[indexFrame-1] << " EWlong[indexFrame-2] "<< EWlong[indexFrame-2] << endl;
-                //printf("Scale (index %d to %d): %lf \n", indexFrame, indexFrame-1, scale );
-                cout<< "(cout) Scale (index " << indexFrame << " to " << indexFrame-1<< "): " << scale <<endl;
-                
-                    // update the thereshlod value for region growing becasue scale varies largely
-                    double ScaleDifference = scale -  s[i].data[3].back();
-                    printf("ScaleDifference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, ScaleDifference );
-                    
-                    
-                    
-                    if (abs(ScaleDifference) > 0.05 && abs(ScaleDifference) < 0.2) {
-                        printf("!!!!!!!!!!!Update the thereshlod value for R-growing becasue scale varies largely \n");
-                        
-                        if ( ScaleDifference > 0.05)
-                            s[i].differencegrow = s[i].differencegrow - 0.02;
-                        
-                        else
-                            s[i].differencegrow = s[i].differencegrow + 0.02;
-                        
-                        printf("new differencegrow: %f \n", s[i].differencegrow);
-                        
-                        //vc.set(CV_CAP_PROP_POS_FRAMES, indexFrame);
-                        threshold_notchange = false;
-                    }
-                
-                    else if (abs(ScaleDifference) > 0.2){
-                        printf("!!!!!!!!!!!Update  thereshlod value for R-growing becasue Object could be found \n");
-                        s[i].differencegrow = s[i].differencegrow + 0.02;
-                        printf("new differencegrow: %f \n", s[i].differencegrow);
-                        threshold_notchange = false;
-                        //waitKey(100);
-                    }
-                
-                
-                   
-                    else{
-                        s[i].data[3].push_back(scale);
-                        s[i].data[0].push_back(C[i].EWlong);
-                        s[i].data[1].push_back(C[i].EWshort);
-                        s[i].data[2].push_back(C[i].Ratio);
-                        s[i].initialseedvektor.clear();
-                        s[i].initialseedvektor.push_back(R[i].regioncenter);
-                        threshold_notchange = true;
-                    }
+            //cout<<"s[i].data[0].back(): "<<s[i].data[0].back() <<"  C[i].EWlong: "<<  C[i].EWlong <<endl;
+            double scale = ( (C[i].EWlong/s[i].data[0].back()) + (C[i].EWshort/s[i].data[1].back()) )/2 ;
+            //cout<< "EWlong[indexFrame-1] " << EWlong[indexFrame-1] << " EWlong[indexFrame-2] "<< EWlong[indexFrame-2] << endl;
+            //printf("Scale (index %d to %d): %lf \n", indexFrame, indexFrame-1, scale );
+            cout<< "(cout) Scale (index " << indexFrame << " to " << indexFrame-1<< "): " << scale <<endl;
             
+            // update the thereshlod value for region growing becasue scale varies largely
+            double ScaleDifference = scale -  s[i].data[3].back();
+            printf("ScaleDifference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, ScaleDifference );
+    
+            
+            if (abs(ScaleDifference) > 0.2 && abs(ScaleDifference) < 0.5) {
+                printf("!!!!!!!!!!!Update the thereshlod value for R-growing becasue scale varies largely \n");
+                
+                if ( ScaleDifference > 0.2)
+                    s[i].differencegrow = s[i].differencegrow - 0.05;
+                
+                else
+                    s[i].differencegrow = s[i].differencegrow + 0.05;
+                
+                printf("new differencegrow: %f \n", s[i].differencegrow);
+                
+                //vc.set(CV_CAP_PROP_POS_FRAMES, indexFrame);
+                threshold_notchange = false;
+            }
+        
+            else if (abs(ScaleDifference) > 0.5){
+                printf("!!!!!!!!!!!Update  thereshlod value for R-growing becasue Object could be found \n");
+                s[i].differencegrow = s[i].differencegrow + 0.1;
+                printf("new differencegrow: %f \n", s[i].differencegrow);
+                threshold_notchange = false;
+                //waitKey(100);
+            }
+            
+            
+            else{
+                s[i].data[3].push_back(scale);
+                s[i].data[0].push_back(C[i].EWlong);
+                s[i].data[1].push_back(C[i].EWshort);
+                s[i].data[2].push_back(C[i].Ratio);
+                s[i].initialseedvektor.clear();
+                s[i].initialseedvektor.push_back(R[i].regioncenter);
+                threshold_notchange = true;
+            }
+            
+            vector<double>::iterator find;
+            find = find(s[i].RGThreshold.begin(), s[i].RGThreshold.end(), newdifferencegrow);
+            if(find == s[i].RGThreshold.end()){
+                cout << "New RG_Threshlod ist not available in RG_Threshlod vector" << endl;
+                s[i].RGThreshold.push_back(newdifferencegrow);
+            }
+            else {
+                cout << "New RG_Threshlod ist already available in RG_Threshlod vector" << endl;
+            }
             
 //            vector<double>::iterator iter;
 //            vector<double>::iterator iter2;
@@ -340,20 +352,20 @@ int main( )
             {
                 Matfinal.at<Vec3b>(R[i].seedtogether[j]) = color[i];
             }
+            
         }
 
         imshow ("segment", Matfinal);
         //imshow("segment counter", FramewithCounter);
         
-        //string text = "Frame";
+//----------------- add the text(frame index number) to written video frame
         int j;
         string time_str;
         char text[50];
         j = sprintf(text, " Frame %d/ ",indexFrame);
-        
         for( int i=0; i<Segmentnum; i++)
         {
-            j += sprintf( text + j, "Threshold(%d): %-6.2f/ ", i+1, s[i].differencegrow );
+            j += sprintf( text + j, "Threshold(%d): %.2f/ ", i+1, s[i].differencegrow );
         }
         
         //time_str=ctime;
@@ -426,8 +438,7 @@ int main( )
 //        //  merge to channel
 //        
 //        merge (channelsMatIn, Matfinal);
-//        
-        
+//
         
         //imshow("final image", Matfinal);
         
@@ -445,7 +456,6 @@ int main( )
            // waitKey(0);
     }
     
-
     cout << "Video playing over" << endl;
     cout << endl;
     vc.release();
@@ -529,7 +539,3 @@ int main( )
 //        
 //    }
 //}
-
-
-
-
