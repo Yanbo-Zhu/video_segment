@@ -100,7 +100,8 @@ int main( )
     
     //vc.open( "/Users/yanbo/Desktop/source/Rotation_50m.mp4");
     //vc.open( "/Users/yanbo/Desktop/source/80_10_descend_rotation.mp4");
-    vc.open( "/Users/yanbo/Desktop/source/5-70.mp4");
+    //vc.open( "/Users/yanbo/Desktop/source/5-70.mp4");
+    vc.open( "/Users/yanbo/Desktop/source/80_10_descend.mp4");
     
     
     if (!vc.isOpened())
@@ -122,7 +123,7 @@ int main( )
     VideoWriter vw; //(filename, fourcc, fps, frameSize[, isColor])
     vw.open( "/Users/yanbo/Desktop/source/output/output1.mov", // 输出视频文件名
             (int)vc.get( CV_CAP_PROP_FOURCC ),//CV_FOURCC('S', 'V', 'Q', '3'), // //CV_FOURCC('8', 'B', 'P', 'S'), // 也可设为CV_FOURCC_PROMPT，在运行时选取 //fourcc – 4-character code of codec used to compress the frames.
-            (double)(vc.get( CV_CAP_PROP_FPS )/5), // 视频帧率
+            (double)(vc.get( CV_CAP_PROP_FPS )/2), // 视频帧率
             Size( (int)vc.get( CV_CAP_PROP_FRAME_WIDTH ),
                  (int)vc.get( CV_CAP_PROP_FRAME_HEIGHT ) ), // 视频大小
             true ); // 是否输出彩色视频
@@ -199,7 +200,8 @@ int main( )
     //在图像窗口上创建控制条
     createTrackbar(trackBarName,windowName,&trackbarValue,trackbarMax,TrackBarFunc);
     TrackBarFunc(0,0);
-    
+
+//-----------------------------------------
     while(!stop)
     {
         
@@ -256,17 +258,19 @@ int main( )
             cout << "Degree: "  << C[i].Degree <<endl;
             cout<< "Threshold for RegionGrow: " << s[i].differencegrow << endl;
             
-            if (indexFrame == 0){
+            while (indexFrame == 0){
                 s[i].data[3].push_back(1.0);
                 s[i].data[0].push_back(C[i].EWlong);
                 s[i].data[1].push_back(C[i].EWshort);
                 s[i].data[2].push_back(C[i].Ratio);
                 s[i].initialseedvektor.clear();
                 s[i].initialseedvektor.push_back(R[i].regioncenter);
+                 cout<< "in loop" << endl;
+                 break;
+                
             }
             
-            else {
-                
+           
                 //cout<<"s[i].data[0].back(): "<<s[i].data[0].back() <<"  C[i].EWlong: "<<  C[i].EWlong <<endl;
                 double scale = ( (C[i].EWlong/s[i].data[0].back()) + (C[i].EWshort/s[i].data[1].back()) )/2 ;
                 //cout<< "EWlong[indexFrame-1] " << EWlong[indexFrame-1] << " EWlong[indexFrame-2] "<< EWlong[indexFrame-2] << endl;
@@ -279,19 +283,27 @@ int main( )
                     
                     
                     
-                    if (abs(ScaleDifference) > 0.2 && abs(ScaleDifference) < 1.0) {
-                        printf("!!!!!!!!!!!Update the thereshlod value for region growing becasue scale varies largely \n");
+                    if (abs(ScaleDifference) > 0.05 && abs(ScaleDifference) < 0.2) {
+                        printf("!!!!!!!!!!!Update the thereshlod value for R-growing becasue scale varies largely \n");
                         
-                        if ( ScaleDifference > 0.2)
-                            s[i].differencegrow = s[i].differencegrow - 0.2;
+                        if ( ScaleDifference > 0.05)
+                            s[i].differencegrow = s[i].differencegrow - 0.02;
                         
                         else
-                            s[i].differencegrow = s[i].differencegrow + 0.2;
+                            s[i].differencegrow = s[i].differencegrow + 0.02;
                         
                         printf("new differencegrow: %f \n", s[i].differencegrow);
                         
                         //vc.set(CV_CAP_PROP_POS_FRAMES, indexFrame);
                         threshold_notchange = false;
+                    }
+                
+                    else if (abs(ScaleDifference) > 0.2){
+                        printf("!!!!!!!!!!!Update  thereshlod value for R-growing becasue Object could be found \n");
+                        s[i].differencegrow = s[i].differencegrow + 0.02;
+                        printf("new differencegrow: %f \n", s[i].differencegrow);
+                        threshold_notchange = false;
+                        //waitKey(100);
                     }
                 
                 
@@ -305,7 +317,7 @@ int main( )
                         s[i].initialseedvektor.push_back(R[i].regioncenter);
                         threshold_notchange = true;
                     }
-            }
+            
             
 //            vector<double>::iterator iter;
 //            vector<double>::iterator iter2;
@@ -333,15 +345,22 @@ int main( )
         imshow ("segment", Matfinal);
         //imshow("segment counter", FramewithCounter);
         
-        string text = "Frame";
+        //string text = "Frame";
+        int j;
         string time_str;
-        char ctime[10];
-        sprintf(ctime, " %d",indexFrame);
-        time_str=ctime;
-        text.append(time_str);
+        char text[50];
+        j = sprintf(text, " Frame %d/ ",indexFrame);
         
-        int font_face = cv::FONT_HERSHEY_COMPLEX;
-        double font_scale = 1;
+        for( int i=0; i<Segmentnum; i++)
+        {
+            j += sprintf( text + j, "Threshold(%d): %-6.2f/ ", i+1, s[i].differencegrow );
+        }
+        
+        //time_str=ctime;
+        //text.append(time_str);
+        
+        int font_face = FONT_HERSHEY_COMPLEX;
+        double font_scale = 0.7;
         int thickness = 2;
         int baseline;
         //获取文本框的长宽
@@ -357,7 +376,7 @@ int main( )
         
         imshow(windowName,FramewithCounter);  //显示图像
        
-        controlRate++; // for trackbar 
+        controlRate++; // for trackbar
         
 //----------------- add the text(frame index number) to written video frame
 
