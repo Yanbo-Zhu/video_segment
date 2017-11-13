@@ -304,7 +304,7 @@ int main( )
                 threshold_notchange = false;
             }
         
-            else if (abs(ScaleDifference) > 0.5){
+            else if (abs(ScaleDifference) > 0.8){
                 printf("!!!!!!!!!!!Update  thereshlod value for R-growing becasue Object could be found \n");
                 s[i].differencegrow = s[i].differencegrow + 0.1;
                 printf("new differencegrow: %f \n", s[i].differencegrow);
@@ -370,13 +370,13 @@ int main( )
         text.push_back( frameindex);
         
         for( int i=0; i<Segmentnum; i++){
-        char Thereshold[20];
-        sprintf(Thereshold, "Threshold(%d): %.2f", i+1, s[i].differencegrow );
+        char Thereshold[15];
+        sprintf(Thereshold, "Threshold(object %d): %f", i+1, s[i].differencegrow );
         text.push_back(Thereshold);
         
             while(threshold_notchange){
                 char scale[30];
-                sprintf(scale, "Scale(index %d to %d for object %d): %f", indexFrame, indexFrame-1, i+1, s[i].data[3].back());
+                sprintf(scale, "Scale (object %d/index %d to %d): %f", i+1, indexFrame, indexFrame-1, s[i].data[3].back());
                 text.push_back(scale);
                 break;
             }
@@ -410,6 +410,7 @@ int main( )
 //        origin.y = FramewithCounter.rows - text_size.height ;
 //        Scalar color = CV_RGB(255,0,0);
 //        putText(FramewithCounter, text, origin, font_face, font_scale, color, thickness, 8, false); //When true, the image data origin is at the bottom-left corner. Otherwise, it is at the top-left corner.
+        
         
 //        stringstream s;
 //        s << "cv::putText() Demo!" ;
@@ -526,7 +527,7 @@ Mat putStats(vector<string> stats, Mat frame){
     double font_scale = 1;
     int thickness = 1;
     int baseline;
-    Scalar color = CV_RGB(255,0,0);
+    Scalar color = CV_RGB(255,255,0);
     Point origin;
     origin.y = frame.rows ;
     
