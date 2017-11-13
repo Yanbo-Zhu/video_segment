@@ -43,6 +43,7 @@ Mat firstFrame;
 vector<Mat> channels;
 vector<Mat> channelsMatIn;
 clock_t  clockBegin, clockEnd;
+Mat putStats(vector<string> stats, Mat frame);
 //vector<Point> seedtogether;
 //-------
 
@@ -59,7 +60,7 @@ clock_t  clockBegin, clockEnd;
 //void Countijudge(Mat Temp, int *pointerijudge);
 //-------------------------------
 
-
+//setting for trackbar
 char const *windowName="Segment counter"; //播放窗口名称
 char const *trackBarName="Frame index";    //trackbar控制条名称
 double totalFrame=1.0;     //视频总帧数
@@ -67,14 +68,16 @@ double totalFrame=1.0;     //视频总帧数
 int trackbarValue=1;    //trackbar控制量
 int trackbarMax=255;   //trackbar控制条最大值
 double frameRate=1.0;  //视频帧率
-VideoCapture vc;    //声明视频对象
+VideoCapture vc;    //声明视频对象   !!!!!!!!!!!!!!!!!!!!!!!此处重要
 double controlRate=0.1;
 
 void TrackBarFunc(int ,void(*))
 {
     controlRate=(double)trackbarValue/trackbarMax*totalFrame; //trackbar控制条对视频播放进度的控制
-    //video.set(CV_CAP_PROP_POS_FRAMES,controlRate);   //设置当前播放帧
+    vc.set(CV_CAP_PROP_POS_FRAMES,controlRate);   //设置当前播放帧
 }
+
+
 
 int main( )
 {
@@ -141,7 +144,7 @@ int main( )
     Mat firstFrame;
     vc.read(firstFrame);
 
-    vc.set(CV_CAP_PROP_POS_FRAMES, 0);
+    vc.set(CV_CAP_PROP_POS_FRAMES, 0.0);
     
     //imshow("first frame",firstFrame);
     //waitKey(10);
@@ -192,14 +195,14 @@ int main( )
     int indexFrame = 0;
     bool bSuccess;
     
-//------------------- createTrackbar
+//------------------- creating Trackbar
     totalFrame = vc.get(CV_CAP_PROP_FRAME_COUNT);  //获取总帧数
     frameRate = vc.get(CV_CAP_PROP_FPS);   //获取帧率
     double pauseTime=1000/frameRate; // 由帧率计算两幅图像间隔时间
     namedWindow(windowName);
     //在图像窗口上创建控制条
     createTrackbar(trackBarName,windowName,&trackbarValue,trackbarMax,TrackBarFunc);
-    TrackBarFunc(0,0);
+    //TrackBarFunc(0,0);
 
 //-----------------------------------------
     while(!stop)
@@ -359,48 +362,42 @@ int main( )
         //imshow("segment counter", FramewithCounter);
         
 //----------------- add the text(frame index number) to written video frame
-        int j;
-        string time_str;
-        char text[50];
-        j = sprintf(text, " Frame %d/ ",indexFrame);
-        for( int i=0; i<Segmentnum; i++)
-        {
-            j += sprintf( text + j, "Threshold(%d): %.2f/ ", i+1, s[i].differencegrow );
+        
+        vector<string> text;
+        
+        char frameindex[10];
+        sprintf( frameindex, "Frame %d",indexFrame);
+        text.push_back( frameindex);
+        
+        for( int i=0; i<Segmentnum; i++){
+        char Thereshold[20];
+        sprintf(Thereshold, "Threshold(%d): %.2f", i+1, s[i].differencegrow );
+        text.push_back(Thereshold);
+        
+            while(threshold_notchange){
+                char scale[30];
+                sprintf(scale, "Scale(index %d to %d for object %d): %f", indexFrame, indexFrame-1, i+1, s[i].data[3].back());
+                text.push_back(scale);
+                break;
+            }
         }
         
-        //time_str=ctime;
-        //text.append(time_str);
+        FramewithCounter = putStats(text,FramewithCounter);
         
-        int font_face = FONT_HERSHEY_COMPLEX;
-        double font_scale = 0.7;
-        int thickness = 2;
-        int baseline;
-        //获取文本框的长宽
-        Size text_size = getTextSize(text, font_face, font_scale, thickness, &baseline);
-        
-        //将文本框居中绘制
-        Point origin;  //文字在图像中的左下角 坐标 Origin of text ist Bottom-left corner of the text string in the image
-        origin.x = FramewithCounter.cols / 2 - text_size.width / 2;
-        //origin.y = FramewithCounter.rows / 2 + text_size.height / 2;
-        origin.y = FramewithCounter.rows - text_size.height ;
-        Scalar color = CV_RGB(255,0,0);
-        putText(FramewithCounter, text, origin, font_face, font_scale, color, thickness, 8, false); //When true, the image data origin is at the bottom-left corner. Otherwise, it is at the top-left corner.
-        
-        imshow(windowName,FramewithCounter);  //显示图像
-       
-        controlRate++; // for trackbar
-        
-//----------------- add the text(frame index number) to written video frame
-
-//        string text = "Frame";
+//        int j;
 //        string time_str;
-//        char ctime[10];
-//        sprintf(ctime, " %d\n",indexFrame);
-//        time_str=ctime;
-//        text.append(time_str);
+//        char text[50];
+//        j = sprintf(text, " Frame %d/ ",indexFrame);
+//        for( int i=0; i<Segmentnum; i++)
+//        {
+//            j += sprintf( text + j, "Threshold(%d): %.2f/ ", i+1, s[i].differencegrow );
+//        }
 //
-//        int font_face = cv::FONT_HERSHEY_COMPLEX;
-//        double font_scale = 1;
+//        //time_str=ctime;
+//        //text.append(time_str);
+//
+//        int font_face = FONT_HERSHEY_COMPLEX;
+//        double font_scale = 0.7;
 //        int thickness = 2;
 //        int baseline;
 //        //获取文本框的长宽
@@ -414,7 +411,20 @@ int main( )
 //        Scalar color = CV_RGB(255,0,0);
 //        putText(FramewithCounter, text, origin, font_face, font_scale, color, thickness, 8, false); //When true, the image data origin is at the bottom-left corner. Otherwise, it is at the top-left corner.
         
-        //    putText(image,text,origin,CV_FONT_HERSHEY_DUPLEX,1.0f,Scalar(0, 255, 255));
+//        stringstream s;
+//        s << "cv::putText() Demo!" ;
+//        s << "cv::putText() Demo!" ;
+//        s << "cv::putText() Demo!" ;
+//        s << "cv::putText() Demo!" ;
+//        putText(FramewithCounter,s.str(),Point(100,100), FONT_HERSHEY_COMPLEX, 1, Scalar(255,0,0), 2, 8 );
+
+        
+        imshow(windowName,FramewithCounter);  //显示图像
+       
+        controlRate++; // for trackbar
+        
+//----------------- add the text(frame index number) to written video frame
+
         
         //vw.write(frame);
         vw << FramewithCounter;
@@ -509,6 +519,32 @@ int main( )
     
     return 0;
 }
+
+//insert text lines to video frame
+Mat putStats(vector<string> stats, Mat frame){
+    int font_face = FONT_HERSHEY_COMPLEX_SMALL;
+    double font_scale = 1;
+    int thickness = 1;
+    int baseline;
+    Scalar color = CV_RGB(255,0,0);
+    Point origin;
+    origin.y = frame.rows ;
+    
+    for(int i=0; i<stats.size(); i++){
+        //获取文本框的长宽
+        Size text_size = getTextSize(stats[i].c_str(), font_face, font_scale, thickness, &baseline);
+        //将文本框居中绘制
+         //文字在图像中的左下角 坐标 Origin of text ist Bottom-left corner of the text string in the image
+        origin.x = frame.cols/2 - text_size.width / 2;
+        //origin.y = FramewithCounter.rows / 2 + text_size.height / 2;
+        origin.y = origin.y - 1.2*text_size.height ;
+        
+        putText(frame, stats[i].c_str(), origin, font_face , font_scale, color, thickness, 8, false);
+    }
+    
+    return frame;
+}
+
 
 ///--------------  on_MouseHandle   funciton----------
 //void on_MouseHandle(int event, int x, int y, int flags, void* param)
