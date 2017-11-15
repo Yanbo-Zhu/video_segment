@@ -35,12 +35,17 @@ Mat Counter::FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color)
     // 多边形逼近轮廓 + 获取矩形边界框
     vector<vector<Point> > contours_poly( contours.size() );
     vector<Rect> boundRect( contours.size() );
+    vector<Point2f>center (contours.size());
+    vector<float>radius (contours.size());
+    for( unsigned int i = 0; i < contours.size(); i++ )
+    {
+        approxPolyDP( Mat(contours[i]), contours_poly[i], 1, true );//用指定精度逼近多边形曲线
+        boundRect[i] = boundingRect( Mat(contours_poly[i]) );//计算点集的最外面（up-right）矩形边界
+        minEnclosingCircle( contours_poly[i], center[i], radius[i] );//对给定的 2D点集，寻找最小面积的包围圆形
+    }
     
     for (size_t i = 0; i < contours.size(); i++)
     {
-        approxPolyDP( Mat(contours[i]), contours_poly[i], 3, true );//用指定精度逼近多边形曲线
-        boundRect[i] = boundingRect( Mat(contours_poly[i]) );//计算点集的最外面（up-right）矩形边界
-        
         //cout<< "contours.size()" << contours.size() <<endl;
         // Calculate the area of each contour
         double area = contourArea(contours[i]);
@@ -49,7 +54,9 @@ Mat Counter::FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color)
         // Draw each contour only for visualisation purposes
         drawContours(FramemitCounter, contours, static_cast<int>(i), color, 2, 8, hierarchy, 0);
         
-        rectangle( FramemitCounter, boundRect[i].tl(), boundRect[i].br(), color, 2, 8, 0 );//绘制矩形 、、、？？？？？？
+        //rectangle( FramemitCounter, boundRect[i].tl(), boundRect[i].br(), color, 1, 8, 0 );// 绘制边框矩形 ？？？？？？
+        circle( FramemitCounter, center[i], (int)radius[i], color, 1, 8, 0 ); // draw the circle
+        
         //drawContours(result, contours, -1, Scalar(0, 0, 255), 1, 8, hierarchy, 0);
         getOrientation(contours[i], FramemitCounter);
     }
