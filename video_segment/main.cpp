@@ -296,16 +296,18 @@ int main( )
             double averageScale = s[i].data[3].back();
             vector<double>::reverse_iterator it;
             if (s[i].data[3].size()< 10){
+                cout<<"s[i].data[3].size(): " << s[i].data[3].size() << endl;
                 for(it = s[i].data[3].rbegin(); it!= s[i].data[3].rend() ; it++)
                 {
-                    cout<<"s[i].data[3].size(): " << s[i].data[3].size() << endl;
+                    
                     averageScale = (averageScale + *it)/2.0;
                 }
             }
             else {
+                cout<<"s[i].data[3].size(): " << s[i].data[3].size() << endl;
                 for(it = s[i].data[3].rbegin(); it!= s[i].data[3].rbegin() + 10; it++)
                 {
-                    cout<<"s[i].data[3].size(): " << s[i].data[3].size() << endl;
+                    
                     averageScale = (averageScale + *it)/2.0;
                 }
             }
@@ -318,19 +320,23 @@ int main( )
             printf("ScaleDifference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, ScaleDifference );
             
             //computeing the average ScaleDifference from last 10 frames
-             double averageScaleDifference = s[i].data[4].back();
-            if (s[i].data[4].size()< 10){
+             double averageScaleDifference = abs(s[i].data[4].back());
+            if (s[i].data[4].size() == 1){
+                averageScaleDifference = 0.02;
+            }
+            else if (s[i].data[4].size()< 10 && s[i].data[4].size() > 1){
+                cout<<"ScaleDifference.size(): " << s[i].data[4].size() << endl;
                 for(it = s[i].data[4].rbegin(); it!= s[i].data[4].rend() ; it++)
                 {
-                    cout<<"ScaleDifference.size(): " << s[i].data[4].size() << endl;
-                    averageScaleDifference = (averageScaleDifference + *it)/2.0;
+                    averageScaleDifference = (averageScaleDifference + abs(*it))/2.0;
                 }
             }
+            
             else {
+                cout<<"ScaleDifference.size(): " << s[i].data[4].size() << endl;
                 for(it = s[i].data[4].rbegin(); it!= s[i].data[4].rbegin() + 10; it++)
                 {
-                    cout<<"ScaleDifference.size(): " << s[i].data[4].size() << endl;
-                    averageScaleDifference = (averageScaleDifference + *it)/2.0;
+                    averageScaleDifference = (averageScaleDifference + abs(*it))/2.0;
                 }
             }
             cout <<"averageScaleDifference: " <<averageScaleDifference<< endl;
