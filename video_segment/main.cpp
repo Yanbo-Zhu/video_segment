@@ -164,7 +164,7 @@ int main( )
     
     cout<<"How many initial segment do you want: " <<endl;
     //cin >> Segmentnum;
-    Segmentnum  = 1;
+    Segmentnum  = 2;
     
     Initalseed s[Segmentnum];
     
@@ -186,8 +186,8 @@ int main( )
         s[i].drawpoint(firstFrame, s[i].initialseedvektor, color[i]);
         s[i].data.resize(5);
         printf("\nPlease set the threshold value for region growing\n");
-        //cin >> s[i].differencegrow;
-        s[i].differencegrow = 5.0;
+        cin >> s[i].differencegrow;
+        //s[i].differencegrow = 5.0;
     }
     
 //------------------------------- Start to apply Segmentation-method in Video
@@ -280,9 +280,6 @@ int main( )
                 s[i].initialseedvektor.clear();
                 s[i].initialseedvektor.push_back(R[i].regioncenter);
                 threshold_notchange = true;
-                cout<< "Scale (index " << indexFrame << " to " << indexFrame-1<< "): " << s[i].data[3].back() <<endl;
-                cout<< "ScaleDifference (index " << indexFrame << " to " << indexFrame-1<< "): " << s[i].data[4].back() <<endl;
-                break;
             }
            
             //cout<<"s[i].data[0].back(): "<<s[i].data[0].back() <<"  C[i].EWlong: "<<  C[i].EWlong <<endl;
@@ -291,20 +288,19 @@ int main( )
             //printf("Scale (index %d to %d): %lf \n", indexFrame, indexFrame-1, scale );
             cout<< "Scale (index " << indexFrame << " to " << indexFrame-1<< "): " << scale <<endl;
             
-            //computeing the average scale from last 10 frames
+    //---------computeing the average scale from last 10 frames
             
             double averageScale = s[i].data[3].back();
             vector<double>::reverse_iterator it;
             if (s[i].data[3].size()< 10){
-                cout<<"s[i].data[3].size(): " << s[i].data[3].size() << endl;
+                cout<<"Scale vector size: " << s[i].data[3].size() << endl;
                 for(it = s[i].data[3].rbegin(); it!= s[i].data[3].rend() ; it++)
                 {
-                    
                     averageScale = (averageScale + *it)/2.0;
                 }
             }
             else {
-                cout<<"s[i].data[3].size(): " << s[i].data[3].size() << endl;
+                cout<<"Scale vector size: " << s[i].data[3].size() << endl;
                 for(it = s[i].data[3].rbegin(); it!= s[i].data[3].rbegin() + 10; it++)
                 {
                     
@@ -312,20 +308,15 @@ int main( )
                 }
             }
             
-            cout <<"AverageScale: " <<averageScale<< endl;
-            
-            
-            //double ScaleDifference = scale -  s[i].data[3].back();
-            double ScaleDifference = scale -  averageScale;
-            printf("ScaleDifference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, ScaleDifference );
-            
-            //computeing the average ScaleDifference from last 10 frames
-             double averageScaleDifference = abs(s[i].data[4].back());
+            cout <<"AverageScale from last frames: " << averageScale<< endl;
+
+    //-------computeing the average ScaleDifference from last 10 frames
+            double averageScaleDifference = abs(s[i].data[4].back());
             if (s[i].data[4].size() == 1){
                 averageScaleDifference = 0.02;
             }
             else if (s[i].data[4].size()< 10 && s[i].data[4].size() > 1){
-                cout<<"ScaleDifference.size(): " << s[i].data[4].size() << endl;
+                cout<<"ScaleDifference vector size: " << s[i].data[4].size() << endl;
                 for(it = s[i].data[4].rbegin(); it!= s[i].data[4].rend() ; it++)
                 {
                     averageScaleDifference = (averageScaleDifference + abs(*it))/2.0;
@@ -333,25 +324,29 @@ int main( )
             }
             
             else {
-                cout<<"ScaleDifference.size(): " << s[i].data[4].size() << endl;
+                cout<<"ScaleDifference vector size: " << s[i].data[4].size() << endl;
                 for(it = s[i].data[4].rbegin(); it!= s[i].data[4].rbegin() + 10; it++)
                 {
                     averageScaleDifference = (averageScaleDifference + abs(*it))/2.0;
                 }
             }
-            cout <<"averageScaleDifference: " <<averageScaleDifference<< endl;
+            cout <<"Average ScaleDifference from last frames: " <<averageScaleDifference<< endl;
+
+            //double ScaleDifference = scale -  s[i].data[3].back();
+            double ScaleDifference = scale -  averageScale;
+            printf("ScaleDifference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, ScaleDifference );
             
-            // update the thereshlod value for region growing becasue scale varies largely
+    //--------- update the thereshlod value for region growing if scale varies largely
             if (abs(ScaleDifference) > 0.2 && abs(ScaleDifference) < 0.5) {
                 printf("!!!!!!!!!!!Update the threshlod value for R-growing becasue scale varies largely \n");
                 
-                if ( ScaleDifference > 0.2)
+                if ( ScaleDifference > 0.0)
                     s[i].differencegrow = s[i].differencegrow - 0.04;
                 
                 else
                     s[i].differencegrow = s[i].differencegrow + 0.04;
                 
-                printf("New differencegrow: %f \n", s[i].differencegrow);
+                printf("New RG_Threshold: %f \n", s[i].differencegrow);
                 
                 //vc.set(CV_CAP_PROP_POS_FRAMES, indexFrame);
                 threshold_notchange = false;
@@ -360,14 +355,13 @@ int main( )
             else if (abs(ScaleDifference) > 0.8){
                 printf("!!!!!!!!!!!Update  threshlod value for R-growing becasue Object could be found \n");
                 s[i].differencegrow = s[i].differencegrow + 0.1;
-                printf("new differencegrow: %f \n", s[i].differencegrow);
+                printf("new RG_Threshold: %f \n", s[i].differencegrow);
                 threshold_notchange = false;
                 //waitKey(100);
             }
             
-            
             else{
-               
+                while (indexFrame > 0){
                 s[i].data[3].push_back(scale);
                 s[i].data[4].push_back(ScaleDifference);
                 s[i].data[0].push_back(C[i].EWlong);
@@ -376,6 +370,8 @@ int main( )
                 s[i].initialseedvektor.clear();
                 s[i].initialseedvektor.push_back(R[i].regioncenter);
                 threshold_notchange = true;
+                break;
+                }
             }
             
 //            vector<double>::iterator find;
