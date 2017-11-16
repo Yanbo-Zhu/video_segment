@@ -9,6 +9,7 @@
 #include <iostream>
 #include "stdio.h"
 #include <time.h> //time_t time()  clock_t clock()
+#include<math.h>
 
 
 #include "opencv2/core/core.hpp"
@@ -164,7 +165,7 @@ int main( )
     
     cout<<"How many initial segment do you want: " <<endl;
     //cin >> Segmentnum;
-    Segmentnum  = 2;
+    Segmentnum  = 1;
     
     Initalseed s[Segmentnum];
     
@@ -223,6 +224,7 @@ int main( )
             {
                 s[i].RGThreshold.clear();
                 s[i].RGThreshold.push_back(s[i].differencegrow);
+                s[i].LoopThreshold = 1.0;
             }
             
         }
@@ -337,24 +339,45 @@ int main( )
             printf("ScaleDifference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, ScaleDifference );
             
     //--------- update the thereshlod value for region growing if scale varies largely
-            if (abs(ScaleDifference) > 0.2 && abs(ScaleDifference) < 0.5) {
+            if (abs(ScaleDifference) > 10*averageScaleDifference && abs(ScaleDifference) < 0.5) {
                 printf("!!!!!!!!!!!Update the threshlod value for R-growing becasue scale varies largely \n");
                 
-                if ( ScaleDifference > 0.0)
-                    s[i].differencegrow = s[i].differencegrow - 0.04;
+//                if ( ScaleDifference > 0.0)
+//                    s[i].differencegrow = s[i].differencegrow - 0.04;
+//
+//                else
+//                    s[i].differencegrow = s[i].differencegrow + 0.04;
                 
+                
+                double newScaleDifference = 0.0;
+                if ( ScaleDifference > 0.0)
+                    newScaleDifference = s[i].differencegrow - (0.04 / pow(2, s[i].LoopThreshold - 1));
                 else
-                    s[i].differencegrow = s[i].differencegrow + 0.04;
+                    newScaleDifference = s[i].differencegrow + (0.04/ pow(2, s[i].LoopThreshold - 1));
+    
+                vector<double>::iterator iterfind;
+                iterfind = find( s[i].RGThreshold.begin(), s[i].RGThreshold.end(), newScaleDifference);
+                if(iterfind == s[i].RGThreshold.end()){
+                    cout << "New RG_Threshlod ist not available in RG_Threshlod vector" << endl;
+                    s[i].RGThreshold.push_back(newScaleDifference);
+                    s[i].differencegrow = newScaleDifference;
+                }
+                else {
+                    cout << "New RG_Threshlod ist already available in RG_Threshlod vector" << endl;
+                    s[i].LoopThreshold = s[i].LoopThreshold + 1.0;
+                    cout << "s[i].LoopThreshold: " << s[i].LoopThreshold  << endl;
+                }
+                
                 
                 printf("New RG_Threshold: %f \n", s[i].differencegrow);
-                
+
                 //vc.set(CV_CAP_PROP_POS_FRAMES, indexFrame);
                 threshold_notchange = false;
             }
         
             else if (abs(ScaleDifference) > 0.8){
                 printf("!!!!!!!!!!!Update  threshlod value for R-growing becasue Object could be found \n");
-                s[i].differencegrow = s[i].differencegrow + 0.1;
+                s[i].differencegrow = s[i].differencegrow - 0.05;
                 printf("new RG_Threshold: %f \n", s[i].differencegrow);
                 threshold_notchange = false;
                 //waitKey(100);
@@ -420,7 +443,7 @@ int main( )
         
         for( int i=0; i<Segmentnum; i++){
         char Thereshold[15];
-        sprintf(Thereshold, "Threshold(object %d): %.2f", i+1, s[i].differencegrow );
+        sprintf(Thereshold, "Threshold(object %d): %f", i+1, s[i].differencegrow );
         text.push_back(Thereshold);
         
             while(threshold_notchange){

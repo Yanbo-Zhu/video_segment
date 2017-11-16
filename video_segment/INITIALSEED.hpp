@@ -37,6 +37,7 @@ public:
     
     vector<Point> initialseedvektor;
     double differencegrow;
+    double LoopThreshold;
     vector<double> RGThreshold;
     
     void modechoose(int x, Mat firstframe);
