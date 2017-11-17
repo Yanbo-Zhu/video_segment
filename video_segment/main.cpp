@@ -44,7 +44,7 @@ Mat firstFrame;
 vector<Mat> channels;
 vector<Mat> channelsMatIn;
 clock_t  clockBegin, clockEnd;
-Mat putStats(vector<string> stats, Mat frame);
+Mat putStats(vector<string> stats, Mat frame,Vec3b color,Point* origin);
 //vector<Point> seedtogether;
 //-------
 
@@ -105,7 +105,9 @@ int main( )
     //vc.open( "/Users/yanbo/Desktop/source/Rotation_50m.mp4");
     //vc.open( "/Users/yanbo/Desktop/source/80_10_descend_rotation.mp4");
     //vc.open( "/Users/yanbo/Desktop/source/5-70.mp4");
-    vc.open( "/Users/yanbo/Desktop/source/80_10_descend.mp4");
+    //vc.open( "/Users/yanbo/Desktop/source/80_10_descend.mp4");
+    //vc.open( "/Users/yanbo/Desktop/source/70_20_descend_highDim.mp4");
+    vc.open( "/Users/yanbo/Desktop/source/70_20_descend.mp4");
     
     
     if (!vc.isOpened())
@@ -164,10 +166,10 @@ int main( )
     mode = 2;
     
     cout<<"How many initial segment do you want: " <<endl;
-    //cin >> Segmentnum;
-    Segmentnum  = 1;
+    cin >> Segmentnum;
+    //Segmentnum  = 1;
     
-    Initalseed s[Segmentnum];
+    Initalseed s[10];
     
     // settung color for diffent segments
     RNG rng(time(0));
@@ -285,16 +287,19 @@ int main( )
             }
            
             //cout<<"s[i].data[0].back(): "<<s[i].data[0].back() <<"  C[i].EWlong: "<<  C[i].EWlong <<endl;
-            double scale = ( (C[i].EWlong/s[i].data[0].back()) + (C[i].EWshort/s[i].data[1].back()) )/2 ;
+            //double scale = ( (C[i].EWlong/s[i].data[0].back()) + (C[i].EWshort/s[i].data[1].back()) )/2 ;
+            double scale = sqrt( (C[i].EWlong* C[i].EWshort)/(s[i].data[0].back() * s[i].data[1].back()) );
             //cout<< "EWlong[indexFrame-1] " << EWlong[indexFrame-1] << " EWlong[indexFrame-2] "<< EWlong[indexFrame-2] << endl;
             //printf("Scale (index %d to %d): %lf \n", indexFrame, indexFrame-1, scale );
             cout<< "Scale (index " << indexFrame << " to " << indexFrame-1<< "): " << scale <<endl;
+            
+            int considerNum = 10;
             
     //---------computeing the average scale from last 10 frames
             
             double averageScale = s[i].data[3].back();
             vector<double>::reverse_iterator it;
-            if (s[i].data[3].size()< 10){
+            if (s[i].data[3].size()< considerNum){
                 cout<<"Scale vector size: " << s[i].data[3].size() << endl;
                 for(it = s[i].data[3].rbegin(); it!= s[i].data[3].rend() ; it++)
                 {
@@ -303,21 +308,21 @@ int main( )
             }
             else {
                 cout<<"Scale vector size: " << s[i].data[3].size() << endl;
-                for(it = s[i].data[3].rbegin(); it!= s[i].data[3].rbegin() + 10; it++)
+                for(it = s[i].data[3].rbegin(); it!= s[i].data[3].rbegin() + considerNum; it++)
                 {
                     
                     averageScale = (averageScale + *it)/2.0;
                 }
             }
             
-            cout <<"AverageScale from last frames: " << averageScale<< endl;
+            cout <<"AverageScale from last several frames: " << averageScale<< endl;
 
     //-------computeing the average ScaleDifference from last 10 frames
             double averageScaleDifference = abs(s[i].data[4].back());
             if (s[i].data[4].size() == 1){
                 averageScaleDifference = 0.02;
             }
-            else if (s[i].data[4].size()< 10 && s[i].data[4].size() > 1){
+            else if (s[i].data[4].size()< considerNum && s[i].data[4].size() > 1){
                 cout<<"ScaleDifference vector size: " << s[i].data[4].size() << endl;
                 for(it = s[i].data[4].rbegin(); it!= s[i].data[4].rend() ; it++)
                 {
@@ -327,49 +332,44 @@ int main( )
             
             else {
                 cout<<"ScaleDifference vector size: " << s[i].data[4].size() << endl;
-                for(it = s[i].data[4].rbegin(); it!= s[i].data[4].rbegin() + 10; it++)
+                for(it = s[i].data[4].rbegin(); it!= s[i].data[4].rbegin() + considerNum; it++)
                 {
                     averageScaleDifference = (averageScaleDifference + abs(*it))/2.0;
                 }
             }
-            cout <<"Average ScaleDifference from last frames: " <<averageScaleDifference<< endl;
+            cout <<"15 * Average ScaleDifference from last several frames: " <<15*averageScaleDifference<< endl;
 
             //double ScaleDifference = scale -  s[i].data[3].back();
             double ScaleDifference = scale -  averageScale;
             printf("ScaleDifference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, ScaleDifference );
             
     //--------- update the thereshlod value for region growing if scale varies largely
-            if (abs(ScaleDifference) > 10*averageScaleDifference && abs(ScaleDifference) < 0.5) {
+            if (abs(ScaleDifference) > 20*averageScaleDifference && abs(ScaleDifference) < 0.5) {
                 printf("!!!!!!!!!!!Update the threshlod value for R-growing becasue scale varies largely \n");
-                
-//                if ( ScaleDifference > 0.0)
-//                    s[i].differencegrow = s[i].differencegrow - 0.04;
-//
-//                else
-//                    s[i].differencegrow = s[i].differencegrow + 0.04;
-                
                 
                 double newScaleDifference = 0.0;
                 if ( ScaleDifference > 0.0)
                     newScaleDifference = s[i].differencegrow - (0.04 / pow(2, s[i].LoopThreshold - 1));
                 else
                     newScaleDifference = s[i].differencegrow + (0.04/ pow(2, s[i].LoopThreshold - 1));
+                
+                cout << "New RG_Threshlod: " << newScaleDifference  << endl;
     
                 vector<double>::iterator iterfind;
                 iterfind = find( s[i].RGThreshold.begin(), s[i].RGThreshold.end(), newScaleDifference);
                 if(iterfind == s[i].RGThreshold.end()){
-                    cout << "New RG_Threshlod ist not available in RG_Threshlod vector" << endl;
+                    cout << "New RG_Threshlod ist not available in RG_Threshlod vector. So using New RG_Threshlod for next loop" << endl;
                     s[i].RGThreshold.push_back(newScaleDifference);
                     s[i].differencegrow = newScaleDifference;
                 }
                 else {
-                    cout << "New RG_Threshlod ist already available in RG_Threshlod vector" << endl;
+                    cout << "New RG_Threshlod ist already available in RG_Threshlod vector. so using old RG_Threshlod for next loop  " << endl;
                     s[i].LoopThreshold = s[i].LoopThreshold + 1.0;
                     cout << "s[i].LoopThreshold: " << s[i].LoopThreshold  << endl;
                 }
                 
                 
-                printf("New RG_Threshold: %f \n", s[i].differencegrow);
+                printf("RG_Threshold for next loop %f \n", s[i].differencegrow);
 
                 //vc.set(CV_CAP_PROP_POS_FRAMES, indexFrame);
                 threshold_notchange = false;
@@ -377,7 +377,7 @@ int main( )
         
             else if (abs(ScaleDifference) > 0.8){
                 printf("!!!!!!!!!!!Update  threshlod value for R-growing becasue Object could be found \n");
-                s[i].differencegrow = s[i].differencegrow - 0.05;
+                s[i].differencegrow = s[i].differencegrow + 0.05;
                 printf("new RG_Threshold: %f \n", s[i].differencegrow);
                 threshold_notchange = false;
                 //waitKey(100);
@@ -396,18 +396,6 @@ int main( )
                 break;
                 }
             }
-            
-//            vector<double>::iterator find;
-//            find = find(s[i].RGThreshold.begin(), s[i].RGThreshold.end(), newdifferencegrow);
-//            if(find == s[i].RGThreshold.end()){
-//                cout << "New RG_Threshlod ist not available in RG_Threshlod vector" << endl;
-//                s[i].RGThreshold.push_back(newdifferencegrow);
-//                s[i].differencegrow = newdifferencegrow;
-//            }
-//            else {
-//                cout << "New RG_Threshlod ist already available in RG_Threshlod vector" << endl;
-//            }
-            
             
 //            vector<double>::iterator iter;
 //            vector<double>::iterator iter2;
@@ -440,21 +428,25 @@ int main( )
         char frameindex[10];
         sprintf( frameindex, "Frame %d",indexFrame);
         text.push_back( frameindex);
+        Point pt(FramewithCounter.cols/2, FramewithCounter.rows);
+        Point* ptr = &pt;
         
         for( int i=0; i<Segmentnum; i++){
-        char Thereshold[15];
-        sprintf(Thereshold, "Threshold(object %d): %f", i+1, s[i].differencegrow );
-        text.push_back(Thereshold);
-        
+            char Thereshold[15];
+            sprintf(Thereshold, "Threshold(object %d): %f", i+1, s[i].differencegrow );
+            text.push_back(Thereshold);
+            
             while(threshold_notchange){
                 char scale[30];
                 sprintf(scale, "Scale (object %d/index %d to %d): %f", i+1, indexFrame, indexFrame-1, s[i].data[3].back());
                 text.push_back(scale);
                 break;
             }
+            FramewithCounter = putStats(text,FramewithCounter,color[i], ptr);
+         text.clear();
         }
+        //text.clear();
         
-        FramewithCounter = putStats(text,FramewithCounter);
         
 //        int j;
 //        string time_str;
@@ -527,7 +519,7 @@ int main( )
         
 //-------------define the stop-button and exit-button
         
-        int keycode = waitKey(0); // equal to  waitKey(10);  //延时10ms
+        int keycode = waitKey(10); // equal to  waitKey(10);  //延时10ms
         if(keycode  == ' '){   //32是空格键的ASCII值
             waitKey(0); }
         
@@ -593,25 +585,27 @@ int main( )
 }
 
 //insert text lines to video frame
-Mat putStats(vector<string> stats, Mat frame){
+Mat putStats(vector<string> stats, Mat frame,Vec3b color, Point* origin ){ // 也可用 Point& pt
     int font_face = FONT_HERSHEY_COMPLEX_SMALL;
     double font_scale = 1;
     int thickness = 1;
     int baseline;
-    Scalar color = CV_RGB(255,255,0);
-    Point origin;
-    origin.y = frame.rows ;
+    //Scalar color = CV_RGB(255,255,0);
+    //Point origin;
+    //origin.y = frame.rows ;
     
     for(int i=0; i<stats.size(); i++){
         //获取文本框的长宽
         Size text_size = getTextSize(stats[i].c_str(), font_face, font_scale, thickness, &baseline);
         //将文本框居中绘制
          //文字在图像中的左下角 坐标 Origin of text ist Bottom-left corner of the text string in the image
-        origin.x = frame.cols/2 - text_size.width / 2;
+        //origin.x = frame.cols/2 - text_size.width / 2;
         //origin.y = FramewithCounter.rows / 2 + text_size.height / 2;
-        origin.y = origin.y - 1.2*text_size.height ;
-        
-        putText(frame, stats[i].c_str(), origin, font_face , font_scale, color, thickness, 8, false);
+        //origin.y = origin.y - 1.2*text_size.height ;
+        (*origin).x = (*origin).x- text_size.width / 2;
+        (*origin).y = (*origin).y - 1.2*text_size.height ;
+        putText(frame, stats[i].c_str(), *origin, font_face , font_scale, color, thickness, 8, false);
+        (*origin).x = (*origin).x+ text_size.width / 2;
     }
     
     return frame;
