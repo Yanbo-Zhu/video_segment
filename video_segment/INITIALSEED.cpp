@@ -159,7 +159,7 @@ void Initalseed :: modechoose(int x, Mat firstFrame)
             //initialize the seeds
             for(size_t i=0;i<initialseedvektor.size();i++)
             {
-                printf("Seed %d: (Row: %d, Column: %d)\n",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
+                //printf("Seed %d: (Row: %d, Column: %d)\n",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
                 //cout << initialseedvektor[i] <<endl;
                
             }
@@ -178,7 +178,7 @@ void Initalseed :: modechoose(int x, Mat firstFrame)
             
             for(size_t i=0; i<initialseedvektor.size();i++)
             {
-                printf("Seed %d: (Row: %d, Column: %d)\n",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
+                //printf("Seed %d: (Row: %d, Column: %d)\n",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
                 //MatGrowCur.at<Vec3b>(initialseedvektor[i]) = firstFrame.at<Vec3b>(initialseedvektor[i]);
             }
             
