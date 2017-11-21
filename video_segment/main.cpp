@@ -44,7 +44,7 @@ Mat firstFrame;
 vector<Mat> channels;
 vector<Mat> channelsMatIn;
 clock_t  clockBegin, clockEnd;
-Mat putStats(vector<string> stats, Mat frame,Vec3b color,Point* origin);
+Mat putStats(vector<string> stats, Mat frame,Vec3b color,Point* origin, char word);
 //vector<Point> seedtogether;
 //-------
 
@@ -86,7 +86,7 @@ int main( )
 //    //设置蓝色背景
 //    image.setTo(cv::Scalar(100, 0, 0));
     
-    char const *savePath = "/Users/yanbo/Desktop/source/output/output1.mov";
+    char const *savePath = "/Users/yanbo/Desktop/source/output/output2.mov";
     
     if(remove(savePath)==0)
     {
@@ -127,7 +127,7 @@ int main( )
 //-------------------------------------- VideoWriter function ----------------
     
     VideoWriter vw; //(filename, fourcc, fps, frameSize[, isColor])
-    vw.open( "/Users/yanbo/Desktop/source/output/output1.mov", // 输出视频文件名
+    vw.open( savePath, // 输出视频文件名
             (int)vc.get( CV_CAP_PROP_FOURCC ),//CV_FOURCC('S', 'V', 'Q', '3'), // //CV_FOURCC('8', 'B', 'P', 'S'), // 也可设为CV_FOURCC_PROMPT，在运行时选取 //fourcc – 4-character code of codec used to compress the frames.
             (double)(vc.get( CV_CAP_PROP_FPS )/2), // 视频帧率
             Size( (int)vc.get( CV_CAP_PROP_FRAME_WIDTH ),
@@ -226,9 +226,8 @@ int main( )
             {
                 s[i].RGThreshold.clear();
                 s[i].RGThreshold.push_back(s[i].differencegrow);
-                s[i].LoopThreshold = 1.0;
+                s[i].LoopThreshold = 1;
             }
-            
         }
     
         else{   // if threshold for this frame  changed , ald read the same frame
@@ -236,7 +235,6 @@ int main( )
             frame = frame_backup.clone();
             bSuccess = true;
         }
-        
         
         //若视频播放完成，退出循环
         if (frame.empty())
@@ -262,12 +260,47 @@ int main( )
         Matfinal = frame.clone();
         Mat FramewithCounter = frame.clone();
         
+//----------------- add the text(frame index number) to written video frame
+        
+        vector<string> text;
+        Point ptBottomMiddle(FramewithCounter.cols/2, FramewithCounter.rows);
+        Point* ptrBottomMiddle = &ptBottomMiddle;
+        Point ptTopLeft(10, 10);
+        Point* ptrTopLeft = &ptTopLeft;
+
+       
         for( int i=0; i<Segmentnum; i++)
         {
-            printf("\n*********** Objekt %d Information ********************* \n", i+1);
+            char seedinfo[30];
+            for(size_t j=0; j<s[i].initialseedvektor.size(); j++)
+            {
+                double B = frame.at<Vec3b>(s[i].initialseedvektor[j])[0];
+                double G = frame.at<Vec3b>(s[i].initialseedvektor[j])[1];
+                double R = frame.at<Vec3b>(s[i].initialseedvektor[j])[2];
+                sprintf(seedinfo, "object %d: Seed (%d, %d) intensity: %.4f", i+1, s[i].initialseedvektor[j].y, s[i].initialseedvektor[j].x, (B+G+R)/3);
+                text.push_back(seedinfo);
+            }
+            FramewithCounter = putStats(text,FramewithCounter, color[i], ptrTopLeft, 't');
+            text.clear();
+        }
+        
+        //text.clear();
+        char frameindex[10];
+        sprintf( frameindex, "Frame %d",indexFrame);
+        text.push_back(frameindex);
+        
+ //------------------------------------------------------------------
+        for( int i=0; i<Segmentnum; i++)
+        {
+            printf("\n************* Objekt %d Information **********************", i+1);
+            printf("\n****** Cyele index for Threshold: %d\n", s[i].LoopThreshold);
             MatOut = R[i].RegionGrow(frame, frame_Blur , s[i].differencegrow, s[i].initialseedvektor);
 
             FramewithCounter = C[i].FindCounter(MatOut, FramewithCounter, color[i]);
+
+            char Thereshold[15];
+            sprintf(Thereshold, "Threshold(object %d): %f", i+1, s[i].differencegrow );
+            text.push_back(Thereshold);
             
             cout << "EWlong: " << C[i].EWlong<<endl;
             cout << "EWshort: " << C[i].EWshort<<endl;
@@ -292,22 +325,20 @@ int main( )
             //cout<< "EWlong[indexFrame-1] " << EWlong[indexFrame-1] << " EWlong[indexFrame-2] "<< EWlong[indexFrame-2] << endl;
             //printf("Scale (index %d to %d): %lf \n", indexFrame, indexFrame-1, scale );
             cout<< "Scale (index " << indexFrame << " to " << indexFrame-1<< "): " << scale <<endl;
-            
-            int considerNum = 10;
-            
+        
     //---------computeing the average scale from last 10 frames
-            
+            int considerNum = 10;
             double averageScale = s[i].data[3].back();
             vector<double>::reverse_iterator it;
             if (s[i].data[3].size()< considerNum){
-                cout<<"Scale vector size: " << s[i].data[3].size() << endl;
+                //cout<<"Scale vector size: " << s[i].data[3].size() << endl;
                 for(it = s[i].data[3].rbegin(); it!= s[i].data[3].rend() ; it++)
                 {
                     averageScale = (averageScale + *it)/2.0;
                 }
             }
             else {
-                cout<<"Scale vector size: " << s[i].data[3].size() << endl;
+                //cout<<"Scale vector size: " << s[i].data[3].size() << endl;
                 for(it = s[i].data[3].rbegin(); it!= s[i].data[3].rbegin() + considerNum; it++)
                 {
                     
@@ -323,7 +354,7 @@ int main( )
                 averageScaleDifference = 0.02;
             }
             else if (s[i].data[4].size()< considerNum && s[i].data[4].size() > 1){
-                cout<<"ScaleDifference vector size: " << s[i].data[4].size() << endl;
+                //cout<<"ScaleDifference vector size: " << s[i].data[4].size() << endl;
                 for(it = s[i].data[4].rbegin(); it!= s[i].data[4].rend() ; it++)
                 {
                     averageScaleDifference = (averageScaleDifference + abs(*it))/2.0;
@@ -331,20 +362,22 @@ int main( )
             }
             
             else {
-                cout<<"ScaleDifference vector size: " << s[i].data[4].size() << endl;
+                //cout<<"ScaleDifference vector size: " << s[i].data[4].size() << endl;
                 for(it = s[i].data[4].rbegin(); it!= s[i].data[4].rbegin() + considerNum; it++)
                 {
                     averageScaleDifference = (averageScaleDifference + abs(*it))/2.0;
                 }
             }
-            cout <<"15 * Average ScaleDifference from last several frames: " <<15*averageScaleDifference<< endl;
+            
+            int multipleScaleDiff = 20;
+            cout << multipleScaleDiff <<"* Average ScaleDifference from last several frames: " <<multipleScaleDiff * averageScaleDifference<< endl;
 
             //double ScaleDifference = scale -  s[i].data[3].back();
             double ScaleDifference = scale -  averageScale;
             printf("ScaleDifference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, ScaleDifference );
             
     //--------- update the thereshlod value for region growing if scale varies largely
-            if (abs(ScaleDifference) > 20*averageScaleDifference && abs(ScaleDifference) < 0.5) {
+            if (abs(ScaleDifference) > multipleScaleDiff * averageScaleDifference && abs(ScaleDifference) < 0.5) {
                 printf("!!!!!!!!!!!Update the threshlod value for R-growing becasue scale varies largely \n");
                 
                 double newScaleDifference = 0.0;
@@ -364,8 +397,8 @@ int main( )
                 }
                 else {
                     cout << "New RG_Threshlod ist already available in RG_Threshlod vector. so using old RG_Threshlod for next loop  " << endl;
-                    s[i].LoopThreshold = s[i].LoopThreshold + 1.0;
-                    cout << "s[i].LoopThreshold: " << s[i].LoopThreshold  << endl;
+                    s[i].LoopThreshold = s[i].LoopThreshold + 1;
+                    //cout << "s[i].LoopThreshold: " << s[i].LoopThreshold  << endl;
                 }
                 
                 
@@ -397,6 +430,13 @@ int main( )
                 }
             }
             
+            while(threshold_notchange){
+                char scale[30];
+                sprintf(scale, "Scale (object %d/index %d to %d): %f", i+1, indexFrame, indexFrame-1, s[i].data[3].back());
+                text.push_back(scale);
+                break;
+            }
+            
 //            vector<double>::iterator iter;
 //            vector<double>::iterator iter2;
 //            //vector<double> v1 = s[i].data[0];
@@ -416,37 +456,40 @@ int main( )
                 Matfinal.at<Vec3b>(R[i].seedtogether[j]) = color[i];
             }
             
+            
+            FramewithCounter = putStats(text,FramewithCounter,color[i], ptrBottomMiddle, 'b' );
+            text.clear();
+            
         }
-
+        
         imshow ("segment", Matfinal);
         //imshow("segment counter", FramewithCounter);
         
 //----------------- add the text(frame index number) to written video frame
         
-        vector<string> text;
-        
-        char frameindex[10];
-        sprintf( frameindex, "Frame %d",indexFrame);
-        text.push_back( frameindex);
-        Point pt(FramewithCounter.cols/2, FramewithCounter.rows);
-        Point* ptr = &pt;
-        
-        for( int i=0; i<Segmentnum; i++){
-            char Thereshold[15];
-            sprintf(Thereshold, "Threshold(object %d): %f", i+1, s[i].differencegrow );
-            text.push_back(Thereshold);
-            
-            while(threshold_notchange){
-                char scale[30];
-                sprintf(scale, "Scale (object %d/index %d to %d): %f", i+1, indexFrame, indexFrame-1, s[i].data[3].back());
-                text.push_back(scale);
-                break;
-            }
-            FramewithCounter = putStats(text,FramewithCounter,color[i], ptr);
-         text.clear();
-        }
-        //text.clear();
-        
+//        vector<string> text;
+//
+//        char frameindex[10];
+//        sprintf( frameindex, "Frame %d",indexFrame);
+//        text.push_back( frameindex);
+//        Point pt(FramewithCounter.cols/2, FramewithCounter.rows);
+//        Point* ptr = &pt;
+//
+//        for( int i=0; i<Segmentnum; i++){
+//            char Thereshold[15];
+//            sprintf(Thereshold, "Threshold(object %d): %f", i+1, s[i].differencegrow );
+//            text.push_back(Thereshold);
+//
+//            while(threshold_notchange){
+//                char scale[30];
+//                sprintf(scale, "Scale (object %d/index %d to %d): %f", i+1, indexFrame, indexFrame-1, s[i].data[3].back());
+//                text.push_back(scale);
+//                break;
+//            }
+//
+//        FramewithCounter = putStats(text,FramewithCounter,color[i], ptr);
+//        text.clear();
+//        }
         
 //        int j;
 //        string time_str;
@@ -483,7 +526,6 @@ int main( )
 //        s << "cv::putText() Demo!" ;
 //        putText(FramewithCounter,s.str(),Point(100,100), FONT_HERSHEY_COMPLEX, 1, Scalar(255,0,0), 2, 8 );
 
-        
         imshow(windowName,FramewithCounter);  //显示图像
        
         controlRate++; // for trackbar
@@ -519,18 +561,20 @@ int main( )
         
 //-------------define the stop-button and exit-button
         
-        int keycode = waitKey(10); // equal to  waitKey(10);  //延时10ms
+        int keycode = waitKey(0); // equal to  waitKey(10);  //延时10ms
         if(keycode  == ' '){   //32是空格键的ASCII值
             waitKey(0); }
         
-        //if(keycode  == 27)  // 27 = ASCII ESC
+        if(keycode  == 27)  // 27 = ASCII ESC
+            stop=true;
+        //if(keycode  == 32)  // 32 = ASCII Enter
             //stop=true;
         
         //if (keycode > 0 )
            // waitKey(0);
     }
     
-    cout << "Video playing over" << endl;
+    cout << "Video plays over(outside loop)" << endl;
     cout << endl;
     vc.release();
     vw.release();
@@ -585,7 +629,7 @@ int main( )
 }
 
 //insert text lines to video frame
-Mat putStats(vector<string> stats, Mat frame,Vec3b color, Point* origin ){ // 也可用 Point& pt
+Mat putStats(vector<string> stats, Mat frame,Vec3b color, Point* origin, char word ){ // 也可用 Point& pt
     int font_face = FONT_HERSHEY_COMPLEX_SMALL;
     double font_scale = 1;
     int thickness = 1;
@@ -593,20 +637,45 @@ Mat putStats(vector<string> stats, Mat frame,Vec3b color, Point* origin ){ // �
     //Scalar color = CV_RGB(255,255,0);
     //Point origin;
     //origin.y = frame.rows ;
-    
-    for(int i=0; i<stats.size(); i++){
-        //获取文本框的长宽
-        Size text_size = getTextSize(stats[i].c_str(), font_face, font_scale, thickness, &baseline);
-        //将文本框居中绘制
-         //文字在图像中的左下角 坐标 Origin of text ist Bottom-left corner of the text string in the image
-        //origin.x = frame.cols/2 - text_size.width / 2;
-        //origin.y = FramewithCounter.rows / 2 + text_size.height / 2;
-        //origin.y = origin.y - 1.2*text_size.height ;
-        (*origin).x = (*origin).x- text_size.width / 2;
-        (*origin).y = (*origin).y - 1.2*text_size.height ;
-        putText(frame, stats[i].c_str(), *origin, font_face , font_scale, color, thickness, 8, false);
-        (*origin).x = (*origin).x+ text_size.width / 2;
+    switch (word) {
+        case 'b':
+            
+            for(int i=0; i<stats.size(); i++){
+                //获取文本框的长宽
+                Size text_size = getTextSize(stats[i].c_str(), font_face, font_scale, thickness, &baseline);
+                //将文本框居中绘制
+                //文字在图像中的左下角 坐标 Origin of text ist Bottom-left corner of the text string in the image
+                //origin.x = frame.cols/2 - text_size.width / 2;
+                //origin.y = FramewithCounter.rows / 2 + text_size.height / 2;
+                //origin.y = origin.y - 1.2*text_size.height ;
+                (*origin).x = (*origin).x- text_size.width / 2;
+                (*origin).y = (*origin).y - 1.2*text_size.height ;
+                putText(frame, stats[i].c_str(), *origin, font_face , font_scale, color, thickness, 8, false);  //When true, the image data origin is at the bottom-left corner. Otherwise, it is at the top-left corner.
+                (*origin).x = (*origin).x+ text_size.width / 2;
+            }
+            break;
+        
+        case 't' :
+            for(int i=0; i<stats.size(); i++){
+                //获取文本框的长宽
+                Size text_size = getTextSize(stats[i].c_str(), font_face, font_scale, thickness, &baseline);
+                //将文本框居中绘制
+                //文字在图像中的左下角 坐标 Origin of text ist Bottom-left corner of the text string in the image
+                //origin.x = frame.cols/2 - text_size.width / 2;
+                //origin.y = FramewithCounter.rows / 2 + text_size.height / 2;
+                //origin.y = origin.y - 1.2*text_size.height ;
+                //(*origin).x = (*origin).x- text_size.width / 2;
+                (*origin).y = (*origin).y + 1.3*text_size.height ;
+                putText(frame, stats[i].c_str(), *origin, font_face , font_scale, color, thickness, 8, false);  //When true, the image data origin is at the bottom-left corner. Otherwise, it is at the top-left corner.
+                //(*origin).x = (*origin).x+ text_size.width / 2;
+            }
+            break;
+            
+        default:
+            break;
     }
+    
+
     
     return frame;
 }

@@ -65,7 +65,6 @@ Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vecto
         G = (G+MatBlur.at<Vec3b>(oneseed)[1])/2.0;
         R = (R+MatBlur.at<Vec3b>(oneseed)[2])/2.0;
         
-        
         for(int iNum=0 ; iNum< rowofDIR ; iNum++)
         {
             Point nextseed;
@@ -110,7 +109,6 @@ Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vecto
     
     return Segment;
 }
-
 
 //--------------------------  difference value duction ---------
 double Regiongrowing:: differenceValue(Mat MatIn, Point oneseed, Point nextseed, int DIR[][2], double rowofDIR, double B, double G, double R)
