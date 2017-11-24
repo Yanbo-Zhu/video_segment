@@ -9,7 +9,9 @@
 #include <iostream>
 #include "stdio.h"
 #include <time.h> //time_t time()  clock_t clock()
-#include<math.h>
+#include <math.h>
+#include "fstream"
+#include <string>
 
 
 #include "opencv2/core/core.hpp"
@@ -29,36 +31,20 @@ using namespace std;
 //-------global variable
 int mode;
 int Segmentnum;
-//double  differencegrow;
-Point g_pt;
-//vector<Point> seedvektor;
-//Point regioncenter ;
-
 //Mat FramewithCounter;
 Mat firstFrame;
-//Mat frame;
-//Mat MatOut;
-// Mat MatGrowCur;
-//Mat MatGrowTemp;
-//int iJudge;
+
 vector<Mat> channels;
 vector<Mat> channelsMatIn;
 clock_t  clockBegin, clockEnd;
 Mat putStats(vector<string> stats, Mat frame,Vec3b color,Point* origin, char word);
-//vector<Point> seedtogether;
+
 //-------
 
 //#define WINDOW_NAME " point marking "
 
 //----- global function
-//void on_MouseHandle(int event, int x, int y, int flags, void* param);
-//void DrawLine( Mat& img, Point pt );
 
-//Mat RegionGrow(Mat MatIn, Mat MatGrowCur, double iGrowJudge, vector<Point> seedset);
-//Mat RegionGrow(Mat MatIn, Mat MatBlur ,double iGrowJudge, vector<Point> seedset);
-//double differenceValue(Mat MatIn, Point oneseed, Point nextseed, int DIR[][2], double rowofDIR, double B, double G, double R );
-//Point centerpoint(vector<Point> seedtogetherBackup);
-//void Countijudge(Mat Temp, int *pointerijudge);
 //-------------------------------
 
 //setting for trackbar
@@ -75,9 +61,8 @@ double controlRate=0.1;
 void TrackBarFunc(int ,void(*))
 {
     controlRate=(double)trackbarValue/trackbarMax*totalFrame; //trackbar控制条对视频播放进度的控制
-    vc.set(CV_CAP_PROP_POS_FRAMES,controlRate);   //设置当前播放帧
+    //vc.set(CV_CAP_PROP_POS_FRAMES,controlRate);   //设置当前播放帧
 }
-
 
 
 int main( )
@@ -85,30 +70,25 @@ int main( )
 //    cv::Mat image = cv::Mat::zeros(cv::Size(640, 480), CV_8UC3);
 //    //设置蓝色背景
 //    image.setTo(cv::Scalar(100, 0, 0));
+ 
+    char path[] = "/Users/yanbo/Desktop/source/" ;
     
-    char const *savePath = "/Users/yanbo/Desktop/source/output/output2.mov";
-    
-    if(remove(savePath)==0)
-    {
-        cout<<"Old output video delete successful"<<endl;
-    }
-    else
-    {
-        cout<<"Old output video delete failed"<<endl;
-    }
-    
-    cout<<endl;
-    
+///-------------------------------------- VideoCapture ----------------
     //【1】读入视频
     //VideoCapture vc;
     
+    string videofilename = "70_20_descend";
+    string videoInputpath;
+    videoInputpath.assign(path);
+    videoInputpath.append(videofilename);
+    videoInputpath.append(".mp4");
     //vc.open( "/Users/yanbo/Desktop/source/Rotation_50m.mp4");
     //vc.open( "/Users/yanbo/Desktop/source/80_10_descend_rotation.mp4");
     //vc.open( "/Users/yanbo/Desktop/source/5-70.mp4");
     //vc.open( "/Users/yanbo/Desktop/source/80_10_descend.mp4");
     //vc.open( "/Users/yanbo/Desktop/source/70_20_descend_highDim.mp4");
-    vc.open( "/Users/yanbo/Desktop/source/70_20_descend.mp4");
-    
+    //vc.open( "/Users/yanbo/Desktop/source/70_20_descend.mp4");
+    vc.open(videoInputpath);
     
     if (!vc.isOpened())
     {
@@ -124,12 +104,34 @@ int main( )
     int Height = vc.get(CV_CAP_PROP_FRAME_HEIGHT);
     printf("Fourcc: %d / indexFrame: %d / fps: %d / Total Frame: %d / Width * Height : %d * %d \n", Fourcc ,IndexFrame, FPS, FRAME_COUNT, Width, Height );
     
-//-------------------------------------- VideoWriter function ----------------
+//-------------------------------------- VideoWriter ----------------
+
+    char *savePath = new char[50];
+    strcpy(savePath,path);
+    strcat(savePath,"output/");
+    strcat(savePath,videofilename.c_str());
+    strcat(savePath,"_output5");     // savePath::  /Users/yanbo/Desktop/source/output/70_20_descend_output
+    
+    char savePathvideo[50] ;
+    strcpy(savePathvideo,savePath);
+    strcat(savePathvideo, ".mov");
+    
+    //char const *savePathvideo = "/Users/yanbo/Desktop/source/output/output2.txt";
+    if(remove(savePathvideo)==0)
+    {
+        cout<<"Old output video delete successful"<<endl;
+    }
+    else
+    {
+        cout<<"Old output video delete failed"<<endl;
+    }
+    
+    cout<<endl;
     
     VideoWriter vw; //(filename, fourcc, fps, frameSize[, isColor])
-    vw.open( savePath, // 输出视频文件名
+    vw.open( savePathvideo, // 输出视频文件名
             (int)vc.get( CV_CAP_PROP_FOURCC ),//CV_FOURCC('S', 'V', 'Q', '3'), // //CV_FOURCC('8', 'B', 'P', 'S'), // 也可设为CV_FOURCC_PROMPT，在运行时选取 //fourcc – 4-character code of codec used to compress the frames.
-            (double)(vc.get( CV_CAP_PROP_FPS )/2), // 视频帧率
+            (double)(vc.get( CV_CAP_PROP_FPS )/6), // 视频帧率
             Size( (int)vc.get( CV_CAP_PROP_FRAME_WIDTH ),
                  (int)vc.get( CV_CAP_PROP_FRAME_HEIGHT ) ), // 视频大小
             true ); // 是否输出彩色视频
@@ -139,8 +141,39 @@ int main( )
         cout << "Failed to write the video! \n" << endl;
         return 1;
     }
-
-
+    
+//---------------- MatGrow videowriter
+    
+    char savePathvideoGrow[50] ;
+    strcpy(savePathvideoGrow,savePath);
+    strcat(savePathvideoGrow,"_Grow");
+    strcat(savePathvideoGrow, ".mov");
+    
+    //char const *savePathvideo = "/Users/yanbo/Desktop/source/output/output2.txt";
+    if(remove(savePathvideoGrow)==0)
+    {
+        cout<<"Old Grow output video delete successful"<<endl;
+    }
+    else
+    {
+        cout<<"Old Grow output video delete failed"<<endl;
+    }
+    
+    cout<<endl;
+    
+    VideoWriter vwGrow; //(filename, fourcc, fps, frameSize[, isColor])
+    vwGrow.open( savePathvideoGrow, // 输出视频文件名
+            (int)vc.get( CV_CAP_PROP_FOURCC ),//CV_FOURCC('S', 'V', 'Q', '3'), // //CV_FOURCC('8', 'B', 'P', 'S'), // 也可设为CV_FOURCC_PROMPT，在运行时选取 //fourcc – 4-character code of codec used to compress the frames.
+            (double)(vc.get( CV_CAP_PROP_FPS )/6), // 视频帧率
+            Size( (int)vc.get( CV_CAP_PROP_FRAME_WIDTH ),
+                 (int)vc.get( CV_CAP_PROP_FRAME_HEIGHT ) ), // 视频大小
+            true ); // 是否输出彩色视频
+    
+    if (!vwGrow.isOpened())
+    {
+        cout << "Failed to write the video! \n" << endl;
+        return 1;
+    }
 
 //-----------------------------finding first seed point---------------
     //Mat firstFrame;
@@ -149,21 +182,12 @@ int main( )
 
     vc.set(CV_CAP_PROP_POS_FRAMES, 0.0);
     
-    //imshow("first frame",firstFrame);
-    //waitKey(10);
-    
-    //Mat MatInBackup = firstFrame.clone();
-    
-    Mat MatOut(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
-    
-    Mat Matfinal (firstFrame.size(),CV_8UC3,Scalar(0,0,0));
-    
     //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
     
-    //cout<<"plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points" <<endl;
-    //cin >> mode;
-    cout<<"Choose seeds by clicking in orignal image." <<endl;
-    mode = 2;
+    cout<<"plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points"<<endl;
+    
+    //mode = 2;
+    cin >> mode;
     
     cout<<"How many initial segment do you want: " <<endl;
     cin >> Segmentnum;
@@ -180,18 +204,49 @@ int main( )
         color[i] = Vec3b(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
     }
     
-    
     for( int i=0; i<Segmentnum; i++)
     {
         printf("\n********************Setting for object %d ***************\n", i+1);
         printf("Plaese select initial seeds \n");
-        s[i].modechoose(mode, firstFrame);
+        s[i].modechoose(mode, firstFrame, i);
         s[i].drawpoint(firstFrame, s[i].initialseedvektor, color[i]);
         s[i].data.resize(5);
         printf("\nPlease set the threshold value for region growing\n");
         cin >> s[i].differencegrow;
         //s[i].differencegrow = 5.0;
     }
+    
+//---------------------create text for recording the inital seed point before RG
+    //char const *savePathtxt = "/Users/yanbo/Desktop/source/output/output2.txt";
+    string savePathtxt;
+    savePathtxt.assign(savePath);
+    savePathtxt.append(".txt");
+    
+    ofstream outputtext;
+    outputtext.open(savePathtxt,ios::out|ios::trunc);
+    if (!outputtext.is_open())
+    {
+        cout << "Failed to open outputtext file! \n" << endl;
+        return 1;
+    }
+
+    for( int i=0; i<Segmentnum; i++)
+    {
+        outputtext << "Objekt: " << i+1 << endl;
+        outputtext << "Initial Threshold: " << s[i].differencegrow << endl;
+        outputtext << "Row  Column " << endl;
+        for(size_t j=0;j<s[i].initialseedvektor.size();j++)
+        {
+            outputtext << s[i].initialseedvektor[j].y << "  " << s[i].initialseedvektor[j].x << endl ;
+        }
+        outputtext << "\n";
+    }
+    
+    outputtext << flush;
+    outputtext.close();
+    
+    //outputtxt << "This is a line.\n";
+    //outputtxt << "This is another line.\n";
     
 //------------------------------- Start to apply Segmentation-method in Video
     
@@ -215,6 +270,9 @@ int main( )
     {
         
         Mat frame;//定义一个Mat变量，用于存储每一帧的图像
+        Mat MatOut;
+        Mat Matfinal;
+        //Mat MatOut(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
         
         if (threshold_notchange){    // if threshold for this frame did not change, read the next frame
             indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
@@ -251,27 +309,29 @@ int main( )
         }
         
         Mat frame_Blur;
-        
         GaussianBlur(frame, frame_Blur, Size( 3, 3),0,0);
         
         Regiongrowing R[Segmentnum];
         Counter C[Segmentnum];
         
         Matfinal = frame.clone();
+        Mat Matsegment(frame.size(),CV_8UC3,Scalar(0,0,0));
         Mat FramewithCounter = frame.clone();
         
 //----------------- add the text(frame index number) to written video frame
         
         vector<string> text;
-        Point ptBottomMiddle(FramewithCounter.cols/2, FramewithCounter.rows);
-        Point* ptrBottomMiddle = &ptBottomMiddle;
+
         Point ptTopLeft(10, 10);
         Point* ptrTopLeft = &ptTopLeft;
-
+        Point ptBottomMiddle(FramewithCounter.cols/2, FramewithCounter.rows);
+        Point* ptrBottomMiddle = &ptBottomMiddle;
+        Point ptBottomMiddle2(FramewithCounter.cols/2, FramewithCounter.rows);
+        Point* ptrBottomMiddle2 = &ptBottomMiddle2;
        
         for( int i=0; i<Segmentnum; i++)
         {
-            char seedinfo[30];
+            char seedinfo[20];
             for(size_t j=0; j<s[i].initialseedvektor.size(); j++)
             {
                 double B = frame.at<Vec3b>(s[i].initialseedvektor[j])[0];
@@ -283,8 +343,7 @@ int main( )
             FramewithCounter = putStats(text,FramewithCounter, color[i], ptrTopLeft, 't');
             text.clear();
         }
-        
-        //text.clear();
+
         char frameindex[10];
         sprintf( frameindex, "Frame %d",indexFrame);
         text.push_back(frameindex);
@@ -294,8 +353,16 @@ int main( )
         {
             printf("\n************* Objekt %d Information **********************", i+1);
             printf("\n****** Cyele index for Threshold: %d\n", s[i].LoopThreshold);
+            //MatOut = R[i].RegionGrow(frame, frame_Blur , s[i].differencegrow, s[i].initialseedvektor);
             MatOut = R[i].RegionGrow(frame, frame_Blur , s[i].differencegrow, s[i].initialseedvektor);
-
+            
+            int intensity =(MatOut.at<Vec3b>(s[i].initialseedvektor.back())[0] + MatOut.at<Vec3b>(s[i].initialseedvektor.back())[1]+ MatOut.at<Vec3b>(s[i].initialseedvektor.back())[2])/3 ;
+            
+            cout<< "intensity: " <<intensity <<endl;
+            if (intensity == 0 ){
+                continue;
+            }
+            
             FramewithCounter = C[i].FindCounter(MatOut, FramewithCounter, color[i]);
 
             char Thereshold[15];
@@ -316,6 +383,7 @@ int main( )
                 s[i].data[2].push_back(C[i].Ratio);
                 s[i].initialseedvektor.clear();
                 s[i].initialseedvektor.push_back(R[i].regioncenter);
+                //s[i].initialseedvektor.push_back(C[i].cntr);
                 threshold_notchange = true;
             }
            
@@ -325,9 +393,13 @@ int main( )
             //cout<< "EWlong[indexFrame-1] " << EWlong[indexFrame-1] << " EWlong[indexFrame-2] "<< EWlong[indexFrame-2] << endl;
             //printf("Scale (index %d to %d): %lf \n", indexFrame, indexFrame-1, scale );
             cout<< "Scale (index " << indexFrame << " to " << indexFrame-1<< "): " << scale <<endl;
+            
+            char scaletext[30];
+            sprintf(scaletext, "Scale (object %d/index %d to %d): %f", i+1, indexFrame, indexFrame-1, s[i].data[3].back());
+            text.push_back(scaletext);
         
     //---------computeing the average scale from last 10 frames
-            int considerNum = 10;
+            int considerNum = 20;
             double averageScale = s[i].data[3].back();
             vector<double>::reverse_iterator it;
             if (s[i].data[3].size()< considerNum){
@@ -377,7 +449,7 @@ int main( )
             printf("ScaleDifference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, ScaleDifference );
             
     //--------- update the thereshlod value for region growing if scale varies largely
-            if (abs(ScaleDifference) > multipleScaleDiff * averageScaleDifference && abs(ScaleDifference) < 0.5) {
+            if (abs(ScaleDifference) > multipleScaleDiff * averageScaleDifference && abs(ScaleDifference) <= 0.8) {
                 printf("!!!!!!!!!!!Update the threshlod value for R-growing becasue scale varies largely \n");
                 
                 double newScaleDifference = 0.0;
@@ -399,6 +471,10 @@ int main( )
                     cout << "New RG_Threshlod ist already available in RG_Threshlod vector. so using old RG_Threshlod for next loop  " << endl;
                     s[i].LoopThreshold = s[i].LoopThreshold + 1;
                     //cout << "s[i].LoopThreshold: " << s[i].LoopThreshold  << endl;
+                    if(s[i].LoopThreshold > 20){
+                        cout<< "Break the video becasue of infinitv Loop for updating Threshold" << endl;
+                        stop=true;
+                    }
                 }
                 
                 
@@ -408,7 +484,7 @@ int main( )
                 threshold_notchange = false;
             }
         
-            else if (abs(ScaleDifference) > 0.8){
+            else if (abs(ScaleDifference) > 0.8 && abs(ScaleDifference) < 1.2 ) { /// Object could be found. ScaleDifference  is negativ
                 printf("!!!!!!!!!!!Update  threshlod value for R-growing becasue Object could be found \n");
                 s[i].differencegrow = s[i].differencegrow + 0.05;
                 printf("new RG_Threshold: %f \n", s[i].differencegrow);
@@ -424,18 +500,19 @@ int main( )
                 s[i].data[1].push_back(C[i].EWshort);
                 s[i].data[2].push_back(C[i].Ratio);
                 s[i].initialseedvektor.clear();
-                s[i].initialseedvektor.push_back(R[i].regioncenter);
+                //s[i].initialseedvektor.push_back(R[i].regioncenter);
+                s[i].initialseedvektor.push_back(C[i].cntr);
                 threshold_notchange = true;
                 break;
                 }
             }
             
-            while(threshold_notchange){
-                char scale[30];
-                sprintf(scale, "Scale (object %d/index %d to %d): %f", i+1, indexFrame, indexFrame-1, s[i].data[3].back());
-                text.push_back(scale);
-                break;
-            }
+//            while(threshold_notchange){
+//                char scale[30];
+//                sprintf(scale, "Scale (object %d/index %d to %d): %f", i+1, indexFrame, indexFrame-1, s[i].data[3].back());
+//                text.push_back(scale);
+//                break;
+//            }
             
 //            vector<double>::iterator iter;
 //            vector<double>::iterator iter2;
@@ -454,14 +531,17 @@ int main( )
             for(size_t j=0; j<R[i].seedtogether.size(); j++)
             {
                 Matfinal.at<Vec3b>(R[i].seedtogether[j]) = color[i];
+                Matsegment.at<Vec3b>(R[i].seedtogether[j]) = color[i];
             }
             
             
-            FramewithCounter = putStats(text,FramewithCounter,color[i], ptrBottomMiddle, 'b' );
+            Matsegment = putStats(text,Matsegment,color[i], ptrBottomMiddle, 'b' );
+            FramewithCounter = putStats(text,FramewithCounter,color[i], ptrBottomMiddle2, 'b' );
             text.clear();
             
         }
         
+        imshow ("Matsegment", Matsegment);
         imshow ("segment", Matfinal);
         //imshow("segment counter", FramewithCounter);
         
@@ -535,6 +615,7 @@ int main( )
         
         //vw.write(frame);
         vw << FramewithCounter;
+        vwGrow << Matsegment;
         
 //        // split to channel
 //        Mat RedChannel;
@@ -561,9 +642,9 @@ int main( )
         
 //-------------define the stop-button and exit-button
         
-        int keycode = waitKey(0); // equal to  waitKey(10);  //延时10ms
-        if(keycode  == ' '){   //32是空格键的ASCII值
-            waitKey(0); }
+        int keycode = waitKey(10); // equal to  waitKey(10);  //延时10ms
+        if(keycode  == ' ')   //32是空格键的ASCII值
+            waitKey(0);
         
         if(keycode  == 27)  // 27 = ASCII ESC
             stop=true;
@@ -578,6 +659,7 @@ int main( )
     cout << endl;
     vc.release();
     vw.release();
+    vwGrow.release();
     //destroyAllWindows();
     
     //system("pause");
@@ -624,7 +706,7 @@ int main( )
 //    vc2.release();
 //    cout << "The written video plays over" << endl;
     
-    
+    exit(0);
     return 0;
 }
 

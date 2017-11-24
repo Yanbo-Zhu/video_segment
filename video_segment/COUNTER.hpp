@@ -37,7 +37,7 @@ public:
     double Ratio;
     double EWlong;
     double EWshort;
-    
+    Point cntr ;
     //vector <vector<double> >Eigenvaluevector(2);
     double Degree;
 

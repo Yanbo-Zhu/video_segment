@@ -34,7 +34,7 @@ Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vecto
     
     //生长方向顺序数据
     //int DIR[8][2]={{-1,-1},{-1,0},{-1,1},{0,-1},{0,1},{1,-1},{1,0},{1,1}};
-     int DIR[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
+    int DIR[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
     double rowofDIR= sizeof(DIR)/sizeof(DIR[0]);
     //cout <<"rowofDIR: " << rowofDIR << "\n" << endl;
     
@@ -98,15 +98,14 @@ Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vecto
         
         //imshow("MatGrownow", MatGrownow);
         //waitKey(1);
+        //vw << MatGrownow;
     }
-    //----------------------------------------------------------------------------
-    
-    //cout << "seedtogether.size:" << seedtogether.size() << endl;
+
     regioncenter  = centerpoint(seedtogether);
     //cout<<"regioncenter: " << regioncenter <<endl;
     
     //seedtogether.clear();
-    
+    //vw.release();
     return Segment;
 }
 

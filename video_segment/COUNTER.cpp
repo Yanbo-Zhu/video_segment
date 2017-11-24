@@ -50,7 +50,7 @@ Mat Counter::FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color)
         // Calculate the area of each contour
         double area = contourArea(contours[i]);
         // Ignore contours that are too small or too large
-        if (area < 1e2 || 1e5 < area) continue;
+        //if (area < 1e2 || 1e5 < area) continue;
         // Draw each contour only for visualisation purposes
         drawContours(FramemitCounter, contours, static_cast<int>(i), color, 2, 8, hierarchy, 0);
         
@@ -79,8 +79,8 @@ double Counter::getOrientation(const vector<Point> &pts, Mat &img)
     //Perform PCA analysis
     PCA pca_analysis(data_pts, Mat(), CV_PCA_DATA_AS_ROW);
     //Store the center of the object
-    Point cntr = Point(static_cast<int>(pca_analysis.mean.at<double>(0, 0)),
-                       static_cast<int>(pca_analysis.mean.at<double>(0, 1)));
+    //Point cntr = Point(static_cast<int>(pca_analysis.mean.at<double>(0, 0)), static_cast<int>(pca_analysis.mean.at<double>(0, 1)));
+    cntr = Point(static_cast<int>(pca_analysis.mean.at<double>(0, 0)), static_cast<int>(pca_analysis.mean.at<double>(0, 1)));
     
     cout<< "Center of the object: Row " << cntr.y << " Column: " << cntr.x << endl;
     //Store the eigenvalues and eigenvectors

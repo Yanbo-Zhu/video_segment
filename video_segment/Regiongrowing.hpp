@@ -31,6 +31,7 @@ private:
 public:
     
     Mat RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vector<Point> seedset);
+    //Mat RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vector<Point> seedset, VideoWriter vw) ;
     Point regioncenter ;
     vector<Point> seedtogether;
     

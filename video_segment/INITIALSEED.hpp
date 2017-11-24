@@ -20,6 +20,9 @@
 using namespace cv;
 using namespace std;
 
+
+//Point const a[2] = {Point(100, 100),Point(300, 300) };
+
 class Initalseed
 {
     
@@ -29,18 +32,18 @@ private:
     void DrawLine( Mat &img, Point pt, Vec3b color  );
     double thresholdvalue;
     Point g_pt;
-    
+    vector<vector<Point>> set_defaultseed(vector<vector<Point>> seed, int x);
 public:
     //Mat MatInBackup = firstFrame.clone();
     
     //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
-    
+
     vector<Point> initialseedvektor;
     double differencegrow;
     int LoopThreshold;
     vector<double> RGThreshold;
     
-    void modechoose(int x, Mat firstframe);
+    void modechoose(int x, Mat firstframe, int objektindex);
     void drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Vec3b color);
     
     //void initalseed();
