@@ -38,6 +38,7 @@ vector<Mat> channels;
 vector<Mat> channelsMatIn;
 clock_t  clockBegin, clockEnd;
 Mat putStats(vector<string> stats, Mat frame,Vec3b color,Point* origin, char word);
+vector<vector<Point>> defaultseed(4);
 
 //-------
 
@@ -67,16 +68,20 @@ void TrackBarFunc(int ,void(*))
 
 int main( )
 {
+// some default seed points
+    defaultseed[0].push_back(Point(233,246));
+    defaultseed[1].push_back(Point(530,234)); // white boot
+    double defaultThreshold[] = {5, 9} ;
 //    cv::Mat image = cv::Mat::zeros(cv::Size(640, 480), CV_8UC3);
 //    //设置蓝色背景
 //    image.setTo(cv::Scalar(100, 0, 0));
  
-    char path[] = "/Users/yanbo/Desktop/source/" ;
+
     
 ///-------------------------------------- VideoCapture ----------------
     //【1】读入视频
     //VideoCapture vc;
-    
+    char path[] = "/Users/yanbo/Desktop/source/" ;
     string videofilename = "70_20_descend";
     string videoInputpath;
     videoInputpath.assign(path);
@@ -207,12 +212,12 @@ int main( )
     for( int i=0; i<Segmentnum; i++)
     {
         printf("\n********************Setting for object %d ***************\n", i+1);
-        printf("Plaese select initial seeds \n");
-        s[i].modechoose(mode, firstFrame, i);
+        
+        s[i].modechoose(mode, firstFrame, i, defaultThreshold, defaultseed );
         s[i].drawpoint(firstFrame, s[i].initialseedvektor, color[i]);
         s[i].data.resize(5);
-        printf("\nPlease set the threshold value for region growing\n");
-        cin >> s[i].differencegrow;
+        //printf("\nPlease set the threshold value for region growing\n");
+        //cin >> s[i].differencegrow;
         //s[i].differencegrow = 5.0;
     }
     
@@ -356,12 +361,16 @@ int main( )
             //MatOut = R[i].RegionGrow(frame, frame_Blur , s[i].differencegrow, s[i].initialseedvektor);
             MatOut = R[i].RegionGrow(frame, frame_Blur , s[i].differencegrow, s[i].initialseedvektor);
             
-            int intensity =(MatOut.at<Vec3b>(s[i].initialseedvektor.back())[0] + MatOut.at<Vec3b>(s[i].initialseedvektor.back())[1]+ MatOut.at<Vec3b>(s[i].initialseedvektor.back())[2])/3 ;
-            
+            double intensity =(MatOut.at<Vec3b>(s[i].initialseedvektor.back())[0] + MatOut.at<Vec3b>(s[i].initialseedvektor.back())[1]+ MatOut.at<Vec3b>(s[i].initialseedvektor.back())[2])/3.0 ;
             cout<< "intensity: " <<intensity <<endl;
-            if (intensity == 0 ){
+            
+//            Mat Mattemp;
+//            cvtColor(MatOut, Mattemp, CV_BGR2GRAY);
+//            int intensity2 = Mattemp.at<uchar>(s[i].initialseedvektor.back());
+//            cout<< "intensity2: " <<intensity2 <<endl;
+            
+            if (intensity == 0 )
                 continue;
-            }
             
             FramewithCounter = C[i].FindCounter(MatOut, FramewithCounter, color[i]);
 
@@ -508,7 +517,7 @@ int main( )
             }
             
 //            while(threshold_notchange){
-//                char scale[30];
+//                char scale[30];-
 //                sprintf(scale, "Scale (object %d/index %d to %d): %f", i+1, indexFrame, indexFrame-1, s[i].data[3].back());
 //                text.push_back(scale);
 //                break;

@@ -7,7 +7,6 @@
 //
 
 #include "INITIALSEED.hpp"
-vector<vector<Point>> defaultseed;
 
 //Initalseed(Mat x, Mat y) // constructor function
 //{
@@ -16,13 +15,13 @@ vector<vector<Point>> defaultseed;
 //}
 
 
-void Initalseed :: modechoose(int x, Mat firstFrame, int objektindex)
+void Initalseed :: modechoose(int x, Mat firstFrame, int objektindex,  double defaultTH[], vector<vector<Point>> defaultSD)
 {
     //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
     Mat MatInBackup = firstFrame.clone();
+    printf("Plaese select initial seeds \n");
     
     switch (x) {
-            
             //tap 1, choose seeds by entrying the threshold value
         case 1:
             
@@ -45,11 +44,12 @@ void Initalseed :: modechoose(int x, Mat firstFrame, int objektindex)
                     }
                 }
             }
+            printf("\nPlease set the threshold value for region growing\n");
+            cin >> differencegrow;
             
             break;
             
         case 2:
-            
             // tap 2, choose seeds by clicking in orignal image
             #define WINDOW_NAME " point marking "
             
@@ -76,6 +76,9 @@ void Initalseed :: modechoose(int x, Mat firstFrame, int objektindex)
                 //printf("Seed %d: (Row: %d, Column: %d)\n",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
                 //cout << initialseedvektor[i] <<endl;
             }
+    
+            printf("\nPlease set the threshold value for region growing\n");
+            cin >> differencegrow;
             
             break;
             
@@ -90,23 +93,25 @@ void Initalseed :: modechoose(int x, Mat firstFrame, int objektindex)
             //initialseedvektor.push_back(Point(581,33)); // white window
             
             //Point (x,y )  x= column  y = row
-            defaultseed.clear();
-            defaultseed.resize(4);
-            defaultseed[0].push_back(Point(233,246)); // white boot
-            defaultseed[1].push_back(Point(530,234));
-            //defaultseed = set_defaultseed(defaultseed, segmentnumber);
-            initialseedvektor = defaultseed[objektindex];
+
+            initialseedvektor = defaultSD[objektindex];
             
             for(size_t i=0; i<initialseedvektor.size();i++)
             {
                 printf("Seed %d: (Row: %d, Column: %d)\n",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
                 //MatGrowCur.at<Vec3b>(initialseedvektor[i]) = firstFrame.at<Vec3b>(initialseedvektor[i]);
             }
+            printf("\nPlease set the threshold value for region growing\n");
+            
+            differencegrow = defaultTH[objektindex];
+            cout << differencegrow << endl;
             break;
             
+
+            
         default:
-            cout<< "Wrong number log in" << endl;
-            break;
+            cout<< "Wrong number input during choosing Method" << endl;
+            exit(0);
     }
 }
 
@@ -187,7 +192,7 @@ void Initalseed :: drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Ve
         Scalar colorvalue = firstFrame.at<Vec3b>(initialseedvektor[i]);
         double intensity = (firstFrame.at<Vec3b>(initialseedvektor[i])[0] + firstFrame.at<Vec3b>(initialseedvektor[i])[1] + firstFrame.at<Vec3b>(initialseedvektor[i])[2]) / 3.0;
         //Vec3b colorvalue = image.at<Vec3b>(Point(x, y));
-        printf("Seed %d: (Row: %d, Column: %d) / ",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
+        printf("n Seed %d: (Row: %d, Column: %d) / ",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
         cout << " Scalar value: " << colorvalue << " / Intensity: " << intensity <<endl;
         //调用函数进行绘制
         DrawLine( firstFrame, initialseedvektor[i], color); //画线

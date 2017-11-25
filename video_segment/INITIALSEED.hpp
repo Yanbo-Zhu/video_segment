@@ -43,7 +43,7 @@ public:
     int LoopThreshold;
     vector<double> RGThreshold;
     
-    void modechoose(int x, Mat firstframe, int objektindex);
+    void modechoose(int x, Mat firstFrame, int objektindex,  double defaultTh[], vector<vector<Point>> defaultSD);
     void drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Vec3b color);
     
     //void initalseed();
