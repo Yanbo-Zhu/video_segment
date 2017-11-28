@@ -68,15 +68,13 @@ void TrackBarFunc(int ,void(*))
 
 int main( )
 {
-// some default seed points
+// some default seed points when i choose 2 during modechoose
     defaultseed[0].push_back(Point(233,246));
     defaultseed[1].push_back(Point(530,234)); // white boot
     double defaultThreshold[] = {5, 9} ;
 //    cv::Mat image = cv::Mat::zeros(cv::Size(640, 480), CV_8UC3);
 //    //设置蓝色背景
 //    image.setTo(cv::Scalar(100, 0, 0));
- 
-
     
 ///-------------------------------------- VideoCapture ----------------
     //【1】读入视频
@@ -256,7 +254,8 @@ int main( )
 //------------------------------- Start to apply Segmentation-method in Video
     
     bool stop(false);
-    bool threshold_notchange(true);
+    bool all_threshold_notchange(true);
+    cout << "all_threshold_notchange" << all_threshold_notchange <<endl;
     Mat frame_backup;
     int indexFrame = 0;
     bool bSuccess;
@@ -279,7 +278,13 @@ int main( )
         Mat Matfinal;
         //Mat MatOut(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
         
-        if (threshold_notchange){    // if threshold for this frame did not change, read the next frame
+        for( int i=0; i<Segmentnum; i++)
+        {
+            all_threshold_notchange = true;
+            all_threshold_notchange = all_threshold_notchange && s[i].threshold_notchange;
+        }
+        
+        if (all_threshold_notchange){    // if threshold for this frame did not change, read the next frame
             indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
             printf("\n----------------------------IndexFrame: %d ----------------------- \n ", indexFrame);
             bSuccess = vc.read(frame); // read a new frame from video
@@ -326,7 +331,7 @@ int main( )
 //----------------- add the text(frame index number) to written video frame
         
         vector<string> text;
-
+        vector<string> seedtext;
         Point ptTopLeft(10, 10);
         Point* ptrTopLeft = &ptTopLeft;
         Point ptBottomMiddle(FramewithCounter.cols/2, FramewithCounter.rows);
@@ -336,17 +341,17 @@ int main( )
        
         for( int i=0; i<Segmentnum; i++)
         {
-            char seedinfo[20];
+            char seedinfo[50];
             for(size_t j=0; j<s[i].initialseedvektor.size(); j++)
             {
                 double B = frame.at<Vec3b>(s[i].initialseedvektor[j])[0];
                 double G = frame.at<Vec3b>(s[i].initialseedvektor[j])[1];
                 double R = frame.at<Vec3b>(s[i].initialseedvektor[j])[2];
-                sprintf(seedinfo, "object %d: Seed (%d, %d) intensity: %.4f", i+1, s[i].initialseedvektor[j].y, s[i].initialseedvektor[j].x, (B+G+R)/3);
-                text.push_back(seedinfo);
+                sprintf(seedinfo, "object %d: initial Seed before Segmentation (%d, %d) intensity: %.4f", i+1, s[i].initialseedvektor[j].y, s[i].initialseedvektor[j].x, (B+G+R)/3);
+                seedtext.push_back(seedinfo);
             }
-            FramewithCounter = putStats(text,FramewithCounter, color[i], ptrTopLeft, 't');
-            text.clear();
+            FramewithCounter = putStats(seedtext,FramewithCounter, color[i], ptrTopLeft, 't');
+            seedtext.clear();
         }
 
         char frameindex[10];
@@ -361,7 +366,7 @@ int main( )
             //MatOut = R[i].RegionGrow(frame, frame_Blur , s[i].differencegrow, s[i].initialseedvektor);
             MatOut = R[i].RegionGrow(frame, frame_Blur , s[i].differencegrow, s[i].initialseedvektor);
             
-            double intensity =(MatOut.at<Vec3b>(s[i].initialseedvektor.back())[0] + MatOut.at<Vec3b>(s[i].initialseedvektor.back())[1]+ MatOut.at<Vec3b>(s[i].initialseedvektor.back())[2])/3.0 ;
+            double intensity =(MatOut.at<Vec3b>(s[i].initialseedvektor.back())[0] + MatOut.at<Vec3b>(s[i].initialseedvektor.back())[1] + MatOut.at<Vec3b>(s[i].initialseedvektor.back())[2])/3.0 ;
             cout<< "intensity: " <<intensity <<endl;
             
 //            Mat Mattemp;
@@ -373,16 +378,27 @@ int main( )
                 continue;
             
             FramewithCounter = C[i].FindCounter(MatOut, FramewithCounter, color[i]);
-
-            char Thereshold[15];
-            sprintf(Thereshold, "Threshold(object %d): %f", i+1, s[i].differencegrow );
-            text.push_back(Thereshold);
+            
+            cout<< "Centre: Row " << C[i].cntr.y << " Column: " << C[i].cntr.x << endl;
+            
+            char Centre[50];
+            double B_Centre = frame.at<Vec3b>(C[i].cntr)[0];
+            double G_Centre = frame.at<Vec3b>(C[i].cntr)[1];
+            double R_Centre = frame.at<Vec3b>(C[i].cntr)[2];
+            sprintf(Centre, "object %d: Segment Centre(%d, %d) intensity: %.4f", i+1, C[i].cntr.y, C[i].cntr.x, (B_Centre+G_Centre+R_Centre)/3);
+            seedtext.push_back(Centre);
+            FramewithCounter = putStats(seedtext,FramewithCounter, color[i], ptrTopLeft, 't');
+            seedtext.clear();
             
             cout << "EWlong: " << C[i].EWlong<<endl;
             cout << "EWshort: " << C[i].EWshort<<endl;
             cout << "Ratio: "  << C[i].Ratio <<endl;
             cout << "Degree: "  << C[i].Degree <<endl;
             cout<< "Threshold for RegionGrow: " << s[i].differencegrow << endl;
+            
+            char Thereshold[15];
+            sprintf(Thereshold, "Threshold(object %d): %f", i+1, s[i].differencegrow );
+            text.push_back(Thereshold);
             
             if (indexFrame == 0){
                 s[i].data[3].push_back(1.0); // scale
@@ -391,9 +407,9 @@ int main( )
                 s[i].data[1].push_back(C[i].EWshort);
                 s[i].data[2].push_back(C[i].Ratio);
                 s[i].initialseedvektor.clear();
-                s[i].initialseedvektor.push_back(R[i].regioncenter);
-                //s[i].initialseedvektor.push_back(C[i].cntr);
-                threshold_notchange = true;
+                //s[i].initialseedvektor.push_back(R[i].regioncenter);
+                s[i].initialseedvektor.push_back(C[i].cntr);
+                s[i].threshold_notchange = true;
             }
            
             //cout<<"s[i].data[0].back(): "<<s[i].data[0].back() <<"  C[i].EWlong: "<<  C[i].EWlong <<endl;
@@ -450,7 +466,7 @@ int main( )
                 }
             }
             
-            int multipleScaleDiff = 20;
+            int multipleScaleDiff = 30;
             cout << multipleScaleDiff <<"* Average ScaleDifference from last several frames: " <<multipleScaleDiff * averageScaleDifference<< endl;
 
             //double ScaleDifference = scale -  s[i].data[3].back();
@@ -490,14 +506,14 @@ int main( )
                 printf("RG_Threshold for next loop %f \n", s[i].differencegrow);
 
                 //vc.set(CV_CAP_PROP_POS_FRAMES, indexFrame);
-                threshold_notchange = false;
+                s[i].threshold_notchange = false;
             }
         
             else if (abs(ScaleDifference) > 0.8 && abs(ScaleDifference) < 1.2 ) { /// Object could be found. ScaleDifference  is negativ
                 printf("!!!!!!!!!!!Update  threshlod value for R-growing becasue Object could be found \n");
                 s[i].differencegrow = s[i].differencegrow + 0.05;
                 printf("new RG_Threshold: %f \n", s[i].differencegrow);
-                threshold_notchange = false;
+                s[i].threshold_notchange = false;
                 //waitKey(100);
             }
             
@@ -511,7 +527,7 @@ int main( )
                 s[i].initialseedvektor.clear();
                 //s[i].initialseedvektor.push_back(R[i].regioncenter);
                 s[i].initialseedvektor.push_back(C[i].cntr);
-                threshold_notchange = true;
+                s[i].threshold_notchange = true;
                 break;
                 }
             }
@@ -651,7 +667,7 @@ int main( )
         
 //-------------define the stop-button and exit-button
         
-        int keycode = waitKey(10); // equal to  waitKey(10);  //延时10ms
+        int keycode = waitKey(0); // equal to  waitKey(10);  //延时10ms
         if(keycode  == ' ')   //32是空格键的ASCII值
             waitKey(0);
         

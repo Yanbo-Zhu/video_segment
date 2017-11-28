@@ -112,6 +112,8 @@ void Initalseed :: modechoose(int x, Mat firstFrame, int objektindex,  double de
         default:
             cout<< "Wrong number input during choosing Method" << endl;
             exit(0);
+            //break;
+            
     }
 }
 

@@ -82,7 +82,7 @@ double Counter::getOrientation(const vector<Point> &pts, Mat &img)
     //Point cntr = Point(static_cast<int>(pca_analysis.mean.at<double>(0, 0)), static_cast<int>(pca_analysis.mean.at<double>(0, 1)));
     cntr = Point(static_cast<int>(pca_analysis.mean.at<double>(0, 0)), static_cast<int>(pca_analysis.mean.at<double>(0, 1)));
     
-    cout<< "Center of the object: Row " << cntr.y << " Column: " << cntr.x << endl;
+    //cout<< "Center of the object: Row " << cntr.y << " Column: " << cntr.x << endl;
     //Store the eigenvalues and eigenvectors
     vector<Point2d> eigen_vecs(2);
     vector<double> eigen_val(2);

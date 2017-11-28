@@ -42,6 +42,7 @@ public:
     double differencegrow;
     int LoopThreshold;
     vector<double> RGThreshold;
+    bool threshold_notchange = true;
     
     void modechoose(int x, Mat firstFrame, int objektindex,  double defaultTh[], vector<vector<Point>> defaultSD);
     void drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Vec3b color);
