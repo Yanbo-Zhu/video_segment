@@ -255,7 +255,6 @@ int main( )
     
     bool stop(false);
     bool all_threshold_notchange(true);
-    cout << "all_threshold_notchange" << all_threshold_notchange <<endl;
     Mat frame_backup;
     int indexFrame = 0;
     bool bSuccess;
@@ -278,11 +277,13 @@ int main( )
         Mat Matfinal;
         //Mat MatOut(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
         
+        all_threshold_notchange = true;
         for( int i=0; i<Segmentnum; i++)
         {
-            all_threshold_notchange = true;
             all_threshold_notchange = all_threshold_notchange && s[i].threshold_notchange;
         }
+        cout<<endl;
+        cout << "all_threshold_notchange: " << all_threshold_notchange <<endl;
         
         if (all_threshold_notchange){    // if threshold for this frame did not change, read the next frame
             indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
@@ -446,6 +447,14 @@ int main( )
             cout <<"AverageScale from last several frames: " << averageScale<< endl;
 
     //-------computeing the average ScaleDifference from last 10 frames
+                        vector<double>::iterator iter;
+                        //vector<double> v1 = s[i].data[0];
+                        cout<< "s[i].data[4].size(): " << s[i].data[4].size() << endl;
+                        cout << "ScaleDifference vector = " ;
+                        for (iter= s[i].data[4].begin(); iter != s[i].data[4].end(); iter++){
+                            cout << *iter << " ";}
+                        cout << endl;
+            
             double averageScaleDifference = abs(s[i].data[4].back());
             if (s[i].data[4].size() == 1){
                 averageScaleDifference = 0.02;
@@ -467,6 +476,7 @@ int main( )
             }
             
             int multipleScaleDiff = 30;
+                                    cout << "Average ScaleDifference from last several frames: " <<averageScaleDifference<< endl;
             cout << multipleScaleDiff <<"* Average ScaleDifference from last several frames: " <<multipleScaleDiff * averageScaleDifference<< endl;
 
             //double ScaleDifference = scale -  s[i].data[3].back();
@@ -487,6 +497,7 @@ int main( )
     
                 vector<double>::iterator iterfind;
                 iterfind = find( s[i].RGThreshold.begin(), s[i].RGThreshold.end(), newScaleDifference);
+                
                 if(iterfind == s[i].RGThreshold.end()){
                     cout << "New RG_Threshlod ist not available in RG_Threshlod vector. So using New RG_Threshlod for next loop" << endl;
                     s[i].RGThreshold.push_back(newScaleDifference);
@@ -501,7 +512,6 @@ int main( )
                         stop=true;
                     }
                 }
-                
                 
                 printf("RG_Threshold for next loop %f \n", s[i].differencegrow);
 
@@ -518,17 +528,27 @@ int main( )
             }
             
             else{
-                while (indexFrame > 0){
-                s[i].data[3].push_back(scale);
-                s[i].data[4].push_back(ScaleDifference);
-                s[i].data[0].push_back(C[i].EWlong);
-                s[i].data[1].push_back(C[i].EWshort);
-                s[i].data[2].push_back(C[i].Ratio);
-                s[i].initialseedvektor.clear();
-                //s[i].initialseedvektor.push_back(R[i].regioncenter);
-                s[i].initialseedvektor.push_back(C[i].cntr);
+                if (indexFrame > 0){
+                    
                 s[i].threshold_notchange = true;
-                break;
+                bool test_threshold_notchange = true;
+                for( int i=0; i<Segmentnum; i++)
+                {
+                    test_threshold_notchange = test_threshold_notchange && s[i].threshold_notchange;
+                }
+                cout << "test_threshold_notchange: " << test_threshold_notchange <<endl;
+                    
+                    if(test_threshold_notchange){
+                        s[i].data[3].push_back(scale);
+                        s[i].data[4].push_back(ScaleDifference);
+                        s[i].data[0].push_back(C[i].EWlong);
+                        s[i].data[1].push_back(C[i].EWshort);
+                        s[i].data[2].push_back(C[i].Ratio);
+                        s[i].initialseedvektor.clear();
+                        //s[i].initialseedvektor.push_back(R[i].regioncenter);
+                        s[i].initialseedvektor.push_back(C[i].cntr);
+                        
+                    }
                 }
             }
             
@@ -564,7 +584,7 @@ int main( )
             FramewithCounter = putStats(text,FramewithCounter,color[i], ptrBottomMiddle2, 'b' );
             text.clear();
             
-        }
+        } ////segment big循环在这里截止
         
         imshow ("Matsegment", Matsegment);
         imshow ("segment", Matfinal);
