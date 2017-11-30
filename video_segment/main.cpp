@@ -116,7 +116,7 @@ int main( )
     strcpy(savePath,path);
     strcat(savePath,"output/");
     strcat(savePath,videofilename.c_str());
-    strcat(savePath,"_output5");     // savePath::  /Users/yanbo/Desktop/source/output/70_20_descend_output
+    strcat(savePath,"_output7");     // savePath::  /Users/yanbo/Desktop/source/output/70_20_descend_output
     
     char savePathvideo[50] ;
     strcpy(savePathvideo,savePath);
@@ -148,7 +148,7 @@ int main( )
         return 1;
     }
     
-//---------------- MatGrow videowriter
+//---------------- MatGrow Videowriter
     
     char savePathvideoGrow[50] ;
     strcpy(savePathvideoGrow,savePath);
@@ -180,6 +180,7 @@ int main( )
         cout << "Failed to write the video! \n" << endl;
         return 1;
     }
+    
 
 //-----------------------------finding first seed point---------------
     //Mat firstFrame;
@@ -207,7 +208,7 @@ int main( )
     Vec3b color[Segmentnum];
     for( int i=0; i<Segmentnum; i++)
     {
-        color[i] = Vec3b(rng.uniform(0, 150), rng.uniform(0, 150), rng.uniform(0, 150));
+        color[i] = Vec3b(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
     }
     
     for( int i=0; i<Segmentnum; i++)
@@ -216,7 +217,7 @@ int main( )
         
         s[i].modechoose(mode, firstFrame, i, defaultThreshold, defaultseed );
         s[i].drawpoint(firstFrame, s[i].initialseedvektor, color[i]);
-        s[i].data.resize(5);
+        s[i].data.resize(6);
         //printf("\nPlease set the threshold value for region growing\n");
         //cin >> s[i].differencegrow;
         //s[i].differencegrow = 5.0;
@@ -252,15 +253,6 @@ int main( )
     outputtext.close();
     
     //outputtxt << "This is a line.\n";
-    //outputtxt << "This is another line.\n";
-    
-//------------------------------- Start to apply Segmentation-method in Video
-    
-    bool stop(false);
-    bool all_threshold_notchange(true);
-    Mat frame_backup;
-    int indexFrame = 0;
-    bool bSuccess;
     
 //------------------- creating Trackbar
     totalFrame = vc.get(CV_CAP_PROP_FRAME_COUNT);  //获取总帧数
@@ -270,8 +262,15 @@ int main( )
     //在图像窗口上创建控制条
     createTrackbar(trackBarName,windowName,&trackbarValue,trackbarMax,TrackBarFunc);
     //TrackBarFunc(0,0);
+    
+//------------------------------- Start to apply Segmentation-method in Video
+    
+    bool stop(false);
+    bool all_threshold_notchange(true);
+    Mat frame_backup;
+    int indexFrame = 0;
+    bool bSuccess;
 
-//-----------------------------------------
     while(!stop)
     {
         
@@ -321,7 +320,9 @@ int main( )
         }
         
         Mat frame_Blur;
-        GaussianBlur(frame, frame_Blur, Size( 3, 3),0,0);
+        Size kernelsize(5,5);
+        GaussianBlur(frame, frame_Blur, kernelsize,0,0);
+        //blur( image, out, Size(3, 3));
         
         Regiongrowing R[Segmentnum];
         Counter C[Segmentnum];
@@ -408,6 +409,7 @@ int main( )
                 s[i].data[0].push_back(C[i].EWlong);
                 s[i].data[1].push_back(C[i].EWshort);
                 s[i].data[2].push_back(C[i].Ratio);
+                s[i].data[5].push_back(0.0); // RatioDifference
                 s[i].initialseedvektor.clear();
                 //s[i].initialseedvektor.push_back(R[i].regioncenter);
                 s[i].initialseedvektor.push_back(C[i].cntr);
@@ -425,73 +427,41 @@ int main( )
             sprintf(scaletext, "Scale (obj %d/index %d to %d): %.5f", i+1, indexFrame, indexFrame-1, s[i].data[3].back());
             text.push_back(scaletext);
         
-    //---------computeing the average scale from last 10 frames
-            int considerNum = 15;
-            
-//            double averageScale = s[i].data[3].back();
-//            vector<double>::reverse_iterator it;
-//            if (s[i].data[3].size()< considerNum){
-//                //cout<<"Scale vector size: " << s[i].data[3].size() << endl;
-//                for(it = s[i].data[3].rbegin(); it!= s[i].data[3].rend(); it++)
-//                {
-//                    averageScale = (averageScale + *it)/2.0;
-//                }
-//            }
-//            else {
-//                //cout<<"Scale vector size: " << s[i].data[3].size() << endl;
-//                for(it = s[i].data[3].rbegin(); it!= s[i].data[3].rbegin() + considerNum; it++)
-//                {
-//
-//                    averageScale = (averageScale + *it)/2.0;
-//                }
-//            }
-            
-            double averageScale = averagevalue(considerNum, s[i].data[3]);
-            
-            cout <<"AverageScale from last several frames: " << averageScale<< endl;
-
-    //-------computeing the average ScaleDifference from last 10 frames
-            
-//            double averageScaleDifference = abs(s[i].data[4].back());
-//            if (s[i].data[4].size() == 1){
-//                averageScaleDifference = 0.02;
-//            }
-//            else if (s[i].data[4].size()< considerNum && s[i].data[4].size() > 1){
-//                //cout<<"ScaleDifference vector size: " << s[i].data[4].size() << endl;
-//                for(it = s[i].data[4].rbegin(); it!= s[i].data[4].rend() ; it++)
-//                {
-//                    averageScaleDifference = (averageScaleDifference + abs(*it))/2.0;
-//                }
-//            }
-//
-//            else {
-//                //cout<<"ScaleDifference vector size: " << s[i].data[4].size() << endl;
-//                for(it = s[i].data[4].rbegin(); it!= s[i].data[4].rbegin() + considerNum; it++)
-//                {
-//                    averageScaleDifference = (averageScaleDifference + abs(*it))/2.0;
-//                }
-//            }
-            
-            double averageScaleDifference = averagedifference(considerNum, s[i].data[4]);
-            
+    //---------computeing the average scale and average Scale Difference
+            int considerNum = 10;
             int multipleScaleDiff = 15;
             
+            double averageScale = averagevalue(considerNum, s[i].data[3]);
+            cout <<"Average Scale from last several frames: " << averageScale<< endl;
+            double averageScaleDifference = averagedifference(considerNum, s[i].data[4]);
             cout << multipleScaleDiff <<"* Average ScaleDifference from last several frames: " <<multipleScaleDiff * averageScaleDifference<< endl;
-
+            
             //double ScaleDifference = scale -  s[i].data[3].back();
             double ScaleDifference = scale -  averageScale;
             printf("ScaleDifference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, ScaleDifference );
+
+    // ---------- avaerage Ratio and averafe Ratio Difference
+            
+            double averageRatio = averagevalue(considerNum, s[i].data[2]);
+            cout <<"Average Ratio from last several frames: " << averageRatio<< endl;
+            double averageRatioDifference = averagedifference(considerNum, s[i].data[5]);
+            cout << multipleScaleDiff << "* Average RatioDifference from last several frames: " <<multipleScaleDiff * averageRatioDifference<< endl;
+            double RatioDifference = C[i].Ratio - averageRatio;
+            printf("Ratio Difference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, RatioDifference );
             
     //--------- update the thereshlod value for region growing if scale varies largely
             if (abs(ScaleDifference) > multipleScaleDiff * averageScaleDifference && abs(ScaleDifference) <= 0.8) {
-                printf("!!!!!!!!!!!Update the threshlod value for R-growing becasue scale varies largely \n");
                 
                 double newScaleDifference = 0.0;
-                if ( ScaleDifference > 0.0)
+                if ( ScaleDifference > 0.0){
                     newScaleDifference = s[i].differencegrow - (0.04 / pow(2, s[i].LoopThreshold - 1));
-                else
+                    printf("!!!!!!!!!!!Update the threshlod value/ Segment (scale difference) is too lagre \n");
+                }
+                else{
                     newScaleDifference = s[i].differencegrow + (0.04/ pow(2, s[i].LoopThreshold - 1));
-                
+                    printf("!!!!!!!!!!!Update the threshlod value/ Segment (scale difference) is too small \n");
+                }
+
                 cout << "New RG_Threshlod: " << newScaleDifference  << endl;
     
                 vector<double>::iterator iterfind;
@@ -506,6 +476,7 @@ int main( )
                     cout << "New RG_Threshlod ist already available in RG_Threshlod vector. Using old RG_Threshlod for next loop  " << endl;
                     s[i].LoopThreshold = s[i].LoopThreshold + 1;
                     //cout << "s[i].LoopThreshold: " << s[i].LoopThreshold  << endl;
+                    
                     if(s[i].LoopThreshold > 20){
                         cout<< "Break the video becasue of infinitv Loop" << endl;
                         stop=true;
@@ -543,7 +514,7 @@ int main( )
                 {
                     test_threshold_notchange = test_threshold_notchange && s[i].threshold_notchange;
                 }
-                cout << "test_threshold_notchange: " << test_threshold_notchange <<endl;
+                //cout << "test_threshold_notchange: " << test_threshold_notchange <<endl;
                     
                     if(test_threshold_notchange){
                         s[i].data[3].push_back(scale);
@@ -551,6 +522,7 @@ int main( )
                         s[i].data[0].push_back(C[i].EWlong);
                         s[i].data[1].push_back(C[i].EWshort);
                         s[i].data[2].push_back(C[i].Ratio);
+                        s[i].data[5].push_back(RatioDifference);
                         s[i].initialseedvektor.clear();
                         //s[i].initialseedvektor.push_back(R[i].regioncenter);
                         s[i].initialseedvektor.push_back(C[i].cntr);
@@ -714,9 +686,6 @@ int main( )
     vwGrow.release();
     //destroyAllWindows();
     
-    //system("pause");
-    //waitKey(0);
-    
 /****************** play the written video */
 //
 //    VideoCapture vc2;
@@ -837,7 +806,7 @@ double averagedifference(int num, vector<double> array){
     double average = abs(array.back());
     vector<double>::reverse_iterator it;
     if (array.size() == 1){
-        average = 0.02;
+        average = 0.01;
     }
     
     else if (array.size()< num && array.size() > 1){
