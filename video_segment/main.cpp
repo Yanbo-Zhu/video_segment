@@ -370,8 +370,7 @@ int main( )
             MatOut = R[i].RegionGrow(frame, frame_Blur , s[i].differencegrow, s[i].initialseedvektor);
             
             double intensity =(MatOut.at<Vec3b>(s[i].initialseedvektor.back())[0] + MatOut.at<Vec3b>(s[i].initialseedvektor.back())[1] + MatOut.at<Vec3b>(s[i].initialseedvektor.back())[2])/3.0 ;
-            cout<< "intensity: " <<intensity <<endl;
-            
+            //cout<< "intensity: " <<intensity <<endl;
 //            Mat Mattemp;
 //            cvtColor(MatOut, Mattemp, CV_BGR2GRAY);
 //            int intensity2 = Mattemp.at<uchar>(s[i].initialseedvektor.back());
@@ -489,7 +488,7 @@ int main( )
                 s[i].threshold_notchange = false;
             }
         
-            else if (abs(ScaleDifference) > 0.8 && abs(ScaleDifference) <= 1.2 ) { /// Object could be found. ScaleDifference  is negativ
+            else if (abs(ScaleDifference) > 0.8 && abs(ScaleDifference) <= 1.2 ) { /// Object could not be found. ScaleDifference is negativ
                 printf("!!!!!!!!!!!Update  threshlod value becasue Object could not be found \n");
                 s[i].differencegrow = s[i].differencegrow + 0.05;
                 printf("new RG_Threshold: %f \n", s[i].differencegrow);
