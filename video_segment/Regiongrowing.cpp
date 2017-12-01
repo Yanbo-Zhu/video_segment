@@ -208,3 +208,10 @@ Point  Regiongrowing:: centerpoint(vector<Point> seedtogetherBackup){
     return Center;
 }
 
+Regiongrowing:: ~Regiongrowing(){
+    //cout << endl;
+    //cout << "Klasse Regiongrowing " << regioncenter <<" wurde geloescht." << endl;
+}
+
+
+

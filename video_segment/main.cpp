@@ -12,6 +12,7 @@
 #include <math.h>
 #include "fstream"
 #include <string>
+#include <list>
 
 
 #include "opencv2/core/core.hpp"
@@ -41,6 +42,7 @@ Mat putStats(vector<string> stats, Mat frame,Vec3b color,Point* origin, char wor
 double averagevalue(int num, vector<double> array);
 double averagedifference(int num, vector<double> array);
 vector<vector<Point>> defaultseed(4);
+vector<vector<Point>> defaultseed2(4);
 
 //-------
 
@@ -67,14 +69,46 @@ void TrackBarFunc(int ,void(*))
     //vc.set(CV_CAP_PROP_POS_FRAMES,controlRate);   //设置当前播放帧
 }
 
+void PrintInt(const int&nData)
+{
+    cout<<nData<<endl;
+}
 
 int main( )
 {
-// some default seed points when i choose 2 during modechoose
-    defaultseed[0].push_back(Point(233,246));
+//    vector<int> vecInt;
+//    for(int i=0; i<10;++i)
+//    {
+//        vecInt.push_back(i);
+//    }
+//    cout<<"向量中的内容为："<<endl;
+//    for_each(vecInt.begin(),vecInt.end(),PrintInt);
+//    cout<<"vector contains "<<vecInt.size()<<" elements"<<endl;
+//    vecInt.pop_back();//删除最后一个元素
+//    cout<<"删除最后一个元素后，vector contains "<<vecInt.size()<<" elements"<<endl;
+//    vector<int>::iterator k = vecInt.begin()+1;
+//    vecInt.erase(k);//删除第一个元素
+//    //vecInt.erase(k); //迭代器k已经失效，会出错
+//    cout<<"删除第一个元素后，vector contains "<<vecInt.size()<<" elements"<<endl;
+//    //vecInt.erase(vecInt.begin(),vecInt.end()); //删除所有元素
+//    //cout<<"删除所有元素后，vector contains "<<vecInt.size()<<"elements"<<endl; //输出为0
+//    vector<int>::iterator vecNewEnd =remove(vecInt.begin(),vecInt.end(),5); //删除元素
+//    cout<<"删除元素后，vector contains "<<vecInt.size()<<" elements"<<endl;
+//    cout<<"向量开始到新结束为止的元素："<<endl;
+//    for_each(vecInt.begin(),vecNewEnd,PrintInt);
+//    cout<<"向量中的元素："<<endl;
+//    for_each(vecInt.begin(),vecInt.end(),PrintInt);
+    
+//--------------some default seed points when i choose 2 during modechoose
+// Point (x,y )  x= column  y = row
+    defaultseed[0].push_back(Point(215,240)); // light blue roof left
     defaultseed[1].push_back(Point(530,234)); // white boot
     
-    double defaultThreshold[] = {5, 9} ;
+    double defaultThreshold[] = {6, 11} ;
+    
+    defaultseed2[0].push_back(Point(491,356)); // black roof bottem
+    double defaultThreshold2[] = {7} ;
+    
 //    cv::Mat image = cv::Mat::zeros(cv::Size(640, 480), CV_8UC3);
 //    //设置蓝色背景
 //    image.setTo(cv::Scalar(100, 0, 0));
@@ -116,7 +150,7 @@ int main( )
     strcpy(savePath,path);
     strcat(savePath,"output/");
     strcat(savePath,videofilename.c_str());
-    strcat(savePath,"_output7");     // savePath::  /Users/yanbo/Desktop/source/output/70_20_descend_output
+    strcat(savePath,"_output8");     // savePath::  /Users/yanbo/Desktop/source/output/70_20_descend_output
     
     char savePathvideo[50] ;
     strcpy(savePathvideo,savePath);
@@ -202,7 +236,15 @@ int main( )
     
     Initalseed s[10];
     
-    // settung color for diffent segments
+    vector<Initalseed> vectorInitialseed;
+    
+    for( int i=0; i<Segmentnum; i++)
+    {
+        vectorInitialseed.push_back(s[i]);
+    }
+    
+    
+    // setting different color for segments
     RNG rng(time(0));
     //RNG& rng = theRNG();
     Vec3b color[Segmentnum];
@@ -215,7 +257,8 @@ int main( )
     {
         printf("\n********************Setting for object %d ***************\n", i+1);
         
-        s[i].modechoose(mode, firstFrame, i, defaultThreshold, defaultseed );
+        //s[i].modechoose(mode, firstFrame, i, defaultThreshold, defaultseed );
+        s[i].modechoose(mode, firstFrame, i, defaultThreshold2, defaultseed2 );
         s[i].drawpoint(firstFrame, s[i].initialseedvektor, color[i]);
         s[i].data.resize(6);
         //printf("\nPlease set the threshold value for region growing\n");
@@ -396,7 +439,8 @@ int main( )
             cout << "EWshort: " << C[i].EWshort<<endl;
             cout << "Ratio: "  << C[i].Ratio <<endl;
             cout << "Degree: "  << C[i].Degree <<endl;
-            cout<< "Threshold for RegionGrow: " << s[i].differencegrow << endl;
+            //cout<< "Threshold: " << s[i].differencegrow << endl;
+            printf("Threshold: %.8f \n", s[i].differencegrow );
             
             char Thereshold[15];
             sprintf(Thereshold, "Threshold(obj %d): %.8f", i+1, s[i].differencegrow );
@@ -421,10 +465,11 @@ int main( )
             //cout<< "EWlong[indexFrame-1] " << EWlong[indexFrame-1] << " EWlong[indexFrame-2] "<< EWlong[indexFrame-2] << endl;
             //printf("Scale (index %d to %d): %lf \n", indexFrame, indexFrame-1, scale );
             cout<< "Scale (index " << indexFrame << " to " << indexFrame-1<< "): " << scale <<endl;
+            cout<< endl;
             
-            char scaletext[30];
-            sprintf(scaletext, "Scale (obj %d/index %d to %d): %.5f", i+1, indexFrame, indexFrame-1, s[i].data[3].back());
-            text.push_back(scaletext);
+//            char scaletext[30];
+//            sprintf(scaletext, "Scale (obj %d/index %d to %d): %.5f", i+1, indexFrame, indexFrame-1, s[i].data[3].back());
+//            text.push_back(scaletext);
         
     //---------computeing the average scale and average Scale Difference
             int considerNum = 10;
@@ -438,7 +483,7 @@ int main( )
             //double ScaleDifference = scale -  s[i].data[3].back();
             double ScaleDifference = scale -  averageScale;
             printf("ScaleDifference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, ScaleDifference );
-
+            cout<< endl;
     // ---------- avaerage Ratio and averafe Ratio Difference
             
             double averageRatio = averagevalue(considerNum, s[i].data[2]);
@@ -447,6 +492,7 @@ int main( )
             cout << multipleScaleDiff << "* Average RatioDifference from last several frames: " <<multipleScaleDiff * averageRatioDifference<< endl;
             double RatioDifference = C[i].Ratio - averageRatio;
             printf("Ratio Difference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, RatioDifference );
+            cout<< endl;
             
     //--------- update the thereshlod value for region growing if scale varies largely
             if (abs(ScaleDifference) > multipleScaleDiff * averageScaleDifference && abs(ScaleDifference) <= 0.8) {
@@ -454,11 +500,11 @@ int main( )
                 double newScaleDifference = 0.0;
                 if ( ScaleDifference > 0.0){
                     newScaleDifference = s[i].differencegrow - (0.04 / pow(2, s[i].LoopThreshold - 1));
-                    printf("!!!!!!!!!!!Update the threshlod value/ Segment (scale difference) is too lagre \n");
+                    printf("!!!!!!!!!!!Update/ the threshlod value will be decreased/ current segment (scale difference positive) is too lagre \n");
                 }
                 else{
                     newScaleDifference = s[i].differencegrow + (0.04/ pow(2, s[i].LoopThreshold - 1));
-                    printf("!!!!!!!!!!!Update the threshlod value/ Segment (scale difference) is too small \n");
+                    printf("!!!!!!!!!!!Update/ the threshlod value will be increased/ current Segment (scale difference negative) is too small \n");
                 }
 
                 cout << "New RG_Threshlod: " << newScaleDifference  << endl;
