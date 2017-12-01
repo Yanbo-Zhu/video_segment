@@ -236,14 +236,6 @@ int main( )
     
     Initalseed s[10];
     
-    vector<Initalseed> vectorInitialseed;
-    
-    for( int i=0; i<Segmentnum; i++)
-    {
-        vectorInitialseed.push_back(s[i]);
-    }
-    
-    
     // setting different color for segments
     RNG rng(time(0));
     //RNG& rng = theRNG();
@@ -264,6 +256,13 @@ int main( )
         //printf("\nPlease set the threshold value for region growing\n");
         //cin >> s[i].differencegrow;
         //s[i].differencegrow = 5.0;
+    }
+    
+    vector<Initalseed> vectorInitialseed;
+    
+    for( int i=0; i<Segmentnum; i++)
+    {
+        vectorInitialseed.push_back(s[i]);
     }
     
 //---------------------create text for recording the inital seed point before RG
