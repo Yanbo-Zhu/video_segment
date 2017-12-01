@@ -23,7 +23,7 @@ using namespace std;
 
 //Point const a[2] = {Point(100, 100),Point(300, 300) };
 
-class Initalseed
+class Initialseed
 {
     
 private:
@@ -32,7 +32,7 @@ private:
     void DrawLine( Mat &img, Point pt, Vec3b color  );
     double thresholdvalue;
     Point g_pt;
-    vector<vector<Point>> set_defaultseed(vector<vector<Point>> seed, int x);
+    vector<vector<Point>> set_defaultseed (vector<vector<Point>> seed, int x);
 public:
     //Mat MatInBackup = firstFrame.clone();
     
@@ -44,9 +44,11 @@ public:
     vector<double> RGThreshold;
     bool threshold_notchange = true;
     
+    Initialseed(Mat Frame);
+    Initialseed();
     void modechoose(int x, Mat firstFrame, int objektindex,  double defaultTh[], vector<vector<Point>> defaultSD);
     void drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Vec3b color);
-    
+    void newseed(Mat firstFrame);
     //void initalseed();
     //Initalseed(Mat x, Mat y);
     vector < vector<double> >data;

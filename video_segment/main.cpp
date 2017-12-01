@@ -32,6 +32,7 @@ using namespace std;
 //-------global variable
 int mode;
 int Segmentnum;
+int Segmentinitialnum;
 //Mat FramewithCounter;
 Mat firstFrame;
 
@@ -103,11 +104,9 @@ int main( )
 // Point (x,y )  x= column  y = row
     defaultseed[0].push_back(Point(215,240)); // light blue roof left
     defaultseed[1].push_back(Point(530,234)); // white boot
+    defaultseed[2].push_back(Point(491,356)); // black roof bottem
+    double defaultThreshold[] = {7, 11,7} ;
     
-    double defaultThreshold[] = {6, 11} ;
-    
-    defaultseed2[0].push_back(Point(491,356)); // black roof bottem
-    double defaultThreshold2[] = {7} ;
     
 //    cv::Mat image = cv::Mat::zeros(cv::Size(640, 480), CV_8UC3);
 //    //设置蓝色背景
@@ -150,7 +149,9 @@ int main( )
     strcpy(savePath,path);
     strcat(savePath,"output/");
     strcat(savePath,videofilename.c_str());
-    strcat(savePath,"_output8");     // savePath::  /Users/yanbo/Desktop/source/output/70_20_descend_output
+    strcat(savePath,"_output9");     // savePath::  /Users/yanbo/Desktop/source/output/70_20_descend_output
+    cout<< "savePath: " << savePath <<endl;
+    cout<<endl;
     
     char savePathvideo[50] ;
     strcpy(savePathvideo,savePath);
@@ -165,8 +166,6 @@ int main( )
     {
         cout<<"Old output video delete failed"<<endl;
     }
-    
-    cout<<endl;
     
     VideoWriter vw; //(filename, fourcc, fps, frameSize[, isColor])
     vw.open( savePathvideo, // 输出视频文件名
@@ -192,11 +191,11 @@ int main( )
     //char const *savePathvideo = "/Users/yanbo/Desktop/source/output/output2.txt";
     if(remove(savePathvideoGrow)==0)
     {
-        cout<<"Old Grow output video delete successful"<<endl;
+        cout<<"Old Grow output video was deleted successful"<<endl;
     }
     else
     {
-        cout<<"Old Grow output video delete failed"<<endl;
+        cout<<"Old Grow output video was deleted failed"<<endl;
     }
     
     cout<<endl;
@@ -225,32 +224,33 @@ int main( )
     
     //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
     
-    cout<<"plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points"<<endl;
+    cout<<"Plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points"<<endl;
     
     //mode = 2;
     cin >> mode;
     
     cout<<"How many initial segment do you want: " <<endl;
-    cin >> Segmentnum;
+    cin >> Segmentinitialnum;
     //Segmentnum  = 1;
     
-    Initalseed s[10];
+    int arraynum = 10;
+    Initialseed s[arraynum];
     
     // setting different color for segments
     RNG rng(time(0));
     //RNG& rng = theRNG();
-    Vec3b color[Segmentnum];
-    for( int i=0; i<Segmentnum; i++)
+    Vec3b color[arraynum];
+    for( int i=0; i<arraynum; i++)
     {
         color[i] = Vec3b(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
     }
     
-    for( int i=0; i<Segmentnum; i++)
+    for( int i=0; i<Segmentinitialnum; i++)
     {
         printf("\n********************Setting for object %d ***************\n", i+1);
         
         //s[i].modechoose(mode, firstFrame, i, defaultThreshold, defaultseed );
-        s[i].modechoose(mode, firstFrame, i, defaultThreshold2, defaultseed2 );
+        s[i].modechoose(mode, firstFrame, i, defaultThreshold, defaultseed );
         s[i].drawpoint(firstFrame, s[i].initialseedvektor, color[i]);
         s[i].data.resize(6);
         //printf("\nPlease set the threshold value for region growing\n");
@@ -258,11 +258,11 @@ int main( )
         //s[i].differencegrow = 5.0;
     }
     
-    vector<Initalseed> vectorInitialseed;
+    vector<Initialseed>  vectorS;
     
-    for( int i=0; i<Segmentnum; i++)
+    for( int i=0; i<Segmentinitialnum; i++)
     {
-        vectorInitialseed.push_back(s[i]);
+        vectorS.push_back(s[i]);
     }
     
 //---------------------create text for recording the inital seed point before RG
@@ -279,7 +279,7 @@ int main( )
         return 1;
     }
 
-    for( int i=0; i<Segmentnum; i++)
+    for( int i=0; i<Segmentinitialnum; i++)
     {
         outputtext << "Objekt: " << i+1 << endl;
         outputtext << "Initial Threshold: " << s[i].differencegrow << endl;
@@ -321,10 +321,14 @@ int main( )
         Mat Matfinal;
         //Mat MatOut(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
         
+        cout <<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
+        Segmentnum = vectorS.size();
+        cout<<"Amount of Segments: " << Segmentnum <<endl;
+        
         all_threshold_notchange = true;
         for( int i=0; i<Segmentnum; i++)
         {
-            all_threshold_notchange = all_threshold_notchange && s[i].threshold_notchange;
+            all_threshold_notchange = all_threshold_notchange && vectorS[i].threshold_notchange;
         }
         
         if (all_threshold_notchange){    // if threshold for this frame did not change, read the next frame
@@ -335,9 +339,9 @@ int main( )
             
             for( int i=0; i<Segmentnum; i++)
             {
-                s[i].RGThreshold.clear();
-                s[i].RGThreshold.push_back(s[i].differencegrow);
-                s[i].LoopThreshold = 1;
+                vectorS[i].RGThreshold.clear();
+                vectorS[i].RGThreshold.push_back(vectorS[i].differencegrow);
+                vectorS[i].LoopThreshold = 1;
             }
         }
     
@@ -387,12 +391,12 @@ int main( )
         for( int i=0; i<Segmentnum; i++)
         {
             char seedinfo[50];
-            for(size_t j=0; j<s[i].initialseedvektor.size(); j++)
+            for(size_t j=0; j<vectorS[i].initialseedvektor.size(); j++)
             {
-                double B = frame.at<Vec3b>(s[i].initialseedvektor[j])[0];
-                double G = frame.at<Vec3b>(s[i].initialseedvektor[j])[1];
-                double R = frame.at<Vec3b>(s[i].initialseedvektor[j])[2];
-                sprintf(seedinfo, "Obj %d: Seed before Segmentation (%d, %d) intensity: %.2f", i+1, s[i].initialseedvektor[j].y, s[i].initialseedvektor[j].x, (B+G+R)/3);
+                double B = frame.at<Vec3b>(vectorS[i].initialseedvektor[j])[0];
+                double G = frame.at<Vec3b>(vectorS[i].initialseedvektor[j])[1];
+                double R = frame.at<Vec3b>(vectorS[i].initialseedvektor[j])[2];
+                sprintf(seedinfo, "Obj %d: Seed before Segmentation (%d, %d) intensity: %.2f", i+1, vectorS[i].initialseedvektor[j].y, vectorS[i].initialseedvektor[j].x, (B+G+R)/3);
                 seedtext.push_back(seedinfo);
             }
             FramewithCounter = putStats(seedtext,FramewithCounter, color[i], ptrTopLeft, 't');
@@ -407,11 +411,11 @@ int main( )
         for( int i=0; i<Segmentnum; i++)
         {
             printf("\n************* Objekt %d Information **********************", i+1);
-            printf("\n****** Cyele index for Threshold: %d\n", s[i].LoopThreshold);
+            printf("\n****** Cyele index for Threshold: %d\n", vectorS[i].LoopThreshold);
             //MatOut = R[i].RegionGrow(frame, frame_Blur , s[i].differencegrow, s[i].initialseedvektor);
-            MatOut = R[i].RegionGrow(frame, frame_Blur , s[i].differencegrow, s[i].initialseedvektor);
+            MatOut = R[i].RegionGrow(frame, frame_Blur , vectorS[i].differencegrow, vectorS[i].initialseedvektor);
             
-            double intensity =(MatOut.at<Vec3b>(s[i].initialseedvektor.back())[0] + MatOut.at<Vec3b>(s[i].initialseedvektor.back())[1] + MatOut.at<Vec3b>(s[i].initialseedvektor.back())[2])/3.0 ;
+            double intensity =(MatOut.at<Vec3b>(vectorS[i].initialseedvektor.back())[0] + MatOut.at<Vec3b>(vectorS[i].initialseedvektor.back())[1] + MatOut.at<Vec3b>(vectorS[i].initialseedvektor.back())[2])/3.0 ;
             //cout<< "intensity: " <<intensity <<endl;
 //            Mat Mattemp;
 //            cvtColor(MatOut, Mattemp, CV_BGR2GRAY);
@@ -439,28 +443,28 @@ int main( )
             cout << "Ratio: "  << C[i].Ratio <<endl;
             cout << "Degree: "  << C[i].Degree <<endl;
             //cout<< "Threshold: " << s[i].differencegrow << endl;
-            printf("Threshold: %.8f \n", s[i].differencegrow );
+            printf("Threshold: %.8f \n", vectorS[i].differencegrow );
             
             char Thereshold[15];
-            sprintf(Thereshold, "Threshold(obj %d): %.8f", i+1, s[i].differencegrow );
+            sprintf(Thereshold, "Threshold(obj %d): %.8f", i+1, vectorS[i].differencegrow );
             text.push_back(Thereshold);
             
             if (indexFrame == 0){
-                s[i].data[3].push_back(1.0); // scale
-                s[i].data[4].push_back(0.0); // ScaleDifference
-                s[i].data[0].push_back(C[i].EWlong);
-                s[i].data[1].push_back(C[i].EWshort);
-                s[i].data[2].push_back(C[i].Ratio);
-                s[i].data[5].push_back(0.0); // RatioDifference
-                s[i].initialseedvektor.clear();
+                vectorS[i].data[3].push_back(1.0); // scale
+                vectorS[i].data[4].push_back(0.0); // ScaleDifference
+                vectorS[i].data[0].push_back(C[i].EWlong);    // Green line. long axis
+                vectorS[i].data[1].push_back(C[i].EWshort);   // lightly blue line . short axis
+                vectorS[i].data[2].push_back(C[i].Ratio);
+                vectorS[i].data[5].push_back(0.0); // RatioDifference
+                vectorS[i].initialseedvektor.clear();
                 //s[i].initialseedvektor.push_back(R[i].regioncenter);
-                s[i].initialseedvektor.push_back(C[i].cntr);
-                s[i].threshold_notchange = true;
+                vectorS[i].initialseedvektor.push_back(C[i].cntr);
+                vectorS[i].threshold_notchange = true;
             }
            
             //cout<<"s[i].data[0].back(): "<<s[i].data[0].back() <<"  C[i].EWlong: "<<  C[i].EWlong <<endl;
             //double scale = ( (C[i].EWlong/s[i].data[0].back()) + (C[i].EWshort/s[i].data[1].back()) )/2 ;
-            double scale = sqrt( (C[i].EWlong* C[i].EWshort)/(s[i].data[0].back() * s[i].data[1].back()) );
+            double scale = sqrt( (C[i].EWlong* C[i].EWshort)/(vectorS[i].data[0].back() * vectorS[i].data[1].back()) );
             //cout<< "EWlong[indexFrame-1] " << EWlong[indexFrame-1] << " EWlong[indexFrame-2] "<< EWlong[indexFrame-2] << endl;
             //printf("Scale (index %d to %d): %lf \n", indexFrame, indexFrame-1, scale );
             cout<< "Scale (index " << indexFrame << " to " << indexFrame-1<< "): " << scale <<endl;
@@ -474,9 +478,9 @@ int main( )
             int considerNum = 10;
             int multipleScaleDiff = 15;
             
-            double averageScale = averagevalue(considerNum, s[i].data[3]);
+            double averageScale = averagevalue(considerNum, vectorS[i].data[3]);
             cout <<"Average Scale from last several frames: " << averageScale<< endl;
-            double averageScaleDifference = averagedifference(considerNum, s[i].data[4]);
+            double averageScaleDifference = averagedifference(considerNum, vectorS[i].data[4]);
             cout << multipleScaleDiff <<"* Average ScaleDifference from last several frames: " <<multipleScaleDiff * averageScaleDifference<< endl;
             
             //double ScaleDifference = scale -  s[i].data[3].back();
@@ -485,9 +489,9 @@ int main( )
             cout<< endl;
     // ---------- avaerage Ratio and averafe Ratio Difference
             
-            double averageRatio = averagevalue(considerNum, s[i].data[2]);
+            double averageRatio = averagevalue(considerNum, vectorS[i].data[2]);
             cout <<"Average Ratio from last several frames: " << averageRatio<< endl;
-            double averageRatioDifference = averagedifference(considerNum, s[i].data[5]);
+            double averageRatioDifference = averagedifference(considerNum, vectorS[i].data[5]);
             cout << multipleScaleDiff << "* Average RatioDifference from last several frames: " <<multipleScaleDiff * averageRatioDifference<< endl;
             double RatioDifference = C[i].Ratio - averageRatio;
             printf("Ratio Difference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, RatioDifference );
@@ -498,78 +502,78 @@ int main( )
                 
                 double newScaleDifference = 0.0;
                 if ( ScaleDifference > 0.0){
-                    newScaleDifference = s[i].differencegrow - (0.04 / pow(2, s[i].LoopThreshold - 1));
+                    newScaleDifference = vectorS[i].differencegrow - (0.04 / pow(2, vectorS[i].LoopThreshold - 1));
                     printf("!!!!!!!!!!!Update/ the threshlod value will be decreased/ current segment (scale difference positive) is too lagre \n");
                 }
                 else{
-                    newScaleDifference = s[i].differencegrow + (0.04/ pow(2, s[i].LoopThreshold - 1));
+                    newScaleDifference = vectorS[i].differencegrow + (0.04/ pow(2, vectorS[i].LoopThreshold - 1));
                     printf("!!!!!!!!!!!Update/ the threshlod value will be increased/ current Segment (scale difference negative) is too small \n");
                 }
 
                 cout << "New RG_Threshlod: " << newScaleDifference  << endl;
     
                 vector<double>::iterator iterfind;
-                iterfind = find( s[i].RGThreshold.begin(), s[i].RGThreshold.end(), newScaleDifference);
+                iterfind = find( vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), newScaleDifference);
                 
-                if(iterfind == s[i].RGThreshold.end()){
+                if(iterfind == vectorS[i].RGThreshold.end()){
                     cout << "New RG_Threshlod ist not available in RG_Threshlod vector. Using New RG_Threshlod for next loop" << endl;
-                    s[i].RGThreshold.push_back(newScaleDifference);
-                    s[i].differencegrow = newScaleDifference;
+                    vectorS[i].RGThreshold.push_back(newScaleDifference);
+                    vectorS[i].differencegrow = newScaleDifference;
                 }
                 else {
                     cout << "New RG_Threshlod ist already available in RG_Threshlod vector. Using old RG_Threshlod for next loop  " << endl;
-                    s[i].LoopThreshold = s[i].LoopThreshold + 1;
+                    vectorS[i].LoopThreshold = vectorS[i].LoopThreshold + 1;
                     //cout << "s[i].LoopThreshold: " << s[i].LoopThreshold  << endl;
                     
-                    if(s[i].LoopThreshold > 20){
+                    if(vectorS[i].LoopThreshold > 20){
                         cout<< "Break the video becasue of infinitv Loop" << endl;
                         stop=true;
                     }
                 }
                 
-                printf("RG_Threshold for next loop %f \n", s[i].differencegrow);
+                printf("RG_Threshold for next loop %f \n", vectorS[i].differencegrow);
 
                 //vc.set(CV_CAP_PROP_POS_FRAMES, indexFrame);
-                s[i].threshold_notchange = false;
+                vectorS[i].threshold_notchange = false;
             }
         
             else if (abs(ScaleDifference) > 0.8 && abs(ScaleDifference) <= 1.2 ) { /// Object could not be found. ScaleDifference is negativ
-                printf("!!!!!!!!!!!Update  threshlod value becasue Object could not be found \n");
-                s[i].differencegrow = s[i].differencegrow + 0.05;
-                printf("new RG_Threshold: %f \n", s[i].differencegrow);
-                s[i].threshold_notchange = false;
+                printf("!!!!!!!!!!!Update threshlod value becasue Object could not be found \n");
+                vectorS[i].differencegrow = vectorS[i].differencegrow + 0.05;
+                printf("new RG_Threshold: %f \n", vectorS[i].differencegrow);
+                vectorS[i].threshold_notchange = false;
                 //waitKey(100);
             }
             
             else if (abs(ScaleDifference) > 1.2 ) { /// Object could be found. ScaleDifference  is negativ
-                printf("!!!!!!!!!!!Update  threshlod value becasue scale value is too large \n");
-                s[i].differencegrow = s[i].differencegrow - 0.05;
-                printf("new RG_Threshold: %f \n", s[i].differencegrow);
-                s[i].threshold_notchange = false;
+                printf("!!!!!!!!!!!Update threshlod value becasue scale value is too large \n");
+                vectorS[i].differencegrow = vectorS[i].differencegrow - 0.05;
+                printf("new RG_Threshold: %f \n", vectorS[i].differencegrow);
+                vectorS[i].threshold_notchange = false;
                 //waitKey(100);
             }
             
             else{
                 if (indexFrame > 0){
                     
-                s[i].threshold_notchange = true;
+                vectorS[i].threshold_notchange = true;
                 bool test_threshold_notchange = true;
                 for( int i=0; i<Segmentnum; i++)
                 {
-                    test_threshold_notchange = test_threshold_notchange && s[i].threshold_notchange;
+                    test_threshold_notchange = test_threshold_notchange && vectorS[i].threshold_notchange;
                 }
                 //cout << "test_threshold_notchange: " << test_threshold_notchange <<endl;
                     
                     if(test_threshold_notchange){
-                        s[i].data[3].push_back(scale);
-                        s[i].data[4].push_back(ScaleDifference);
-                        s[i].data[0].push_back(C[i].EWlong);
-                        s[i].data[1].push_back(C[i].EWshort);
-                        s[i].data[2].push_back(C[i].Ratio);
-                        s[i].data[5].push_back(RatioDifference);
-                        s[i].initialseedvektor.clear();
+                        vectorS[i].data[3].push_back(scale);
+                        vectorS[i].data[4].push_back(ScaleDifference);
+                        vectorS[i].data[0].push_back(C[i].EWlong);
+                        vectorS[i].data[1].push_back(C[i].EWshort);
+                        vectorS[i].data[2].push_back(C[i].Ratio);
+                        vectorS[i].data[5].push_back(RatioDifference);
+                        vectorS[i].initialseedvektor.clear();
                         //s[i].initialseedvektor.push_back(R[i].regioncenter);
-                        s[i].initialseedvektor.push_back(C[i].cntr);
+                        vectorS[i].initialseedvektor.push_back(C[i].cntr);
                         
                     }
                 }
@@ -718,6 +722,30 @@ int main( )
             stop=true;
         //if(keycode  == 32)  // 32 = ASCII Enter
             //stop=true;
+        
+        if(keycode  == 45){  // 45 =  - minus
+            cout <<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
+            cout<<"Please input the objekt number which you want to delete  "<<endl;
+            int deletenum;
+            cin >> deletenum;
+            vector<Initialseed>::iterator iterdelete = vectorS.begin() + (deletenum - 1);
+            vectorS.erase(iterdelete);
+            waitKey(0);
+        }
+        
+        if(keycode  == 61){  // 43 =  + minus 加号（shift and = ）    等号 = ascii 61
+            cout <<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
+            cout<<"Please input the number of segments which you want to add "<<endl;
+            int addnum;
+            cin >> addnum;
+            for(int i=0; i< addnum; i++){
+                cout<<"Setting for New projekt "<< i+1 <<endl;
+                Initialseed newobject = Initialseed(frame);
+                newobject.data.resize(6);
+                vectorS.push_back(newobject);
+            }
+            waitKey(0);
+        }
         
         //if (keycode > 0 )
            // waitKey(0);

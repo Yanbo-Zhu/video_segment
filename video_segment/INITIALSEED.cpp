@@ -13,9 +13,16 @@
 //    MatInBackup = x;
 //    MatGrowCur = y;
 //}
+Initialseed :: Initialseed(){
+}
 
 
-void Initalseed :: modechoose(int x, Mat firstFrame, int objektindex,  double defaultTH[], vector<vector<Point>> defaultSD)
+Initialseed :: Initialseed(Mat Frame){
+    this->newseed(Frame);
+}
+
+
+void Initialseed :: modechoose(int x, Mat firstFrame, int objektindex,  double defaultTH[], vector<vector<Point>> defaultSD)
 {
     //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
     Mat MatInBackup = firstFrame.clone();
@@ -58,7 +65,7 @@ void Initalseed :: modechoose(int x, Mat firstFrame, int objektindex,  double de
             //imshow( WINDOW_NAME, MatInBackup);
             //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle,(void*)&MatInBackup);
             //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle, &MatInBackup);
-            setMouseCallback(WINDOW_NAME, Initalseed ::on_MouseHandle,this);
+            setMouseCallback(WINDOW_NAME, Initialseed ::on_MouseHandle,this);
             
             while(1)
             {
@@ -101,7 +108,7 @@ void Initalseed :: modechoose(int x, Mat firstFrame, int objektindex,  double de
                 printf("Seed %d: (Row: %d, Column: %d)\n",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
                 //MatGrowCur.at<Vec3b>(initialseedvektor[i]) = firstFrame.at<Vec3b>(initialseedvektor[i]);
             }
-            printf("\nPlease set the threshold value for region growing\n");
+            printf("\nPlease set the threshold value for region growing \n");
             
             differencegrow = defaultTH[objektindex];
             cout << differencegrow << endl;
@@ -117,13 +124,52 @@ void Initalseed :: modechoose(int x, Mat firstFrame, int objektindex,  double de
     }
 }
 
-vector<vector<Point>> Initalseed :: set_defaultseed (vector<vector<Point>> seed, int x)
-{
 
+void Initialseed :: newseed(Mat firstFrame)
+{
+    //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
+    Mat MatInBackup = firstFrame.clone();
+    printf("Plaese select initial seeds \n");
+    
+    //choose seeds by clicking in orignal image
+    #define New_WINDOW_NAME " new point marking "
+            
+    // setting for mouse
+    namedWindow( New_WINDOW_NAME );
+    //imshow( WINDOW_NAME, MatInBackup);
+    //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle,(void*)&MatInBackup);
+    //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle, &MatInBackup);
+    setMouseCallback(New_WINDOW_NAME, Initialseed ::on_MouseHandle,this);
+    
+    while(1)
+    {
+        imshow( New_WINDOW_NAME, MatInBackup);
+        //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle,this);
+        //if( waitKey( 10 ) == 27 ) break;//按下ESC键，程序退出
+        if( waitKey( 10 ) == 13 ) break; // 按下 enter 键
+    }
+    
+    destroyWindow(New_WINDOW_NAME);
+    
+    //initialize the seeds
+    for(size_t i=0;i<initialseedvektor.size();i++)
+    {
+        //printf("Seed %d: (Row: %d, Column: %d)\n",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
+        //cout << initialseedvektor[i] <<endl;
+    }
+    
+    printf("\nPlease set the threshold value for region growing\n");
+    cin >> differencegrow;
+            
+}
+
+vector<vector<Point>> Initialseed :: set_defaultseed (vector<vector<Point>> seed, int x)
+{
+    
     Point a[][2] ={{Point(100,100),Point(200,200) },{ Point(300,300), Point(400,400)} };
     for(size_t i=0; i<seed.size();i++){
         int length = sizeof(a[i]) / sizeof(a[i][0]);
-
+        
         for(size_t j=0; j<length; j++){
             seed[i].push_back(a[i][j]);
         }
@@ -131,7 +177,8 @@ vector<vector<Point>> Initalseed :: set_defaultseed (vector<vector<Point>> seed,
     return seed;
 }
 
-void Initalseed :: on_MouseHandle(int event, int x, int y, int flags, void* param)
+
+void Initialseed :: on_MouseHandle(int event, int x, int y, int flags, void* param)
 {
     //cout<<"in loop" <<endl;
     //Mat & image = *(Mat*) param;
@@ -139,7 +186,7 @@ void Initalseed :: on_MouseHandle(int event, int x, int y, int flags, void* para
     //    return;
     //}
     // Check for null pointer in userdata and handle the error
-    Initalseed* temp = reinterpret_cast<Initalseed*>(param);
+    Initialseed* temp = reinterpret_cast<Initialseed*>(param);
     temp->on_Mouse(event, x, y, flags);
     
     //Scalar colorvalue = image.at<Vec3b>(Point(x, y));
@@ -150,7 +197,7 @@ void Initalseed :: on_MouseHandle(int event, int x, int y, int flags, void* para
     //DrawLine( image, Point(x, y));//画线
 }
 
-void Initalseed :: on_Mouse(int event, int x, int y, int flags)
+void Initialseed :: on_Mouse(int event, int x, int y, int flags)
 {
     //Mat & image = *(Mat*) param;
     //Mat *im = reinterpret_cast<Mat*>(param);
@@ -186,7 +233,7 @@ void Initalseed :: on_Mouse(int event, int x, int y, int flags)
 //}
 
 
-void Initalseed :: drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Vec3b color)
+void Initialseed :: drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Vec3b color)
 {
     for(size_t i=0; i<initialseedvektor.size();i++)
     {
@@ -194,17 +241,17 @@ void Initalseed :: drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Ve
         Scalar colorvalue = firstFrame.at<Vec3b>(initialseedvektor[i]);
         double intensity = (firstFrame.at<Vec3b>(initialseedvektor[i])[0] + firstFrame.at<Vec3b>(initialseedvektor[i])[1] + firstFrame.at<Vec3b>(initialseedvektor[i])[2]) / 3.0;
         //Vec3b colorvalue = image.at<Vec3b>(Point(x, y));
-        printf("n Seed %d: (Row: %d, Column: %d) / ",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
+        printf("\nSeed %d: (Row: %d, Column: %d) / ",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
         cout << " Scalar value: " << colorvalue << " / Intensity: " << intensity <<endl;
         //调用函数进行绘制
         DrawLine( firstFrame, initialseedvektor[i], color); //画线
     }
     
-    imshow ("firstFrame with initialseedvektor" , firstFrame);
-    waitKey(10);
+    imshow ("Frame with initial seeds" , firstFrame);
+    waitKey(100);
 }
 
-void Initalseed :: DrawLine( Mat &img, Point pt, Vec3b color )
+void Initialseed :: DrawLine( Mat &img, Point pt, Vec3b color )
 {
     //RNG rng(time(0));
     //line(img, pt, pt, Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255)),6,8,0); //随机颜色

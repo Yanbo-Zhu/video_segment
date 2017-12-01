@@ -106,7 +106,7 @@ double Counter::getOrientation(const vector<Point> &pts, Mat &img)
     Point p2 = cntr - 0.02 * Point(static_cast<int>(eigen_vecs[1].x * eigen_val[1]), static_cast<int>(eigen_vecs[1].y * eigen_val[1]));
     
     double pixelabstand[2];
-    pixelabstand[0] = drawAxis(img, cntr, p1, Scalar(0, 255, 0), 1); // Green line. long axis
+    pixelabstand[0] = drawAxis(img, cntr, p1, Scalar(0, 255, 0), 2.5); // Green line. long axis
     pixelabstand[1] = drawAxis(img, cntr, p2, Scalar(255, 255, 0), 3); // lightly blue line . short axis
     
     //Ratio = pixelabstand[0]/ pixelabstand[1];
