@@ -34,7 +34,6 @@ Initialseed :: Initialseed(int x, Mat firstFrame, int objektindex,  double defau
     data.resize(6);
 }
 
-
 void Initialseed :: modechoose(int x, Mat firstFrame, int objektindex,  double defaultTH[], vector<vector<Point>> defaultSD)
 {
     //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));

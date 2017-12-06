@@ -32,25 +32,23 @@ using namespace std;
 int mode;
 int Segmentnum;
 int Segmentinitialnum;
-//Mat FramewithCounter;
 Mat firstFrame;
 
 vector<Mat> channels;
 vector<Mat> channelsMatIn;
-clock_t  clockBegin, clockEnd;
-Mat putStats(vector<string> stats, Mat frame,Vec3b color,Point* origin, char word);
-double averagevalue(int num, vector<double> array);
-double averagedifference(int num, vector<double> array);
-vector<vector<Point>> defaultseed(4);
-vector<vector<Point>> defaultseed2(4);
+vector<Point> relationpointvektor;
 
-//-------
+clock_t  clockBegin, clockEnd;
 
 //#define WINDOW_NAME " point marking "
 //#define windowName String(XXX) //播放窗口名称
 
 //----- global function
-
+Mat putStats(vector<string> stats, Mat frame,Vec3b color,Point* origin, char word);
+double averagevalue(int num, vector<double> array);
+double averagedifference(int num, vector<double> array);
+void on_MouseHandle(int event, int x, int y, int flags, void* param);
+double pixeldistance(Mat& img, vector<Point> pv);
 //-------------------------------
 
 //setting for trackbar
@@ -71,10 +69,6 @@ void TrackBarFunc(int ,void(*))
     //vc.set(CV_CAP_PROP_POS_FRAMES,controlRate);   //设置当前播放帧
 }
 
-void PrintInt(const int&nData)
-{
-    cout<<nData<<endl;
-}
 
 int main( )
 {
@@ -103,6 +97,7 @@ int main( )
     
 //--------------some default seed points when i choose 2 during modechoose
 // Point (x,y )  x= column  y = row
+    vector<vector<Point>> defaultseed(4);
     defaultseed[0].push_back(Point(215,240)); // light blue roof left
     defaultseed[1].push_back(Point(530,234)); // white boot
     defaultseed[2].push_back(Point(491,356)); // black roof bottem
@@ -220,14 +215,53 @@ int main( )
         return 1;
     }
     
-
-//-----------------------------finding first seed point---------------
-    //Mat firstFrame;
+    
     Mat firstFrame;
     vc.read(firstFrame);
-
+    
     int initialindex = 0;
     vc.set(CV_CAP_PROP_POS_FRAMES, initialindex);
+    
+//---------------------- Setting the relation between real distrance and pixel distance
+    
+    Mat firstframeBackup;
+    firstFrame.copyTo(firstframeBackup);
+
+    cout<<"Setting the relation between real distrance and pixel distance"<<endl;
+    cout<<"Please mark two point on the image"<<endl;
+    #define WINDOW_NAME "Pixel-distance relation"
+    namedWindow( WINDOW_NAME );
+    setMouseCallback(WINDOW_NAME,on_MouseHandle,(void*)&firstframeBackup);
+    
+    while(1)
+    {
+        imshow( WINDOW_NAME, firstframeBackup );
+        if( waitKey( 10 ) == 27 ) break;//按下ESC键，程序退出
+    }
+    
+    //cout<< "relationpoint vektor size= " << relationpointvektor.size() <<endl;
+    if (relationpointvektor.size() != 2){
+        cout<< "\n!!!!!!!You did not mark 2 points. Porgramm breaks"  <<endl;
+        return 0;
+    }
+    
+    double pixeld = pixeldistance(firstframeBackup, relationpointvektor);
+    cout<< "Pixeldistance: " << pixeld <<endl;
+    
+    imshow( WINDOW_NAME, firstframeBackup );
+    waitKey(1);
+    
+    cout<< "Please input the real distance (m) for this line"<<endl;
+    double distance;
+    cin >> distance;
+    distance = distance/ pixeld;
+    cout<< "The relation: " << distance << " m/pixel \n" << endl;
+    
+    destroyWindow(WINDOW_NAME);
+    
+
+//-----------------------------finding first seed point---------------
+
     
     //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
     
@@ -902,33 +936,38 @@ double averagedifference(int num, vector<double> array){
 }
 
 
+void on_MouseHandle(int event, int x, int y, int flags, void* param)
+{
+    
+    Mat& image = *(Mat*) param;
+    //Mat *im = reinterpret_cast<Mat*>(param);
+    //mouse ist not in window 处理鼠标不在窗口中的情况
+    if( x < 0 || x >= image.cols || y < 0 || y >= image.rows )
+        return;
+    
+    if (event == EVENT_LBUTTONDOWN)
+    //switch(event)
+    {
+        //左键按下消息
+        Point g_pt = Point(x, y);
+        cout<<"Row: "<<y<<", Column: "<< x <<endl;
+        line(image, g_pt, g_pt, Scalar(0, 0, 255),4,8,0);
+        //DrawLine( image, g_pt );//画线
+        relationpointvektor.push_back(g_pt);
+    }
+}
 
-///--------------  on_MouseHandle   funciton----------
-//void on_MouseHandle(int event, int x, int y, int flags, void* param)
+double pixeldistance(Mat& img, vector<Point> pv)
+{
+    double a = pv[0].x - pv[1].x;
+    double b = pv[0].y - pv[1].y;
+    line(img, pv[0], pv[1], Scalar(0, 0, 255),2,8,0);//随机颜色
+    return(sqrt(a*a+b*b)); // a^2 not equal to a*a. a^2 has differnt meaning in Opencv
+}
+
+//void DrawLine( Mat& img, vector<Point> pv )
 //{
-//    
-//    Mat & image = *(Mat*) param;
-//    //Mat *im = reinterpret_cast<Mat*>(param);
-//    
-//    //mouse ist not in window 处理鼠标不在窗口中的情况
-//    if( x < 0 || x >= image.cols || y < 0 || y >= image.rows ){
-//        return;
-//    }
-//    
-//    if (event == EVENT_LBUTTONDOWN)
-//        
-//    {
-//        
-//        //g_pt = Point(x, y);
-//        
-//        Scalar colorvalue = image.at<Vec3b>(Point(x, y));
-//        //Vec3b colorvalue = image.at<Vec3b>(Point(x, y));
-//        cout<<"at("<<x<<","<<y<<") pixel value: " << colorvalue <<endl;
-//        
-//        //调用函数进行绘制
-//        DrawLine( image, Point(x, y));//画线
-//        
-//        seedvektor.push_back(Point(x, y));
-//        
-//    }
+//    line(img, pv[0], pv[1], Scalar(0, 0, 255),5,8,0);//随机颜色
 //}
+
+
