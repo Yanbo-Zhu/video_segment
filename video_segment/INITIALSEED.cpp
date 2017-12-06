@@ -7,6 +7,7 @@
 //
 
 #include "INITIALSEED.hpp"
+#include <time.h>
 
 //Initalseed(Mat x, Mat y) // constructor function
 //{
@@ -19,6 +20,18 @@ Initialseed :: Initialseed(){
 
 Initialseed :: Initialseed(Mat Frame){
     this->newseed(Frame);
+    waitKey(1000);
+    RNG rng(time(0));
+    color = Vec3b(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
+    data.resize(6);
+}
+
+Initialseed :: Initialseed(int x, Mat firstFrame, int objektindex,  double defaultTH[], vector<vector<Point>> defaultSD){
+    this->modechoose(x, firstFrame, objektindex, defaultTH, defaultSD);
+    waitKey(1000);
+    RNG rng(time(0));
+    color = Vec3b(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
+    data.resize(6);
 }
 
 
@@ -58,7 +71,7 @@ void Initialseed :: modechoose(int x, Mat firstFrame, int objektindex,  double d
             
         case 2:
             // tap 2, choose seeds by clicking in orignal image
-            #define WINDOW_NAME " point marking "
+            #define WINDOW_NAME " Drawing Point "
             
             // setting foe mouse
             namedWindow( WINDOW_NAME );
@@ -132,13 +145,10 @@ void Initialseed :: newseed(Mat firstFrame)
     printf("Plaese select initial seeds \n");
     
     //choose seeds by clicking in orignal image
-    #define New_WINDOW_NAME " new point marking "
+    #define New_WINDOW_NAME " New point marking "
             
     // setting for mouse
     namedWindow( New_WINDOW_NAME );
-    //imshow( WINDOW_NAME, MatInBackup);
-    //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle,(void*)&MatInBackup);
-    //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle, &MatInBackup);
     setMouseCallback(New_WINDOW_NAME, Initialseed ::on_MouseHandle,this);
     
     while(1)
@@ -163,20 +173,23 @@ void Initialseed :: newseed(Mat firstFrame)
             
 }
 
-vector<vector<Point>> Initialseed :: set_defaultseed (vector<vector<Point>> seed, int x)
+void Initialseed :: drawpoint(Mat firstFrame, vector<Point> initialseedvektor)
 {
-    
-    Point a[][2] ={{Point(100,100),Point(200,200) },{ Point(300,300), Point(400,400)} };
-    for(size_t i=0; i<seed.size();i++){
-        int length = sizeof(a[i]) / sizeof(a[i][0]);
+    for(size_t i=0; i<initialseedvektor.size();i++)
+    {
         
-        for(size_t j=0; j<length; j++){
-            seed[i].push_back(a[i][j]);
-        }
+        Scalar colorvalue = firstFrame.at<Vec3b>(initialseedvektor[i]);
+        double intensity = (firstFrame.at<Vec3b>(initialseedvektor[i])[0] + firstFrame.at<Vec3b>(initialseedvektor[i])[1] + firstFrame.at<Vec3b>(initialseedvektor[i])[2]) / 3.0;
+        //Vec3b colorvalue = image.at<Vec3b>(Point(x, y));
+        printf("Seed %d: (Row: %d, Column: %d) / ",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
+        cout << " Scalar value: " << colorvalue << " / Intensity: " << intensity <<endl;
+        //调用函数进行绘制
+        DrawLine( firstFrame, initialseedvektor[i], color); //画线
     }
-    return seed;
+    
+    imshow ("Frame with initial seeds" , firstFrame);
+    waitKey(1);
 }
-
 
 void Initialseed :: on_MouseHandle(int event, int x, int y, int flags, void* param)
 {
@@ -233,24 +246,6 @@ void Initialseed :: on_Mouse(int event, int x, int y, int flags)
 //}
 
 
-void Initialseed :: drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Vec3b color)
-{
-    for(size_t i=0; i<initialseedvektor.size();i++)
-    {
-        
-        Scalar colorvalue = firstFrame.at<Vec3b>(initialseedvektor[i]);
-        double intensity = (firstFrame.at<Vec3b>(initialseedvektor[i])[0] + firstFrame.at<Vec3b>(initialseedvektor[i])[1] + firstFrame.at<Vec3b>(initialseedvektor[i])[2]) / 3.0;
-        //Vec3b colorvalue = image.at<Vec3b>(Point(x, y));
-        printf("\nSeed %d: (Row: %d, Column: %d) / ",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
-        cout << " Scalar value: " << colorvalue << " / Intensity: " << intensity <<endl;
-        //调用函数进行绘制
-        DrawLine( firstFrame, initialseedvektor[i], color); //画线
-    }
-    
-    imshow ("Frame with initial seeds" , firstFrame);
-    waitKey(100);
-}
-
 void Initialseed :: DrawLine( Mat &img, Point pt, Vec3b color )
 {
     //RNG rng(time(0));
@@ -260,3 +255,18 @@ void Initialseed :: DrawLine( Mat &img, Point pt, Vec3b color )
     line(img, pt, pt, color,thickness,lineType,0);
     //line(img, pt, pt, Scalar(0,0,255),thickness,lineType,0); //随机颜色
 }
+
+//vector<vector<Point>> Initialseed :: set_defaultseed (vector<vector<Point>> seed, int x)
+//{
+//
+//    Point a[][2] ={{Point(100,100),Point(200,200) },{ Point(300,300), Point(400,400)} };
+//    for(size_t i=0; i<seed.size();i++){
+//        int length = sizeof(a[i]) / sizeof(a[i][0]);
+//
+//        for(size_t j=0; j<length; j++){
+//            seed[i].push_back(a[i][j]);
+//        }
+//    }
+//    return seed;
+//}
+

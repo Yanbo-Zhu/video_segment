@@ -14,8 +14,8 @@
 #include "opencv2/videoio.hpp"
 #include <opencv2/opencv.hpp>
 #include <stdio.h>
-#include "vector"
 #include <iostream>
+#include <time.h>
 
 using namespace cv;
 using namespace std;
@@ -33,6 +33,7 @@ private:
     double thresholdvalue;
     Point g_pt;
     vector<vector<Point>> set_defaultseed (vector<vector<Point>> seed, int x);
+    
 public:
     //Mat MatInBackup = firstFrame.clone();
     
@@ -43,15 +44,17 @@ public:
     int LoopThreshold;
     vector<double> RGThreshold;
     bool threshold_notchange = true;
+    Vec3b color;
+    vector < vector<double> >data;
     
     Initialseed(Mat Frame);
     Initialseed();
+    Initialseed(int x, Mat firstFrame, int objektindex,  double defaultTH[], vector<vector<Point>> defaultSD);
     void modechoose(int x, Mat firstFrame, int objektindex,  double defaultTh[], vector<vector<Point>> defaultSD);
-    void drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Vec3b color);
+    //void drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Vec3b color);
+    void drawpoint(Mat firstFrame, vector<Point> initialseedvektor);
     void newseed(Mat firstFrame);
-    //void initalseed();
-    //Initalseed(Mat x, Mat y);
-    vector < vector<double> >data;
+    
     //vector<double> C;
 };
 
