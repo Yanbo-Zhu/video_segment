@@ -70,24 +70,24 @@ void Initialseed :: modechoose(int x, Mat firstFrame, int objektindex,  double d
             
         case 2:
             // tap 2, choose seeds by clicking in orignal image
-            #define WINDOW_NAME " Drawing Point "
+            
             
             // setting foe mouse
-            namedWindow( WINDOW_NAME );
+            namedWindow( Point_mark_window );
             //imshow( WINDOW_NAME, MatInBackup);
             //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle,(void*)&MatInBackup);
             //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle, &MatInBackup);
-            setMouseCallback(WINDOW_NAME, Initialseed ::on_MouseHandle,this);
+            setMouseCallback(Point_mark_window, Initialseed ::on_MouseHandle,this);
             
             while(1)
             {
-                imshow( WINDOW_NAME, MatInBackup);
+                imshow( Point_mark_window, MatInBackup);
                 //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle,this);
                 //if( waitKey( 10 ) == 27 ) break;//按下ESC键，程序退出
                 if( waitKey( 10 ) == 13 ) break; // 按下 enter 键
             }
             
-            destroyWindow(WINDOW_NAME);
+            destroyWindow(Point_mark_window);
             
             //initialize the seeds
             for(size_t i=0;i<initialseedvektor.size();i++)
@@ -144,21 +144,20 @@ void Initialseed :: newseed(Mat firstFrame)
     printf("Plaese select initial seeds \n");
     
     //choose seeds by clicking in orignal image
-    #define New_WINDOW_NAME " New point marking "
             
     // setting for mouse
-    namedWindow( New_WINDOW_NAME );
-    setMouseCallback(New_WINDOW_NAME, Initialseed ::on_MouseHandle,this);
+    namedWindow( Point_mark_window );
+    setMouseCallback(Point_mark_window, Initialseed ::on_MouseHandle,this);
     
     while(1)
     {
-        imshow( New_WINDOW_NAME, MatInBackup);
+        imshow( Point_mark_window, MatInBackup);
         //setMouseCallback(WINDOW_NAME, Initalseed :: on_MouseHandle,this);
         //if( waitKey( 10 ) == 27 ) break;//按下ESC键，程序退出
         if( waitKey( 10 ) == 13 ) break; // 按下 enter 键
     }
     
-    destroyWindow(New_WINDOW_NAME);
+    destroyWindow(Point_mark_window);
     
     //initialize the seeds
     for(size_t i=0;i<initialseedvektor.size();i++)

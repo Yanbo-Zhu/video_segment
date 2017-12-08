@@ -33,6 +33,7 @@ private:
     double thresholdvalue;
     Point g_pt;
     vector<vector<Point>> set_defaultseed (vector<vector<Point>> seed, int x);
+    #define Point_mark_window " Drawing Point "
     
 public:
     //Mat MatInBackup = firstFrame.clone();

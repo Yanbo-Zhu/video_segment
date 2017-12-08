@@ -40,6 +40,10 @@ public:
     Point cntr ;
     //vector <vector<double> >Eigenvaluevector(2);
     double Degree;
+    double area;
+    double rectanglewidth;
+    double rectangleheight;
+
 
 };
 

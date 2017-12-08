@@ -32,6 +32,8 @@ Mat Counter::FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color)
     vector<vector<Point> > contours;
     findContours(MatoutGray, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
     
+    cout<< "contours.size() " << contours.size() <<endl;
+    
     // 多边形逼近轮廓 + 获取矩形边界框
     vector<vector<Point> > contours_poly( contours.size() );
     vector<Rect> boundRect( contours.size() );
@@ -48,15 +50,18 @@ Mat Counter::FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color)
     {
         //cout<< "contours.size()" << contours.size() <<endl;
         // Calculate the area of each contour
-        double area = contourArea(contours[i]);  // 面积就是包含了多少像素点
+        area = contourArea(contours[i]);  // 面积就是包含了多少像素点
+        
         //cout << " area" <<area << endl;
         // Ignore contours that are too small or too large
         //if (area < 1e2 || 1e5 < area) continue;
         // Draw each contour only for visualisation purposes
         drawContours(FramemitCounter, contours, static_cast<int>(i), color, 2, 8, hierarchy, 0);
         
-        //rectangle( FramemitCounter, boundRect[i].tl(), boundRect[i].br(), color, 1, 8, 0 );// 绘制边框矩形 ？？？？？？
-        circle( FramemitCounter, center[i], (int)radius[i], color, 1, 8, 0 ); // draw the circle
+        rectangle( FramemitCounter, boundRect[i].tl(), boundRect[i].br(), color, 1, 8, 0 );// 绘制边框矩形 ？？？？？？
+        rectanglewidth = boundRect[i].width;
+        rectangleheight = boundRect[i].height;
+        //circle( FramemitCounter, center[i], (int)radius[i], color, 1, 8, 0 ); // draw the circle
         
         //drawContours(result, contours, -1, Scalar(0, 0, 255), 1, 8, hierarchy, 0);
         getOrientation(contours[i], FramemitCounter);

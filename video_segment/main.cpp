@@ -229,14 +229,14 @@ int main( )
 
     cout<<"Setting the relation between real distrance and pixel distance"<<endl;
     cout<<"Please mark two point on the image"<<endl;
-    #define WINDOW_NAME "Pixel-distance relation"
-    namedWindow( WINDOW_NAME );
-    setMouseCallback(WINDOW_NAME,on_MouseHandle,(void*)&firstframeBackup);
+    #define Pixel_realtion_window "Pixel-distance relation"
+    namedWindow( Pixel_realtion_window );
+    setMouseCallback(Pixel_realtion_window,on_MouseHandle,(void*)&firstframeBackup);
     
     while(1)
     {
-        imshow( WINDOW_NAME, firstframeBackup );
-        if( waitKey( 10 ) == 27 ) break;//按下ESC键，程序退出
+        imshow( Pixel_realtion_window, firstframeBackup );
+        if( waitKey( 10 ) == 13 ) break;//按下enter键，程序退出
     }
     
     //cout<< "relationpoint vektor size= " << relationpointvektor.size() <<endl;
@@ -248,16 +248,16 @@ int main( )
     double pixeld = pixeldistance(firstframeBackup, relationpointvektor);
     cout<< "Pixeldistance: " << pixeld <<endl;
     
-    imshow( WINDOW_NAME, firstframeBackup );
+    imshow( Pixel_realtion_window, firstframeBackup );
     waitKey(1);
     
     cout<< "Please input the real distance (m) for this line"<<endl;
     double distance;
     cin >> distance;
-    distance = distance/ pixeld;
-    cout<< "The relation: " << distance << " m/pixel \n" << endl;
+    double pixelrelation = distance/ pixeld;
+    cout<< "The relation: " << pixelrelation << " m/pixel \n" << endl;
     
-    destroyWindow(WINDOW_NAME);
+    destroyWindow(Pixel_realtion_window);
     
 
 //-----------------------------finding first seed point---------------
@@ -291,13 +291,14 @@ int main( )
     {
         printf("\n********************Setting for object %d ***************\n", i+1);
         
-        //s[i].modechoose(mode, firstFrame, i, defaultThreshold, defaultseed );
-        //s[i].modechoose(mode, firstFrame, i, defaultThreshold, defaultseed );
+
         s[i] = Initialseed(mode, firstFrame, i, defaultThreshold, defaultseed);
         s[i].drawpoint(firstFrame, s[i].initialseedvektor);
         //printf("\nPlease set the threshold value for region growing\n");
         //cin >> s[i].differencegrow;
         //s[i].differencegrow = 5.0;
+        
+        
     }
     
     vector<Initialseed>  vectorS;
@@ -320,7 +321,15 @@ int main( )
         cout << "Failed to open outputtext file! \n" << endl;
         return 1;
     }
-
+    
+    outputtext << "Pixel-real distance relation: " << endl ;
+    for(size_t i=0; i< relationpointvektor.size(); i++)
+    {
+        outputtext << "Row: " << relationpointvektor[i].y << " Column: "  << relationpointvektor[i].x << endl;
+    }
+    outputtext << "Pixeldistance: " << pixeld << " Real distance: " << distance <<endl;
+    outputtext << "The relation: " << pixelrelation << " m/pixel \n" << endl;
+    
     for( int i=0; i<Segmentinitialnum; i++)
     {
         outputtext << "Objekt: " << i+1 << endl;
@@ -363,17 +372,18 @@ int main( )
         Mat Matfinal;
         //Mat MatOut(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
         
-        cout <<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
+        cout <<"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
         Segmentnum = vectorS.size();
         cout<<"Amount of Segments: " << Segmentnum <<endl;
         
-        all_threshold_notchange = true;
-        for( int i=0; i<Segmentnum; i++)
-        {
-            all_threshold_notchange = all_threshold_notchange && vectorS[i].threshold_notchange;
-        }
+//        all_threshold_notchange = true; //不能放在括号外  如果放在括号外 上一局的的all_threshold_notchange会影响
+//        for( int i=0; i<Segmentnum; i++)
+//        {
+//            all_threshold_notchange = all_threshold_notchange && vectorS[i].threshold_notchange;
+//        }
         
         if (all_threshold_notchange){    // if threshold for this frame did not change, read the next frame
+            
             indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
             printf("\n----------------------------IndexFrame: %d ----------------------- \n ", indexFrame);
             bSuccess = vc.read(frame); // read a new frame from video
@@ -490,6 +500,9 @@ int main( )
             cout << "EWshort: " << C[i].EWshort<<endl;
             cout << "Ratio: "  << C[i].Ratio <<endl;
             cout << "Degree: "  << C[i].Degree <<endl;
+            cout << "Rectangle width: "  << C[i].rectanglewidth <<endl;
+            cout << "Rectangle height: "  << C[i].rectangleheight <<endl;
+            cout << "contour area: "  << C[i].area <<endl;
             //cout<< "Threshold: " << s[i].differencegrow << endl;
             printf("Threshold: %.8f \n", vectorS[i].differencegrow );
             
@@ -534,7 +547,7 @@ int main( )
             double ScaleDifference = scale -  averageScale;
             printf("ScaleDifference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, ScaleDifference );
             cout<< endl;
-    // ---------- avaerage Ratio and averafe Ratio Difference
+    // ---------- average Ratio and average Ratio Difference
             
             double averageRatio = averagevalue(considerNum, vectorS[i].data[2]);
             cout <<"Average Ratio from last several frames: " << averageRatio<< endl;
@@ -607,7 +620,7 @@ int main( )
                 bool test_threshold_notchange = true;
                 for( int i=0; i<Segmentnum; i++)
                 {
-                    test_threshold_notchange = test_threshold_notchange && vectorS[i].threshold_notchange;
+                    test_threshold_notchange = test_threshold_notchange && vectorS[i].threshold_notchange;  //防止 某个object 为ture 另一obj为false.ture的那个 持续性输入
                 }
                 //cout << "test_threshold_notchange: " << test_threshold_notchange <<endl;
                     
@@ -625,6 +638,7 @@ int main( )
                     }
                 }
             }
+            
             
 //            while(threshold_notchange){
 //                char scale[30];-
@@ -663,8 +677,37 @@ int main( )
         char Duration[10];
         sprintf(Duration, "%f s", runningtime );
         text.push_back(Duration);
+        
+        // update bool all_threshold_notchange
+        all_threshold_notchange = true; //不能放在括号外  如果放在括号外 上一局的的all_threshold_notchange会影响
+        for( int i=0; i<Segmentnum; i++)
+        {
+            all_threshold_notchange = all_threshold_notchange && vectorS[i].threshold_notchange;
+        }
+        
+        if (all_threshold_notchange){    // if threshold for this frame did not change, read the next frame
+            
+            double averageScaleoneFrame = 0.0;
+            for( int i=0; i<Segmentnum; i++)
+            {
+                averageScaleoneFrame += vectorS[i].data[3].back();
+            }
+            
+            cout<< "*************************************************" <<endl;
+            averageScaleoneFrame /= Segmentnum;
+            cout<< "average Scale of all Segment in same Frame: " << averageScaleoneFrame<<endl;
+            
+            pixelrelation /= averageScaleoneFrame;
+            cout<< "Pixelrelation: " << pixelrelation << "m/pixel"<<endl;
+        }
+        
+        char relarion[10];
+        sprintf(relarion, "%.5fm/p", pixelrelation);
+        text.push_back(relarion);
+        
         FramewithCounter= putStats(text,FramewithCounter, Vec3b(0,0,210), ptrTopright, 'r' );
         text.clear();
+        
 
 //----------------- add the text(frame index number) to written video frame
         
@@ -750,7 +793,7 @@ int main( )
         
         if(keycode  == 27)  // 27 = ASCII ESC
             stop=true;
-        //if(keycode  == 32)  // 32 = ASCII Enter
+        //if(keycode  == 13)  // 13 = ASCII Enter
             //stop=true;
         
         if(keycode  == 45){  // 45 =  - minus
@@ -879,7 +922,7 @@ Mat putStats(vector<string> stats, Mat frame,Vec3b color, Point* origin, char wo
                 (*origin).x = (*origin).x- text_size.width;
                 (*origin).y = (*origin).y + 1.3*text_size.height ;
                 putText(frame, stats[i].c_str(), *origin, font_face , font_scale, color, thickness, 8, false);  //When true, the image data origin is at the bottom-left corner. Otherwise, it is at the top-left corner.
-                //(*origin).x = (*origin).x+ text_size.width / 2;
+                (*origin).x = (*origin).x+ text_size.width;
             }
             break;
             
