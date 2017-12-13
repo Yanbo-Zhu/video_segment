@@ -9,6 +9,7 @@
 #include "INITIALSEED.hpp"
 #include <time.h>
 
+
 //Initalseed(Mat x, Mat y) // constructor function
 //{
 //    MatInBackup = x;
@@ -23,7 +24,7 @@ Initialseed :: Initialseed(Mat Frame){
     waitKey(1000);
     RNG rng(time(0));
     color = Vec3b(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
-    data.resize(6);
+    data.resize(8);
 }
 
 Initialseed :: Initialseed(int x, Mat firstFrame, int objektindex,  double defaultTH[], vector<vector<Point>> defaultSD){
@@ -31,7 +32,7 @@ Initialseed :: Initialseed(int x, Mat firstFrame, int objektindex,  double defau
     waitKey(1000);
     RNG rng(time(0));
     color = Vec3b(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
-    data.resize(6);
+    data.resize(8);
 }
 
 void Initialseed :: modechoose(int x, Mat firstFrame, int objektindex,  double defaultTH[], vector<vector<Point>> defaultSD)
@@ -171,21 +172,21 @@ void Initialseed :: newseed(Mat firstFrame)
             
 }
 
-void Initialseed :: drawpoint(Mat firstFrame, vector<Point> initialseedvektor)
+void Initialseed :: drawpoint(Mat Frame, vector<Point> initialseedvektor)
 {
     for(size_t i=0; i<initialseedvektor.size();i++)
     {
         
-        Scalar colorvalue = firstFrame.at<Vec3b>(initialseedvektor[i]);
-        double intensity = (firstFrame.at<Vec3b>(initialseedvektor[i])[0] + firstFrame.at<Vec3b>(initialseedvektor[i])[1] + firstFrame.at<Vec3b>(initialseedvektor[i])[2]) / 3.0;
+        Scalar colorvalue = Frame.at<Vec3b>(initialseedvektor[i]);
+        double intensity = (Frame.at<Vec3b>(initialseedvektor[i])[0] + Frame.at<Vec3b>(initialseedvektor[i])[1] + Frame.at<Vec3b>(initialseedvektor[i])[2]) / 3.0;
         //Vec3b colorvalue = image.at<Vec3b>(Point(x, y));
         printf("Seed %d: (Row: %d, Column: %d) / ",  int(i)+1,  initialseedvektor[i].y, initialseedvektor[i].x  );
         cout << " Scalar value: " << colorvalue << " / Intensity: " << intensity <<endl;
         //调用函数进行绘制
-        DrawLine( firstFrame, initialseedvektor[i], color); //画线
+        DrawLine( Frame, initialseedvektor[i], color); //画线
     }
     
-    imshow ("Frame with initial seeds" , firstFrame);
+    imshow ("Frame with initial seeds" , Frame);
     waitKey(1);
 }
 

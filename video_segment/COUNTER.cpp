@@ -32,8 +32,6 @@ Mat Counter::FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color)
     vector<vector<Point> > contours;
     findContours(MatoutGray, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
     
-    cout<< "contours.size() " << contours.size() <<endl;
-    
     // 多边形逼近轮廓 + 获取矩形边界框
     vector<vector<Point> > contours_poly( contours.size() );
     vector<Rect> boundRect( contours.size() );
@@ -50,7 +48,7 @@ Mat Counter::FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color)
     {
         //cout<< "contours.size()" << contours.size() <<endl;
         // Calculate the area of each contour
-        area = contourArea(contours[i]);  // 面积就是包含了多少像素点
+        Area = contourArea(contours[i]);  // 面积就是包含了多少像素点
         
         //cout << " area" <<area << endl;
         // Ignore contours that are too small or too large

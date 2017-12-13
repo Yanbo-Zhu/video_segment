@@ -101,7 +101,7 @@ int main( )
     defaultseed[0].push_back(Point(215,240)); // light blue roof left
     defaultseed[1].push_back(Point(530,234)); // white boot
     defaultseed[2].push_back(Point(491,356)); // black roof bottem
-    double defaultThreshold[] = {9, 12 ,7} ;
+    double defaultThreshold[] = {9, 12 ,8} ;
     
     
 //    cv::Mat image = cv::Mat::zeros(cv::Size(640, 480), CV_8UC3);
@@ -150,7 +150,7 @@ int main( )
     strcpy(savePath,path);
     strcat(savePath,"output/");
     strcat(savePath,videofilename.c_str());
-    strcat(savePath,"_output10");     // savePath::  /Users/yanbo/Desktop/source/output/70_20_descend_output
+    strcat(savePath,"_output_10");     // savePath::  /Users/yanbo/Desktop/source/output/70_20_descend_output
     cout<< "savePath: " << savePath <<endl;
     cout<<endl;
     
@@ -231,19 +231,25 @@ int main( )
     cout<<"Please mark two point on the image"<<endl;
     #define Pixel_realtion_window "Pixel-distance relation"
     namedWindow( Pixel_realtion_window );
-    setMouseCallback(Pixel_realtion_window,on_MouseHandle,(void*)&firstframeBackup);
     
-    while(1)
-    {
-        imshow( Pixel_realtion_window, firstframeBackup );
-        if( waitKey( 10 ) == 13 ) break;//按下enter键，程序退出
-    }
+//    setMouseCallback(Pixel_realtion_window,on_MouseHandle,(void*)&firstframeBackup);
+//
+//    while(1)
+//    {
+//        imshow( Pixel_realtion_window, firstframeBackup );
+//        if( waitKey( 10 ) == 13 ) break;//按下enter键，程序退出
+//    }
+//
+//    //cout<< "relationpoint vektor size= " << relationpointvektor.size() <<endl;
+//    if (relationpointvektor.size() != 2){
+//        cout<< "\n!!!!!!!You did not mark 2 points. Porgramm breaks"  <<endl;
+//        return 0;
+//    }
     
-    //cout<< "relationpoint vektor size= " << relationpointvektor.size() <<endl;
-    if (relationpointvektor.size() != 2){
-        cout<< "\n!!!!!!!You did not mark 2 points. Porgramm breaks"  <<endl;
-        return 0;
-    }
+    relationpointvektor.push_back(Point(438,211));
+    relationpointvektor.push_back(Point(487,227));
+//    relationpointvektor.push_back(Point(584,222));
+//    relationpointvektor.push_back(Point(497,268));
     
     double pixeld = pixeldistance(firstframeBackup, relationpointvektor);
     cout<< "Pixeldistance: " << pixeld <<endl;
@@ -252,8 +258,12 @@ int main( )
     waitKey(1);
     
     cout<< "Please input the real distance (m) for this line"<<endl;
-    double distance;
-    cin >> distance;
+    //double distance;
+    //cin >> distance;
+    
+    double distance = 10;
+    cout<<  distance << endl;
+    
     double pixelrelation = distance/ pixeld;
     cout<< "The relation: " << pixelrelation << " m/pixel \n" << endl;
     
@@ -290,15 +300,32 @@ int main( )
     for( int i=0; i<Segmentinitialnum; i++)
     {
         printf("\n********************Setting for object %d ***************\n", i+1);
-        
-
         s[i] = Initialseed(mode, firstFrame, i, defaultThreshold, defaultseed);
-        s[i].drawpoint(firstFrame, s[i].initialseedvektor);
-        //printf("\nPlease set the threshold value for region growing\n");
-        //cin >> s[i].differencegrow;
-        //s[i].differencegrow = 5.0;
+        Mat drawFrame = firstFrame.clone();
+        s[i].drawpoint(drawFrame, s[i].initialseedvektor);
         
+        Regiongrowing RTest;
+        Counter CTest;
+        bool threshold_qualified(true);
         
+        while (threshold_qualified) {
+            Mat Mattest =  firstFrame.clone();
+            Mat Matcounter =  firstFrame.clone();
+            Mat Mattest_Blur;
+            Size kernelsize(5,5);
+            GaussianBlur(Mattest, Mattest_Blur, kernelsize, 0, 0);
+            
+            Mattest = RTest.RegionGrow(Mattest, Mattest_Blur , s[i].differencegrow, s[i].initialseedvektor);
+            Matcounter = CTest.FindCounter(Mattest, Matcounter, s[i].color);
+            imshow("Contour of Segment", Matcounter);
+            waitKey(1);
+            cout<<"Area: " << CTest.Area << endl;
+            if (CTest.Area < 2000) s[i].differencegrow = s[i].differencegrow + 0.01;
+            else if (CTest.Area >= 2000 && CTest.Area <= 10000 ) break;
+            else  s[i].differencegrow = s[i].differencegrow - 0.01;
+            cout<< "Threshold: " << s[i].differencegrow <<endl;
+        }
+        waitKey(0);
     }
     
     vector<Initialseed>  vectorS;
@@ -329,6 +356,7 @@ int main( )
     }
     outputtext << "Pixeldistance: " << pixeld << " Real distance: " << distance <<endl;
     outputtext << "The relation: " << pixelrelation << " m/pixel \n" << endl;
+    relationpointvektor.clear();
     
     for( int i=0; i<Segmentinitialnum; i++)
     {
@@ -374,7 +402,7 @@ int main( )
         
         cout <<"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
         Segmentnum = vectorS.size();
-        cout<<"Amount of Segments: " << Segmentnum <<endl;
+        cout<<"                             Amount of Segments: " << Segmentnum <<endl;
         
 //        all_threshold_notchange = true; //不能放在括号外  如果放在括号外 上一局的的all_threshold_notchange会影响
 //        for( int i=0; i<Segmentnum; i++)
@@ -502,7 +530,7 @@ int main( )
             cout << "Degree: "  << C[i].Degree <<endl;
             cout << "Rectangle width: "  << C[i].rectanglewidth <<endl;
             cout << "Rectangle height: "  << C[i].rectangleheight <<endl;
-            cout << "contour area: "  << C[i].area <<endl;
+            cout << "contour area: "  << C[i].Area <<endl;
             //cout<< "Threshold: " << s[i].differencegrow << endl;
             printf("Threshold: %.8f \n", vectorS[i].differencegrow );
             
@@ -517,14 +545,17 @@ int main( )
                 vectorS[i].data[1].push_back(C[i].EWshort);   // lightly blue line . short axis
                 vectorS[i].data[2].push_back(C[i].Ratio);
                 vectorS[i].data[5].push_back(0.0); // RatioDifference
+                vectorS[i].data[6].push_back(C[i].Area);  // Area
+                vectorS[i].data[7].push_back(1.0);  // scaleArea
                 vectorS[i].initialseedvektor.clear();
                 //s[i].initialseedvektor.push_back(R[i].regioncenter);
                 vectorS[i].initialseedvektor.push_back(C[i].cntr);
                 vectorS[i].threshold_notchange = true;
             }
            
-            //double scale = ( (C[i].EWlong/s[i].data[0].back()) + (C[i].EWshort/s[i].data[1].back()) )/2 ;
+            //double scale = ( (C[i].EWlong/vectorS[i].data[0].back()) + (C[i].EWshort/vectorS[i].data[1].back()) )/2 ;
             double scale = sqrt( (C[i].EWlong* C[i].EWshort)/(vectorS[i].data[0].back() * vectorS[i].data[1].back()) );
+            double scaleArea = sqrt( C[i].Area / vectorS[i].data[6].back() );
             //cout<< "EWlong[indexFrame-1] " << EWlong[indexFrame-1] << " EWlong[indexFrame-2] "<< EWlong[indexFrame-2] << endl;
             //printf("Scale (index %d to %d): %lf \n", indexFrame, indexFrame-1, scale );
             cout<< "Scale (index " << indexFrame << " to " << indexFrame-1<< "): " << scale <<endl;
@@ -536,7 +567,7 @@ int main( )
         
     //---------computeing the average scale and average Scale Difference
             int considerNum = 10;
-            int multipleScaleDiff = 15;
+            int multipleScaleDiff = 10;
             
             double averageScale = averagevalue(considerNum, vectorS[i].data[3]);
             cout <<"Average Scale from last several frames: " << averageScale<< endl;
@@ -562,15 +593,16 @@ int main( )
                 
                 double newScaleDifference = 0.0;
                 if ( ScaleDifference > 0.0){
-                    newScaleDifference = vectorS[i].differencegrow - (0.04 / pow(2, vectorS[i].LoopThreshold - 1));
+                    newScaleDifference = vectorS[i].differencegrow - (0.02 / pow(2, vectorS[i].LoopThreshold - 1));
                     printf("!!!!!!!!!!!Update/ the threshlod value will be decreased/ current segment (scale difference positive) is too lagre \n");
                 }
                 else{
-                    newScaleDifference = vectorS[i].differencegrow + (0.04/ pow(2, vectorS[i].LoopThreshold - 1));
+                    newScaleDifference = vectorS[i].differencegrow + (0.02/ pow(2, vectorS[i].LoopThreshold - 1));
                     printf("!!!!!!!!!!!Update/ the threshlod value will be increased/ current Segment (scale difference negative) is too small \n");
                 }
 
-                cout << "New RG_Threshlod: " << newScaleDifference  << endl;
+                //cout << "New RG_Threshlod: " << newScaleDifference  << endl;
+                printf("New RG_Threshlod: %f \n", newScaleDifference);
     
                 vector<double>::iterator iterfind;
                 iterfind = find( vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), newScaleDifference);
@@ -599,7 +631,7 @@ int main( )
         
             else if (abs(ScaleDifference) > 0.8 && abs(ScaleDifference) <= 1.2 ) { /// Object could not be found. ScaleDifference is negativ
                 printf("!!!!!!!!!!!Update threshlod value becasue Object could not be found \n");
-                vectorS[i].differencegrow = vectorS[i].differencegrow + 0.05;
+                vectorS[i].differencegrow = vectorS[i].differencegrow + 0.03;
                 printf("new RG_Threshold: %f \n", vectorS[i].differencegrow);
                 vectorS[i].threshold_notchange = false;
                 //waitKey(100);
@@ -607,7 +639,7 @@ int main( )
             
             else if (abs(ScaleDifference) > 1.2 ) { /// Segment grows unregular and is too large . ScaleDifference  is negativ
                 printf("!!!!!!!!!!!Update threshlod value becasue scale value is too large \n");
-                vectorS[i].differencegrow = vectorS[i].differencegrow - 0.05;
+                vectorS[i].differencegrow = vectorS[i].differencegrow - 0.03;
                 printf("new RG_Threshold: %f \n", vectorS[i].differencegrow);
                 vectorS[i].threshold_notchange = false;
                 //waitKey(100);
@@ -631,6 +663,8 @@ int main( )
                         vectorS[i].data[1].push_back(C[i].EWshort);
                         vectorS[i].data[2].push_back(C[i].Ratio);
                         vectorS[i].data[5].push_back(RatioDifference);
+                        vectorS[i].data[6].push_back(C[i].Area);
+                        vectorS[i].data[7].push_back(scaleArea);
                         vectorS[i].initialseedvektor.clear();
                         //s[i].initialseedvektor.push_back(R[i].regioncenter);
                         vectorS[i].initialseedvektor.push_back(C[i].cntr);
@@ -690,13 +724,12 @@ int main( )
             double averageScaleoneFrame = 0.0;
             for( int i=0; i<Segmentnum; i++)
             {
-                averageScaleoneFrame += vectorS[i].data[3].back();
+                averageScaleoneFrame += vectorS[i].data[7].back();
             }
             
             cout<< "*************************************************" <<endl;
             averageScaleoneFrame /= Segmentnum;
             cout<< "average Scale of all Segment in same Frame: " << averageScaleoneFrame<<endl;
-            
             pixelrelation /= averageScaleoneFrame;
             cout<< "Pixelrelation: " << pixelrelation << "m/pixel"<<endl;
         }
@@ -819,8 +852,42 @@ int main( )
             waitKey(0);
         }
         
-        //if (keycode > 0 )
-           // waitKey(0);
+        
+        if(keycode  == 114){  // 114 =  r
+        Mat FramewithCounterBackup;
+        FramewithCounter.copyTo(FramewithCounterBackup);
+        
+        cout<<"\nTest! real distrance of two pixel length"<<endl;
+        cout<<"Please mark two point on the image"<<endl;
+        //#define Pixel_realtion_window "Pixel-distance relation"
+        namedWindow( Pixel_realtion_window );
+        setMouseCallback(Pixel_realtion_window,on_MouseHandle,(void*)&FramewithCounterBackup);
+        
+        while(1)
+        {
+            imshow( Pixel_realtion_window, FramewithCounterBackup );
+            if( waitKey( 10 ) == 13 ) break;//按下enter键，程序退出
+        }
+        
+        //cout<< "relationpoint vektor size= " << relationpointvektor.size() <<endl;
+        if (relationpointvektor.size() != 2){
+            cout<< "\n!!!!!!!You did not mark 2 points. Porgramm breaks"  <<endl;
+            return 0;
+        }
+        
+        double pixeld = pixeldistance(FramewithCounterBackup, relationpointvektor);
+        cout<< "Pixeldistance: " << pixeld <<endl;
+       
+        cout<< "The real length: " << pixelrelation * pixeld  << " m \n" << endl;
+            
+        imshow( Pixel_realtion_window, FramewithCounterBackup );
+        waitKey(0);
+        destroyWindow(Pixel_realtion_window);
+        
+        
+        }
+    
+    
     }
     
     cout << "Video plays over(outside loop)" << endl;
