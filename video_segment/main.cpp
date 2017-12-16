@@ -33,6 +33,7 @@ int mode;
 int Segmentnum;
 int Segmentinitialnum;
 Mat firstFrame;
+Size kernelsize(3,3);
 
 vector<Mat> channels;
 vector<Mat> channelsMatIn;
@@ -103,8 +104,10 @@ int main( )
     defaultseed[2].push_back(Point(491,356)); // black roof bottem
     double defaultThreshold[] = {9, 12 ,8} ;
     
+//    defaultseed[0].push_back(Point(531,240)); // white boot
+//    double defaultThreshold[] = {33} ;
     
-//    cv::Mat image = cv::Mat::zeros(cv::Size(640, 480), CV_8UC3);
+    cv::Mat image = cv::Mat::zeros(cv::Size(640, 480), CV_8UC3);
 //    //设置蓝色背景
 //    image.setTo(cv::Scalar(100, 0, 0));
     
@@ -216,6 +219,7 @@ int main( )
     }
     
     
+
     Mat firstFrame;
     vc.read(firstFrame);
     
@@ -224,50 +228,51 @@ int main( )
     
 //---------------------- Setting the relation between real distrance and pixel distance
     
-    Mat firstframeBackup;
+    Mat firstframeBackup; //= firstFrame.clone();
     firstFrame.copyTo(firstframeBackup);
 
     cout<<"Setting the relation between real distrance and pixel distance"<<endl;
     cout<<"Please mark two point on the image"<<endl;
+    //char const *Pixel_realtion_window= "Pixel-distance relation";
     #define Pixel_realtion_window "Pixel-distance relation"
     namedWindow( Pixel_realtion_window );
     
-//    setMouseCallback(Pixel_realtion_window,on_MouseHandle,(void*)&firstframeBackup);
-//
-//    while(1)
-//    {
-//        imshow( Pixel_realtion_window, firstframeBackup );
-//        if( waitKey( 10 ) == 13 ) break;//按下enter键，程序退出
-//    }
-//
-//    //cout<< "relationpoint vektor size= " << relationpointvektor.size() <<endl;
-//    if (relationpointvektor.size() != 2){
-//        cout<< "\n!!!!!!!You did not mark 2 points. Porgramm breaks"  <<endl;
-//        return 0;
-//    }
+    setMouseCallback(Pixel_realtion_window,on_MouseHandle,(void*)&firstframeBackup);
+
+    while(1)
+    {
+        imshow( Pixel_realtion_window, firstframeBackup );
+        if( waitKey( 10 ) == 13 ) break;//按下enter键，程序退出
+    }
+
+    //cout<< "relationpoint vektor size= " << relationpointvektor.size() <<endl;
+    if (relationpointvektor.size() != 2){
+        cout<< "\n!!!!!!!You did not mark 2 points. Porgramm breaks"  <<endl;
+        return 0;
+    }
     
-    relationpointvektor.push_back(Point(438,211));
-    relationpointvektor.push_back(Point(487,227));
+ //   relationpointvektor.push_back(Point(438,211));
+ //   relationpointvektor.push_back(Point(487,227));
 //    relationpointvektor.push_back(Point(584,222));
 //    relationpointvektor.push_back(Point(497,268));
-    
+
     double pixeld = pixeldistance(firstframeBackup, relationpointvektor);
     cout<< "Pixeldistance: " << pixeld <<endl;
     
-    imshow( Pixel_realtion_window, firstframeBackup );
+    imshow( Pixel_realtion_window , firstframeBackup );
     waitKey(1);
+    //destroyWindow(Pixel_realtion_window);
+    //destroyAllWindows();
     
     cout<< "Please input the real distance (m) for this line"<<endl;
-    //double distance;
-    //cin >> distance;
+    double distance;
+    cin >> distance;
     
-    double distance = 10;
+    //double distance = 10;
     cout<<  distance << endl;
     
     double pixelrelation = distance/ pixeld;
     cout<< "The relation: " << pixelrelation << " m/pixel \n" << endl;
-    
-    destroyWindow(Pixel_realtion_window);
     
 
 //-----------------------------finding first seed point---------------
@@ -312,7 +317,7 @@ int main( )
             Mat Mattest =  firstFrame.clone();
             Mat Matcounter =  firstFrame.clone();
             Mat Mattest_Blur;
-            Size kernelsize(5,5);
+            //Size kernelsize(5,5);
             GaussianBlur(Mattest, Mattest_Blur, kernelsize, 0, 0);
             
             Mattest = RTest.RegionGrow(Mattest, Mattest_Blur , s[i].differencegrow, s[i].initialseedvektor);
@@ -320,12 +325,15 @@ int main( )
             imshow("Contour of Segment", Matcounter);
             waitKey(1);
             cout<<"Area: " << CTest.Area << endl;
-            if (CTest.Area < 2000) s[i].differencegrow = s[i].differencegrow + 0.01;
-            else if (CTest.Area >= 2000 && CTest.Area <= 10000 ) break;
-            else  s[i].differencegrow = s[i].differencegrow - 0.01;
+            if (CTest.Area < (Width*Height/250)) s[i].differencegrow = s[i].differencegrow + 0.1;  // (Width*Height/250) = 2100   (Width*Height/50 )= 10000
+            else if (CTest.Area <= (Width*Height/50) ) break;
+            else  s[i].differencegrow = s[i].differencegrow - 0.1;
             cout<< "Threshold: " << s[i].differencegrow <<endl;
         }
         waitKey(0);
+        destroyWindow("Contour of Segment");
+        //cout<<"Area: " << CTest.Area << endl;
+        //cout<< "Threshold: " << s[i].differencegrow <<endl;
     }
     
     vector<Initialseed>  vectorS;
@@ -446,7 +454,7 @@ int main( )
         }
         
         Mat frame_Blur;
-        Size kernelsize(5,5);
+        //Size kernelsize(5,5);
         GaussianBlur(frame, frame_Blur, kernelsize,0,0);
         //blur( image, out, Size(3, 3));
         
@@ -540,7 +548,7 @@ int main( )
             
             if (indexFrame == initialindex){
                 vectorS[i].data[3].push_back(1.0); // scale
-                vectorS[i].data[4].push_back(0.0); // ScaleDifference
+                vectorS[i].data[4].push_back(0.01); // ScaleDifference
                 vectorS[i].data[0].push_back(C[i].EWlong);    // Green line. long axis
                 vectorS[i].data[1].push_back(C[i].EWshort);   // lightly blue line . short axis
                 vectorS[i].data[2].push_back(C[i].Ratio);
@@ -567,7 +575,7 @@ int main( )
         
     //---------computeing the average scale and average Scale Difference
             int considerNum = 10;
-            int multipleScaleDiff = 10;
+            int multipleScaleDiff = 15;
             
             double averageScale = averagevalue(considerNum, vectorS[i].data[3]);
             cout <<"Average Scale from last several frames: " << averageScale<< endl;
@@ -593,11 +601,11 @@ int main( )
                 
                 double newScaleDifference = 0.0;
                 if ( ScaleDifference > 0.0){
-                    newScaleDifference = vectorS[i].differencegrow - (0.02 / pow(2, vectorS[i].LoopThreshold - 1));
+                    newScaleDifference = vectorS[i].differencegrow - (0.03 / pow(2, vectorS[i].LoopThreshold - 1));
                     printf("!!!!!!!!!!!Update/ the threshlod value will be decreased/ current segment (scale difference positive) is too lagre \n");
                 }
                 else{
-                    newScaleDifference = vectorS[i].differencegrow + (0.02/ pow(2, vectorS[i].LoopThreshold - 1));
+                    newScaleDifference = vectorS[i].differencegrow + (0.03/ pow(2, vectorS[i].LoopThreshold - 1));
                     printf("!!!!!!!!!!!Update/ the threshlod value will be increased/ current Segment (scale difference negative) is too small \n");
                 }
 
@@ -631,7 +639,7 @@ int main( )
         
             else if (abs(ScaleDifference) > 0.8 && abs(ScaleDifference) <= 1.2 ) { /// Object could not be found. ScaleDifference is negativ
                 printf("!!!!!!!!!!!Update threshlod value becasue Object could not be found \n");
-                vectorS[i].differencegrow = vectorS[i].differencegrow + 0.03;
+                vectorS[i].differencegrow = vectorS[i].differencegrow + 0.05;
                 printf("new RG_Threshold: %f \n", vectorS[i].differencegrow);
                 vectorS[i].threshold_notchange = false;
                 //waitKey(100);
@@ -639,7 +647,7 @@ int main( )
             
             else if (abs(ScaleDifference) > 1.2 ) { /// Segment grows unregular and is too large . ScaleDifference  is negativ
                 printf("!!!!!!!!!!!Update threshlod value becasue scale value is too large \n");
-                vectorS[i].differencegrow = vectorS[i].differencegrow - 0.03;
+                vectorS[i].differencegrow = vectorS[i].differencegrow - 0.05;
                 printf("new RG_Threshold: %f \n", vectorS[i].differencegrow);
                 vectorS[i].threshold_notchange = false;
                 //waitKey(100);
