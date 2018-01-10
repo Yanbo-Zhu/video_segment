@@ -43,8 +43,7 @@ public:
     double Area;
     double rectanglewidth;
     double rectangleheight;
-
-
+    double diagonallength;
 };
 
 #endif /* COUNTER_hpp */
