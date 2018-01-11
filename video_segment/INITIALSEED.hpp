@@ -48,13 +48,15 @@ public:
     Vec3b color;
     vector < vector<double> >data;
     
-    Initialseed(Mat Frame);
     Initialseed();
+    Initialseed(Mat Frame);
+    Initialseed(Mat Frame , int width, int height);
     Initialseed(int x, Mat firstFrame, int objektindex,  double defaultTH[], vector<vector<Point>> defaultSD);
     void modechoose(int x, Mat firstFrame, int objektindex,  double defaultTh[], vector<vector<Point>> defaultSD);
     //void drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Vec3b color);
     void drawpoint(Mat firstFrame, vector<Point> initialseedvektor);
     void newseed(Mat firstFrame);
+    void randomseed(Mat firstFrame, int width, int height);
     
     //vector<double> C;
 };

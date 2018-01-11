@@ -19,8 +19,9 @@ Initialseed :: Initialseed(){
 }
 
 
-Initialseed :: Initialseed(Mat Frame){
-    this->newseed(Frame);
+Initialseed :: Initialseed(Mat Frame , int width, int height){
+    this->randomseed(Frame, width, height);
+    //this->newseed(Frame);
     waitKey(1000);
     RNG rng(time(0));
     color = Vec3b(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
@@ -137,6 +138,20 @@ void Initialseed :: modechoose(int x, Mat firstFrame, int objektindex,  double d
     }
 }
 
+void Initialseed :: randomseed(Mat firstFrame, int width, int height)
+{
+    //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
+    Mat MatInBackup = firstFrame.clone();
+    RNG rng(time(0));
+    Point newrandomseed = Point(rng.uniform(0, width), rng.uniform(0, height));
+    
+    initialseedvektor.push_back(newrandomseed);
+    
+    printf( "New random seed : (Row: %d, Column: %d) / ",   newrandomseed.y, newrandomseed.x );
+    
+    differencegrow = 5;
+    
+}
 
 void Initialseed :: newseed(Mat firstFrame)
 {
