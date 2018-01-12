@@ -77,13 +77,10 @@ void TrackBarFunc(int ,void(*))
     vc.set(CV_CAP_PROP_POS_FRAMES,controlRate);   //设置当前播放帧
 }
 
-void PrintInt(const int&nData)
-
-{
-    
-    cout<<nData<<endl;
-    
-}
+//void PrintInt(const int&nData)
+//{
+//    cout<<nData<<endl;
+//}
 
 
 int main( )
@@ -130,6 +127,7 @@ int main( )
 ///-------------------------------------- VideoCapture ----------------
     //【1】读入视频
     //VideoCapture vc;
+    //vc.open( "/Users/yanbo/Desktop/source/Rotation_50m.mp4");
     char path[] = "/Users/yanbo/Desktop/source/" ;
     string videofilename = "70_20_descend";
     //string videofilename = "skew_descend";
@@ -138,12 +136,7 @@ int main( )
     videoInputpath.assign(path);
     videoInputpath.append(videofilename);
     videoInputpath.append(".mp4");
-    //vc.open( "/Users/yanbo/Desktop/source/Rotation_50m.mp4");
-    //vc.open( "/Users/yanbo/Desktop/source/80_10_descend_rotation.mp4");
-    //vc.open( "/Users/yanbo/Desktop/source/5-70.mp4");
-    //vc.open( "/Users/yanbo/Desktop/source/80_10_descend.mp4");
-    //vc.open( "/Users/yanbo/Desktop/source/70_20_descend_highDim.mp4");
-    //vc.open( "/Users/yanbo/Desktop/source/70_20_descend.mp4");
+
     vc.open(videoInputpath);
     
     if (!vc.isOpened())
@@ -158,7 +151,7 @@ int main( )
     int FRAME_COUNT = vc.get(CV_CAP_PROP_FRAME_COUNT);
     Width = vc.get(CV_CAP_PROP_FRAME_WIDTH);
     Height = vc.get(CV_CAP_PROP_FRAME_HEIGHT);
-    printf("Fourcc: %d / indexFrame: %d / fps: %d / Total Frame: %d / Width * Height : %d * %d / Width*Height/250 : %d / Width*Height/50: %d \n", Fourcc ,IndexFrame, FPS, FRAME_COUNT, Width, Height, Width*Height/250, Width*Height/50);
+    printf("Fourcc: %d / indexFrame: %d / fps: %d / Total Frame: %d / Width * Height : %d * %d / Width*Height/300 : %d / Width*Height/40: %d \n", Fourcc ,IndexFrame, FPS, FRAME_COUNT, Width, Height, Width*Height/250, Width*Height/50);
     
 //    string XXX = "Segment counter ";
 //    char *windowName = new char[50];
@@ -298,10 +291,8 @@ int main( )
     
     //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
     
-    cout<<"Plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points"<<endl;
-    
-    //mode = 2;
-    cin >> mode;
+//    cout<<"Plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points"<<endl;
+//    cin >> mode;
     
     cout<<"How many initial segment do you want: " <<endl;
     cin >> Segmentinitialnum;
@@ -309,8 +300,8 @@ int main( )
     
     int arraynum = 10;
     Initialseed s[Segmentinitialnum];
-    //vector<Initialseed>  vectorS;
-    deque<Initialseed>  vectorS;
+    vector<Initialseed>  vectorS;
+    //deque<Initialseed>  vectorS;
     
 //    // setting different color for segments
 //    RNG rng(time(0));
@@ -328,6 +319,8 @@ int main( )
     while( i < Segmentinitialnum)
     {
         printf("\n********************Setting for object %d ***************\n", i+1);
+        cout<<"Plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points"<<endl;
+        cin >> mode;
         s[i] = Initialseed(mode, firstFrame, i, defaultThreshold, defaultseed);
         //Mat drawFrame = firstFrame.clone();
         //s[i].drawpoint(drawFrame, s[i].initialseedvektor);
@@ -609,7 +602,6 @@ int main( )
                 //cout << "Rectangle width * pixelrelation : "  << C[i].rectanglewidth  * pixelrelation <<endl;
                 //cout << "Rectangle height: "  << C[i].rectangleheight <<endl;
                 cout << "contour area: "  << C[i].Area <<endl;
-                //cout<< "Threshold: " << s[i].differencegrow << endl;
                 printf("Threshold: %.8f \n", vectorS[i].differencegrow );
                 
                 char Thereshold[15];
@@ -650,6 +642,13 @@ int main( )
                 double averageScale = averagevalue(considerNum, vectorS[i].data[3]);
                 
                 cout <<"Average Scale from last several frames: " << averageScale<< endl;
+                            vector<double>::iterator iter;
+                
+                            //vector<double> v1 = s[i].data[0];
+                            cout<< "ScaleDifference.size(): " << vectorS[i].data[4].size() << endl;
+                            cout << "ScaleDifference vector = " ;
+                            for (iter= vectorS[i].data[4].begin(); iter != vectorS[i].data[4].end(); iter++)  {cout << *iter << " ";}
+                            cout << endl;
   
                 double averageScaleDifference = averagedifference(considerNum, vectorS[i].data[4]);
                 
@@ -673,6 +672,12 @@ int main( )
                 double Areadiffernce = C[i].Area - vectorS[i].data[6].back();
                 printf("Area Difference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, Areadiffernce );
                 cout<< "0.2*(vectorS[i].data[6].back()): " << 0.2*(vectorS[i].data[6].back())  << endl <<endl;
+                
+                cout<< "RGThreshold(): " << vectorS[i].RGThreshold.size() << endl;
+                cout << "RGThreshold vector = " ;
+                for (iter= vectorS[i].RGThreshold.begin(); iter != vectorS[i].RGThreshold.end(); iter++)  {cout << *iter << " ";}
+                cout << endl;
+                
         //--------- update the thereshlod value for region growing if scale varies largely
                 //cout<< 0.2*vectorS[i].data[6].back() <<endl;
                 if ( abs(Areadiffernce) <=  0.2*(vectorS[i].data[6].back()) )
@@ -689,7 +694,7 @@ int main( )
                         }
                         else{
                             newthreshold = vectorS[i].differencegrow + (0.03/ pow(2, vectorS[i].LoopThreshold - 1));
-                            printf("!!!!!!!!!!!Update/ the threshlod value will be increased/ current Segment (scale difference negative) is too small \n");
+                            printf("!!!!!!!!!!!Update/ the threshlod value will be increased/Segment (scale difference negative) is too small \n");
                         }
 
                         //cout << "New RG_Threshlod: " << newthreshold  << endl;
@@ -777,16 +782,7 @@ int main( )
                     printf("!!!!!!!!!!!Update / the current segment is too small\n");
                     anothernewthreshold = vectorS[i].differencegrow + (0.05/ pow(2, vectorS[i].LoopThreshold - 1));
                     }
-
-//                else if (abs(ScaleDifference) > 0.8 && abs(ScaleDifference) <= 1.2 ) { /// Object could not be found. ScaleDifference is negativ
-//                    printf("!!!!!!!!!!!Update threshlod value becasue Object could not be found \n");
-//                    vectorS[i].differencegrow = vectorS[i].differencegrow + 0.05;
-//                    printf("new RG_Threshold: %f \n", vectorS[i].differencegrow);
-//                    vectorS[i].threshold_notchange = false;
-//                    //waitKey(100);
-//                }
-                
-                //else  (abs(ScaleDifference) > 1.2 ) { /// Segment grows unregular and is too large . ScaleDifference  is negativ
+                    
                     else { /// Segment grows unregular and is too large . ScaleDifference  is negativ
                     printf("!!!!!!!!!!!Update threshlod value becasue segment is too large \n");
                     anothernewthreshold = vectorS[i].differencegrow - (0.05/ pow(2, vectorS[i].LoopThreshold - 1));
@@ -818,14 +814,6 @@ int main( )
                     vectorS[i].threshold_notchange = false;
                     
                 }
-                
-                
-    //            while(threshold_notchange){
-    //                char scale[30];-
-    //                sprintf(scale, "Scale (object %d/index %d to %d): %f", i+1, indexFrame, indexFrame-1, s[i].data[3].back());
-    //                text.push_back(scale);
-    //                break;
-    //            }
                 
     //            vector<double>::iterator iter;
     //            vector<double>::iterator iter2;
@@ -950,23 +938,8 @@ int main( )
         
 //----------------- add the text(frame index number) to written video frame
 
-        //vw.write(frame);
         vw << FramewithCounter;
         vwGrow << Matsegment;
-        
-//        // split to channel
-//        Mat RedChannel;
-//        Mat RedChannelMatIn;
-        
-//        split(MatOut,channels);//分离色彩通道
-//        RedChannel = channels.at(2).clone();
-//        split(frame,channelsMatIn);//分离色彩通道
-//        RedChannelMatIn = channelsMatIn.at(2).clone();
-//        addWeighted(RedChannelMatIn,0.80, RedChannel, 20.0 ,0, RedChannelMatIn);
-//        RedChannelMatIn.copyTo(channelsMatIn.at(2));
-//        //  merge to channel
-//        merge (channelsMatIn, Matfinal);
-        //imshow("final image", Matfinal);
 
         
 //-------------define the stop-button and exit-button
@@ -986,8 +959,8 @@ int main( )
             cout<<"Please input the objekt number which you want to delete  "<<endl;
             int deletenum;
             cin >> deletenum;
-            //vector<Initialseed>::iterator iterdelete = vectorS.begin() + (deletenum - 1);
-            deque<Initialseed>::iterator iterdelete = vectorS.begin() + (deletenum - 1);
+            vector<Initialseed>::iterator iterdelete = vectorS.begin() + (deletenum - 1);
+            //deque<Initialseed>::iterator iterdelete = vectorS.begin() + (deletenum - 1);
             vectorS.erase(iterdelete);
             //waitKey(0);
         }
@@ -1010,7 +983,7 @@ int main( )
                 }
                 
                 else{
-                    cout<< "New segment sucessfully found" << endl;
+                    cout<< endl << "New segment sucessfully found" << endl;
                     vectorS.push_back(newobject);
                     i++;
                 }
@@ -1059,8 +1032,8 @@ int main( )
             
             if (vectorS[i].LoopThreshold > maxitrarion) {
                 cout<<endl << "####Delete objekt " << i+1 << " because of infinitv loop" << endl;
-                    //vector<Initialseed>::iterator iterdelete = vectorS.begin() + i ;
-                    deque<Initialseed>::iterator iterdelete = vectorS.begin() + i;
+                    vector<Initialseed>::iterator iterdelete = vectorS.begin() + i ;
+                    //deque<Initialseed>::iterator iterdelete = vectorS.begin() + i;
                     vectorS.erase(iterdelete);
             }
         }
@@ -1281,8 +1254,8 @@ void checkThreshold(Mat Frame, Initialseed &seedclass, int& iterationnum, bool& 
         
         Thresholdstack.push_back(seedclass.differencegrow) ;
         
-        if (CTest.Area < (Width*Height/250)) seedclass.differencegrow = seedclass.differencegrow + 0.1;  // (Width*Height/250) = 2100   (Width*Height/50 )= 10000
-        else if (CTest.Area <= (Width*Height/50) ) break;
+        if (CTest.Area < (Width*Height/300)) seedclass.differencegrow = seedclass.differencegrow + 0.1;  // (Width*Height/250) = 2100   (Width*Height/50 )= 10000
+        else if (CTest.Area <= (Width*Height/40) ) break;
         else  seedclass.differencegrow = seedclass.differencegrow - 0.1;
         
         iterationnum++;
