@@ -298,7 +298,7 @@ int main( )
     cin >> Segmentinitialnum;
     //Segmentnum  = 1;
     
-    int arraynum = 10;
+    //int arraynum = 10;
     Initialseed s[Segmentinitialnum];
     vector<Initialseed>  vectorS;
     //deque<Initialseed>  vectorS;
@@ -678,15 +678,12 @@ int main( )
                 for (iter= vectorS[i].RGThreshold.begin(); iter != vectorS[i].RGThreshold.end(); iter++)  {
                     cout << *iter << " ";
                     
-                    if(*iter == 5.2)
+                    if(*iter == 5.1)
                     {
                         cout<< "5.1!!!" <<endl;
                     }
                 }
                 cout << endl;
-                
-                vector<double>::iterator iterfind;
-                iterfind = find( vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), 5.15);
 
                 
         //--------- update the thereshlod value for region growing if scale varies largely
@@ -801,8 +798,8 @@ int main( )
                     
                     printf("new RG_Threshold: %f \n", anothernewthreshold);
 
-                    vector<double>::iterator iterfind2;
-                    iterfind2 = find( vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), anothernewthreshold);
+                    vector<double>::iterator iterfind;
+                    iterfind = find( vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), anothernewthreshold);
                     
                     if(iterfind == vectorS[i].RGThreshold.end()){
                         cout << "New RG_Threshlod ist not available in RG_Threshlod vector. Using New RG_Threshlod for next loop" << endl;
@@ -1272,10 +1269,10 @@ void checkThreshold(Mat Frame, Initialseed &seedclass, int& iterationnum, bool& 
         iterationnum++;
         cout<< "iterationnum: " << iterationnum << endl;
         
-        vector<double>::iterator iterfind;
-        iterfind = find( Thresholdstack.begin(), Thresholdstack.end(), seedclass.differencegrow);
+        vector<double>::iterator iterfind2;
+        iterfind2 = find( Thresholdstack.begin(), Thresholdstack.end(), seedclass.differencegrow);
         
-        if(iterfind != Thresholdstack.end()){
+        if(iterfind2 != Thresholdstack.end()){
             cout << "New Threshlod ist already available Threshlod vector. " << endl;
             repeat_thres = true;
             break;
@@ -1285,7 +1282,6 @@ void checkThreshold(Mat Frame, Initialseed &seedclass, int& iterationnum, bool& 
         
     }
     
-    seedclass.RGThreshold.resize(100);
     seedclass.LoopThreshold = 1;
     seedclass.data[3].push_back(1.0); // scale
     seedclass.data[4].push_back(0.01); // ScaleDifference
