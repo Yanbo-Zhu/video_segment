@@ -608,20 +608,20 @@ int main( )
                 sprintf(Thereshold, "Threshold(obj %d): %.8f", i+1, vectorS[i].differencegrow );
                 text.push_back(Thereshold);
                 
-                if (indexFrame == initialindex){
-                    vectorS[i].data[3].push_back(1.0); // scale
-                    vectorS[i].data[4].push_back(0.01); // ScaleDifference
-                    vectorS[i].data[0].push_back(C[i].EWlong);    // Green line. long axis
-                    vectorS[i].data[1].push_back(C[i].EWshort);   // lightly blue line . short axis
-                    vectorS[i].data[2].push_back(C[i].Ratio);
-                    vectorS[i].data[5].push_back(0.0); // RatioDifference
-                    vectorS[i].data[6].push_back(C[i].Area);  // Area
-                    vectorS[i].data[7].push_back(1.0);  // scaleArea
-                    vectorS[i].initialseedvektor.clear();
-                    //s[i].initialseedvektor.push_back(R[i].regioncenter);
-                    vectorS[i].initialseedvektor.push_back(C[i].cntr);
-                    vectorS[i].threshold_notchange = true;
-                }
+//                if (indexFrame == initialindex){
+//                    vectorS[i].data[3].push_back(1.0); // scale
+//                    vectorS[i].data[4].push_back(0.01); // ScaleDifference
+//                    vectorS[i].data[0].push_back(C[i].EWlong);    // Green line. long axis
+//                    vectorS[i].data[1].push_back(C[i].EWshort);   // lightly blue line . short axis
+//                    vectorS[i].data[2].push_back(C[i].Ratio);
+//                    vectorS[i].data[5].push_back(0.0); // RatioDifference
+//                    vectorS[i].data[6].push_back(C[i].Area);  // Area
+//                    vectorS[i].data[7].push_back(1.0);  // scaleArea
+//                    vectorS[i].initialseedvektor.clear();
+//                    //s[i].initialseedvektor.push_back(R[i].regioncenter);
+//                    vectorS[i].initialseedvektor.push_back(C[i].cntr);
+//                    vectorS[i].threshold_notchange = true;
+//                }
                
                 //double scale = ( (C[i].EWlong/vectorS[i].data[0].back()) + (C[i].EWshort/vectorS[i].data[1].back()) )/2 ;
                 double scale = sqrt( ( C[i].EWlong* C[i].EWshort)/(vectorS[i].data[0].back() * vectorS[i].data[1].back()) );
@@ -642,8 +642,8 @@ int main( )
                 double averageScale = averagevalue(considerNum, vectorS[i].data[3]);
                 
                 cout <<"Average Scale from last several frames: " << averageScale<< endl;
-                            vector<double>::iterator iter;
                 
+                            vector<double>::iterator iter;
                             //vector<double> v1 = s[i].data[0];
                             cout<< "ScaleDifference.size(): " << vectorS[i].data[4].size() << endl;
                             cout << "ScaleDifference vector = " ;
@@ -675,8 +675,20 @@ int main( )
                 
                 cout<< "RGThreshold(): " << vectorS[i].RGThreshold.size() << endl;
                 cout << "RGThreshold vector = " ;
-                for (iter= vectorS[i].RGThreshold.begin(); iter != vectorS[i].RGThreshold.end(); iter++)  {cout << *iter << " ";}
+                for (iter= vectorS[i].RGThreshold.begin(); iter != vectorS[i].RGThreshold.end(); iter++)  {
+                    cout << *iter << " ";
+                    
+                    
+                    if(*iter == 5.2)
+                    {
+                        cout<< "5.1!!!" <<endl;
+                    }
+                }
                 cout << endl;
+                
+                vector<double>::iterator iterfind;
+                iterfind = find( vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), 5.15);
+
                 
         //--------- update the thereshlod value for region growing if scale varies largely
                 //cout<< 0.2*vectorS[i].data[6].back() <<endl;
@@ -790,8 +802,8 @@ int main( )
                     
                     printf("new RG_Threshold: %f \n", anothernewthreshold);
 
-                    vector<double>::iterator iterfind;
-                    iterfind = find( vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), anothernewthreshold);
+                    vector<double>::iterator iterfind2;
+                    iterfind2 = find( vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), anothernewthreshold);
                     
                     if(iterfind == vectorS[i].RGThreshold.end()){
                         cout << "New RG_Threshlod ist not available in RG_Threshlod vector. Using New RG_Threshlod for next loop" << endl;
@@ -1274,6 +1286,7 @@ void checkThreshold(Mat Frame, Initialseed &seedclass, int& iterationnum, bool& 
         
     }
     
+    seedclass.RGThreshold.resize(100);
     seedclass.LoopThreshold = 1;
     seedclass.data[3].push_back(1.0); // scale
     seedclass.data[4].push_back(0.01); // ScaleDifference
