@@ -13,6 +13,7 @@
 #include "fstream"
 #include <string>
 #include <list>
+#include <vector>
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -108,14 +109,37 @@ int main( )
 //    cout<<"向量中的元素："<<endl;
 //    for_each(vecInt.begin(),vecInt.end(),PrintInt);
     
+    
+    vector<double> v;
+    double num_to_find= 5.5*5.5;//要查找的元素,类型要与vector<>类型一致
+    for(double i=1.5;i<10;i++)
+        v.push_back(i*i);
+    
+    vector<double>::iterator iterM;
+    
+    for (iterM = v.begin(); iterM != v.end(); iterM++)  {
+        cout << *iterM << " ";
+        
+        if(*iterM == num_to_find)
+        {
+            cout<< "25!!!" <<endl;
+        }
+    }
+    vector<double>::iterator iterX = find(v.begin(),v.end(),num_to_find);//返回的是一个迭代器指针
+    if(iterX==v.end())
+        cout<<"ERROR!"<<endl;
+    else               //注意迭代器指针输出元素的方式和distance用法
+        cout<<"the index of value "<<(*iterX)<<" is " <<std::endl;
+    
 //--------------some default seed points when i choose 2 during modechoose
 // Point (x,y )  x= column  y = row
     vector<vector<Point>> defaultseed(4);
-    defaultseed[0].push_back(Point(781,379)); // grass
+    defaultseed[0].push_back(Point(515,376)); // black roof 有缺陷 在中间
+    //defaultseed[0].push_back(Point(781,379)); // grass  threshold 4
     defaultseed[1].push_back(Point(215,240)); // light blue roof left
     defaultseed[2].push_back(Point(530,234)); // white boot
     defaultseed[3].push_back(Point(491,356)); // black roof bottem
-    double defaultThreshold[] = {4,11, 12 ,8} ;
+    double defaultThreshold[] = {5, 11, 12 ,8} ;
     
 //    defaultseed[0].push_back(Point(531,240)); // white boot
 //    double defaultThreshold[] = {33} ;
@@ -673,21 +697,24 @@ int main( )
                 printf("Area Difference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, Areadiffernce );
                 cout<< "0.2*(vectorS[i].data[6].back()): " << 0.2*(vectorS[i].data[6].back())  << endl <<endl;
                 
-                cout<< "RGThreshold(): " << vectorS[i].RGThreshold.size() << endl;
-                cout << "RGThreshold vector = " ;
-                for (iter= vectorS[i].RGThreshold.begin(); iter != vectorS[i].RGThreshold.end(); iter++)  {
-                    cout << *iter << " ";
-                    
-                    if(*iter == 5.1)
-                    {
-                        cout<< "5.1!!!" <<endl;
-                    }
-                }
-                cout << endl;
+                        cout<< "RGThreshold(): " << vectorS[i].RGThreshold.size() << endl;
+                        cout << "RGThreshold vector = " ;
+                        //vector<double>::iterator iterM;
+                        for (iter = vectorS[i].RGThreshold.begin(); iter != vectorS[i].RGThreshold.end(); iter++)  {
+                            cout << *iter << " ";
+                            
+                            if(*iter == 11)
+                            {
+                                cout<< "!!!" <<endl;
+                            }
+                        }
+                        cout << endl;
 
                 
         //--------- update the thereshlod value for region growing if scale varies largely
                 //cout<< 0.2*vectorS[i].data[6].back() <<endl;
+                
+                double newthreshold;
                 if ( abs(Areadiffernce) <=  0.2*(vectorS[i].data[6].back()) )
                 {
                     printf("the Area of segment is stable\n");
@@ -695,7 +722,7 @@ int main( )
                     if (abs(ScaleDifference) > multipleScaleDiff * averageScaleDifference ) {
                         
                         //double newthreshold = 0.0;
-                        double newthreshold;
+                        //double newthreshold;
                         if ( ScaleDifference > 0.0){
                             newthreshold = vectorS[i].differencegrow - (0.03 / pow(2, vectorS[i].LoopThreshold - 1));
                             printf("!!!!!!!!!!!Update/ the threshlod value will be decreased/ current segment (scale difference positive) is too lagre \n");
@@ -750,7 +777,7 @@ int main( )
 //                    }
                 
                     else{
-                        if (indexFrame > initialindex){
+                        //if (indexFrame > initialindex){
                             
                         vectorS[i].threshold_notchange = true;
                         bool test_threshold_notchange = true;
@@ -760,7 +787,7 @@ int main( )
                         }
                         //cout << "test_threshold_notchange: " << test_threshold_notchange <<endl;
                             
-                            if(test_threshold_notchange){
+                            while(test_threshold_notchange){
                                 vectorS[i].data[3].push_back(scale);
                                 vectorS[i].data[4].push_back(ScaleDifference);
                                 vectorS[i].data[0].push_back(C[i].EWlong);
@@ -772,9 +799,10 @@ int main( )
                                 vectorS[i].initialseedvektor.clear();
                                 //s[i].initialseedvektor.push_back(R[i].regioncenter);
                                 vectorS[i].initialseedvektor.push_back(C[i].cntr);
+                                break;
                                 
                             }
-                        }
+                        //}
                     }
                     
                 }
@@ -784,27 +812,29 @@ int main( )
                     
                     cout<<"Area of segment is unstable" << endl;
                     
-                    double anothernewthreshold;
+                    //double newthreshold;
                     
                     if (Areadiffernce <0){
                     printf("!!!!!!!!!!!Update / the current segment is too small\n");
-                    anothernewthreshold = vectorS[i].differencegrow + (0.05/ pow(2, vectorS[i].LoopThreshold - 1));
+                    newthreshold = vectorS[i].differencegrow + (0.05/ pow(2, vectorS[i].LoopThreshold - 1));
                     }
                     
-                    else { /// Segment grows unregular and is too large . ScaleDifference  is negativ
+                    else {
                     printf("!!!!!!!!!!!Update threshlod value becasue segment is too large \n");
-                    anothernewthreshold = vectorS[i].differencegrow - (0.05/ pow(2, vectorS[i].LoopThreshold - 1));
+                    newthreshold = vectorS[i].differencegrow - (0.05/ pow(2, vectorS[i].LoopThreshold - 1));
                     }
                     
-                    printf("new RG_Threshold: %f \n", anothernewthreshold);
+                    printf("new RG_Threshold: %f \n", newthreshold);
 
-                    vector<double>::iterator iterfind;
-                    iterfind = find( vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), anothernewthreshold);
+                    vector<double>::iterator iterfind2;
+                    iterfind2 = find( vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), newthreshold);
                     
-                    if(iterfind == vectorS[i].RGThreshold.end()){
+                    if(iterfind2 == vectorS[i].RGThreshold.end()){
                         cout << "New RG_Threshlod ist not available in RG_Threshlod vector. Using New RG_Threshlod for next loop" << endl;
-                        vectorS[i].RGThreshold.push_back(anothernewthreshold);
-                        vectorS[i].differencegrow = anothernewthreshold;
+                        vectorS[i].RGThreshold.push_back(newthreshold);
+                        vectorS[i].differencegrow = newthreshold;
+                        cout << endl;
+                        
                     }
                     else {
                         cout << "New RG_Threshlod ist already available in RG_Threshlod vector. Using old RG_Threshlod for next loop  " << endl;

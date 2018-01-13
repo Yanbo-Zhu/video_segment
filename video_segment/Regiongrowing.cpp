@@ -106,6 +106,16 @@ Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vecto
     
     //seedtogether.clear();
     //vw.release();
+    //imshow("Segment", Segment);
+    
+    //Mat element = getStructuringElement(MORPH_RECT, Size(5,5));
+    //dilate(Segment,Segment, element);
+    //imshow("Segment after dalite", Segment);
+    //erode(Segment,Segment, element);
+    //imshow("Segment after erode", Segment);
+    //morphologyEx(Segment,Segment, MORPH_CLOSE, element);
+    //waitKey(0);
+    
     return Segment;
 }
 
