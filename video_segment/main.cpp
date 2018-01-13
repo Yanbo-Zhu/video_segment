@@ -678,7 +678,6 @@ int main( )
                 for (iter= vectorS[i].RGThreshold.begin(); iter != vectorS[i].RGThreshold.end(); iter++)  {
                     cout << *iter << " ";
                     
-                    
                     if(*iter == 5.2)
                     {
                         cout<< "5.1!!!" <<endl;
