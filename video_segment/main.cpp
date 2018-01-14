@@ -10,10 +10,13 @@
 #include "stdio.h"
 #include <time.h> //time_t time()  clock_t clock()
 #include <math.h>
+#include <float.h>
 #include "fstream"
 #include <string>
 #include <list>
 #include <vector>
+#include <limits>  // numeric_limits<double>::epsilon(): 2.22045e-016
+#include <numeric>
 
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
@@ -35,6 +38,7 @@ int Segmentnum;
 int Segmentinitialnum;
 //Mat firstFrame;
 Size kernelsize(3,3);
+#define EPSILON 1e-13   // arrcuracy
 
 int Width ;
 int Height ;
@@ -110,31 +114,27 @@ int main( )
 //    for_each(vecInt.begin(),vecInt.end(),PrintInt);
     
     
-    vector<double> v;
-    double num_to_find= 5.5*5.5;//要查找的元素,类型要与vector<>类型一致
-    for(double i=1.5;i<10;i++)
-        v.push_back(i*i);
-    
-    vector<double>::iterator iterM;
-    
-    for (iterM = v.begin(); iterM != v.end(); iterM++)  {
-        cout << *iterM << " ";
-        
-        if(*iterM == num_to_find)
-        {
-            cout<< "25!!!" <<endl;
-        }
-    }
-    vector<double>::iterator iterX = find(v.begin(),v.end(),num_to_find);//返回的是一个迭代器指针
-    if(iterX==v.end())
-        cout<<"ERROR!"<<endl;
-    else               //注意迭代器指针输出元素的方式和distance用法
-        cout<<"the index of value "<<(*iterX)<<" is " <<std::endl;
+//    vector<double> v;
+//    double num_to_find= 5.5*5.5;//要查找的元素,类型要与vector<>类型一致
+//    for(double i=1.5;i<10;i++)
+//        v.push_back(i*i);
+//
+//    vector<double>::iterator iterM;
+//
+//    for (iterM = v.begin(); iterM != v.end(); iterM++)  {
+//        cout << *iterM << " ";
+//
+//        if(*iterM == num_to_find)
+//        {
+//            cout<< "25!!!" <<endl;
+//        }
+//    }
+
     
 //--------------some default seed points when i choose 2 during modechoose
 // Point (x,y )  x= column  y = row
     vector<vector<Point>> defaultseed(4);
-    defaultseed[0].push_back(Point(515,376)); // black roof 有缺陷 在中间
+    defaultseed[0].push_back(Point(515,376)); // black roof 有缺陷 在中间  threshold 5
     //defaultseed[0].push_back(Point(781,379)); // grass  threshold 4
     defaultseed[1].push_back(Point(215,240)); // light blue roof left
     defaultseed[2].push_back(Point(530,234)); // white boot
@@ -472,6 +472,7 @@ int main( )
         Mat MatOut;
         Mat Matfinal;
         int maxitrarion = 10;
+        vector<double> templateScaleSameframe;
         //Mat MatOut(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
         
         cout <<"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
@@ -655,6 +656,8 @@ int main( )
                 cout<< "Scale (index " << indexFrame << " to " << indexFrame-1<< "): " << scale <<endl;
                 cout<< endl;
                 
+                templateScaleSameframe.push_back(scale);
+                
     //            char scaletext[30];
     //            sprintf(scaletext, "Scale (obj %d/index %d to %d): %.5f", i+1, indexFrame, indexFrame-1, s[i].data[3].back());
     //            text.push_back(scaletext);
@@ -668,9 +671,8 @@ int main( )
                 cout <<"Average Scale from last several frames: " << averageScale<< endl;
                 
                             vector<double>::iterator iter;
-                            //vector<double> v1 = s[i].data[0];
                             cout<< "ScaleDifference.size(): " << vectorS[i].data[4].size() << endl;
-                            cout << "ScaleDifference vector = " ;
+                            cout << "ScaleDifference vector = " << endl;;
                             for (iter= vectorS[i].data[4].begin(); iter != vectorS[i].data[4].end(); iter++)  {cout << *iter << " ";}
                             cout << endl;
   
@@ -697,27 +699,24 @@ int main( )
                 printf("Area Difference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, Areadiffernce );
                 cout<< "0.2*(vectorS[i].data[6].back()): " << 0.2*(vectorS[i].data[6].back())  << endl <<endl;
                 
-                        cout<< "RGThreshold(): " << vectorS[i].RGThreshold.size() << endl;
-                        cout << "RGThreshold vector = " ;
-                        //vector<double>::iterator iterM;
-                        for (iter = vectorS[i].RGThreshold.begin(); iter != vectorS[i].RGThreshold.end(); iter++)  {
+                        cout<< "RGThreshold vector Size: " << vectorS[i].RGThreshold.size() << endl;
+                        cout << "RGThreshold vector = " << endl;;
+                        for (iter = vectorS[i].RGThreshold.begin(); iter != vectorS[i].RGThreshold.end(); iter++) {
                             cout << *iter << " ";
-                            
-                            if(*iter == 11)
-                            {
-                                cout<< "!!!" <<endl;
-                            }
                         }
-                        cout << endl;
-
+                cout << endl;
                 
+//                double a = 5.4;
+//                vector<double>::iterator iterfind2;
+//                iterfind2  = find_if(vectorS[i].RGThreshold.begin(),vectorS[i].RGThreshold.end(),[a](double b) { return abs(a - b) < EPSILON; });
+
         //--------- update the thereshlod value for region growing if scale varies largely
                 //cout<< 0.2*vectorS[i].data[6].back() <<endl;
                 
                 double newthreshold;
                 if ( abs(Areadiffernce) <=  0.2*(vectorS[i].data[6].back()) )
                 {
-                    printf("the Area of segment is stable\n");
+                    printf("the Area of segment %d is stable\n", i+1);
                     
                     if (abs(ScaleDifference) > multipleScaleDiff * averageScaleDifference ) {
                         
@@ -736,7 +735,8 @@ int main( )
                         printf("New RG_Threshlod: %f \n", newthreshold);
             
                         vector<double>::iterator iterfind;
-                        iterfind = find( vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), newthreshold);
+                        //iterfind = find( vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), newthreshold);
+                        iterfind  = find_if(vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), [newthreshold](double b) { return fabs(newthreshold - b) < EPSILON; });
                         
                         if(iterfind == vectorS[i].RGThreshold.end()){
                             cout << "New RG_Threshlod ist not available in RG_Threshlod vector. Using New RG_Threshlod for next loop" << endl;
@@ -810,7 +810,7 @@ int main( )
                 
                 else {
                     
-                    cout<<"Area of segment is unstable" << endl;
+                    cout<<"Area of segment " << i+1 <<" is unstable" << endl;
                     
                     //double newthreshold;
                     
@@ -824,18 +824,21 @@ int main( )
                     newthreshold = vectorS[i].differencegrow - (0.05/ pow(2, vectorS[i].LoopThreshold - 1));
                     }
                     
-                    printf("new RG_Threshold: %f \n", newthreshold);
-
+                    //printf("new RG_Threshold: %f \n", newthreshold);
+                    cout<<"new RG_Threshold: " <<  newthreshold << endl;
+                  
                     vector<double>::iterator iterfind2;
-                    iterfind2 = find( vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), newthreshold);
+                    //iterfind2 = find( vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), newthreshold);
+                    iterfind2  = find_if(vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), [newthreshold](double b) { return fabs(newthreshold - b) < EPSILON; });
+                    //iterfind2  = find_if(v.begin(),v.end(),dbl_cmp(10.5, 1E-8));
                     
                     if(iterfind2 == vectorS[i].RGThreshold.end()){
                         cout << "New RG_Threshlod ist not available in RG_Threshlod vector. Using New RG_Threshlod for next loop" << endl;
                         vectorS[i].RGThreshold.push_back(newthreshold);
                         vectorS[i].differencegrow = newthreshold;
                         cout << endl;
-                        
                     }
+                    
                     else {
                         cout << "New RG_Threshlod ist already available in RG_Threshlod vector. Using old RG_Threshlod for next loop  " << endl;
                         vectorS[i].LoopThreshold = vectorS[i].LoopThreshold + 1;
@@ -875,6 +878,33 @@ int main( )
                 
             }////segment big循环在这里截止
         
+   //------------------------ Scale of different Segment in the same Frame to build  gaussian model
+        
+        
+//        cout<< "templateScaleSameframe.size()" << templateScaleSameframe.size() << endl;
+//       
+////        for (int i = 0 ; i< templateScaleSameframe.size(); i++){
+////            cout<< templateScaleSameframe[i] << endl;
+////        }
+//        
+//        double sum = accumulate( templateScaleSameframe.begin(), templateScaleSameframe.end(), 0.0);
+//        double mean =  sum / templateScaleSameframe.size(); // 均值 average value
+//        
+//        double accum  = 0.0;
+//        for_each (templateScaleSameframe.begin(), templateScaleSameframe.end(), [&](const double d) {
+//            accum  += (d-mean)*(d-mean);
+//        });
+//        cout<< accum << endl;
+//        double stdev = sqrt(accum/(templateScaleSameframe.size()-1)); //方差 standard deviation
+//        
+//        for (int i = 0 ; i< templateScaleSameframe.size(); i++){
+//            
+//            if (templateScaleSameframe[i] > (mean + 1.64*stdev) && templateScaleSameframe[i] < (mean - 1.64*stdev))
+//            cout<< "the Scale of Segment " << i+1 << " is not qualified"<< endl;
+//            
+//            else cout<< "the Scale of Segment " << i+1 << " is qualified"<< endl;
+//        }
+        
         // running time
         end = clock();
         runningtime = (double)(end - start) / CLOCKS_PER_SEC;
@@ -899,7 +929,7 @@ int main( )
                 averageScaleoneFrame += vectorS[i].data[7].back();
             }
             
-            cout<< "*************************************************" <<endl;
+            cout<< endl << "*************************************************" <<endl;
             averageScaleoneFrame /= Segmentnum;
             cout<< "average Scale of all Segment in same Frame: " << averageScaleoneFrame<<endl;
             pixelrelation /= averageScaleoneFrame;
@@ -978,6 +1008,36 @@ int main( )
 
         vw << FramewithCounter;
         vwGrow << Matsegment;
+//-------------delete the unuseful segment
+        
+        for( int i=0; i<vectorS.size(); i++){
+            
+            if (vectorS[i].LoopThreshold > maxitrarion) {
+                cout<<endl << "####Delete objekt " << i+1 << " because of infinitv loop" << endl;
+                vector<Initialseed>::iterator iterdelete = vectorS.begin() + i ;
+                //deque<Initialseed>::iterator iterdelete = vectorS.begin() + i;
+                vectorS.erase(iterdelete);
+            }
+        }
+        
+//------ check the current number of segments is enough or not
+        
+//        while (vectorS.size() < 4){
+//            cout<< "The objekts are not enough" << endl << "Setting for New objeckt: "<< vectorS.size() +1 <<endl;
+//            //Initialseed newobject = Initialseed(frame);
+//            Initialseed newobject = Initialseed(frame, Width, Height);
+//            checkThreshold(frame, newobject, checkThresholditeration, repeat_thres);
+//
+//            if(checkThresholditeration>=1000 || repeat_thres){
+//                cout<< "this new random initial point can not become a available seed point " << endl;
+//                continue;
+//            }
+//
+//            else{
+//                cout<< endl << "New segment sucessfully found" << endl;
+//                vectorS.push_back(newobject);
+//            }
+//        }
 
         
 //-------------define the stop-button and exit-button
@@ -1025,57 +1085,43 @@ int main( )
                     vectorS.push_back(newobject);
                     i++;
                 }
-                
             }
-            waitKey(0);
+            //waitKey(0);
         }
         
         
         if(keycode  == 114){  // 114 =  r
-        Mat FramewithCounterBackup;
-        FramewithCounter.copyTo(FramewithCounterBackup);
-        
-        cout<<"\nTest! real distrance of two pixel length"<<endl;
-        cout<<"Please mark two point on the image"<<endl;
-        //#define Pixel_realtion_window "Pixel-distance relation"
-        namedWindow( Pixel_realtion_window );
-        setMouseCallback(Pixel_realtion_window,on_MouseHandle,(void*)&FramewithCounterBackup);
-        
-        while(1)
-        {
-            imshow( Pixel_realtion_window, FramewithCounterBackup );
-            if( waitKey( 10 ) == 13 ) break;//按下enter键，程序退出
-        }
-        
-        //cout<< "relationpoint vektor size= " << relationpointvektor.size() <<endl;
-        if (relationpointvektor.size() != 2){
-            cout<< "\n!!!!!!!You did not mark 2 points. Porgramm breaks"  <<endl;
-            return 0;
-        }
-        
-        double pixeld = pixeldistance(FramewithCounterBackup, relationpointvektor);
-        cout<< "Pixeldistance: " << pixeld <<endl;
-       
-        cout<< "The real length: " << pixelrelation * pixeld  << " m \n" << endl;
+            Mat FramewithCounterBackup;
+            FramewithCounter.copyTo(FramewithCounterBackup);
             
-        imshow( Pixel_realtion_window, FramewithCounterBackup );
-        waitKey(0);
-        destroyWindow(Pixel_realtion_window);
-        }
-        
-        
-//-------------delete the unuseful segment
-
-        for( int i=0; i<vectorS.size(); i++){
+            cout<<"\nTest! real distrance of two pixel length"<<endl;
+            cout<<"Please mark two point on the image"<<endl;
+            //#define Pixel_realtion_window "Pixel-distance relation"
+            namedWindow( Pixel_realtion_window );
+            setMouseCallback(Pixel_realtion_window,on_MouseHandle,(void*)&FramewithCounterBackup);
             
-            if (vectorS[i].LoopThreshold > maxitrarion) {
-                cout<<endl << "####Delete objekt " << i+1 << " because of infinitv loop" << endl;
-                    vector<Initialseed>::iterator iterdelete = vectorS.begin() + i ;
-                    //deque<Initialseed>::iterator iterdelete = vectorS.begin() + i;
-                    vectorS.erase(iterdelete);
+            while(1)
+            {
+                imshow( Pixel_realtion_window, FramewithCounterBackup );
+                if( waitKey( 10 ) == 13 ) break;//按下enter键，程序退出
             }
+            
+            //cout<< "relationpoint vektor size= " << relationpointvektor.size() <<endl;
+            if (relationpointvektor.size() != 2){
+                cout<< "\n!!!!!!!You did not mark 2 points. Porgramm breaks"  <<endl;
+                return 0;
+            }
+            
+            double pixeld = pixeldistance(FramewithCounterBackup, relationpointvektor);
+            cout<< "Pixeldistance: " << pixeld <<endl;
+           
+            cout<< "The real length: " << pixelrelation * pixeld  << " m \n" << endl;
+            
+            imshow( Pixel_realtion_window, FramewithCounterBackup );
+            waitKey(0);
+            destroyWindow(Pixel_realtion_window);
         }
-    
+        
     }
     
     cout << "Video plays over(outside loop)" << endl;
@@ -1292,9 +1338,9 @@ void checkThreshold(Mat Frame, Initialseed &seedclass, int& iterationnum, bool& 
         
         Thresholdstack.push_back(seedclass.differencegrow) ;
         
-        if (CTest.Area < (Width*Height/300)) seedclass.differencegrow = seedclass.differencegrow + 0.1;  // (Width*Height/250) = 2100   (Width*Height/50 )= 10000
+        if (CTest.Area < (Width*Height/300)) seedclass.differencegrow = (seedclass.differencegrow + 0.05);  // (Width*Height/250) = 2100   (Width*Height/50 )= 10000
         else if (CTest.Area <= (Width*Height/40) ) break;
-        else  seedclass.differencegrow = seedclass.differencegrow - 0.1;
+        else  seedclass.differencegrow = (seedclass.differencegrow - 0.05);
         
         iterationnum++;
         cout<< "iterationnum: " << iterationnum << endl;
@@ -1309,7 +1355,6 @@ void checkThreshold(Mat Frame, Initialseed &seedclass, int& iterationnum, bool& 
         }
         
         cout<< "Threshold: " << seedclass.differencegrow <<endl;
-        
     }
     
     seedclass.LoopThreshold = 1;
@@ -1326,7 +1371,7 @@ void checkThreshold(Mat Frame, Initialseed &seedclass, int& iterationnum, bool& 
     seedclass.initialseedvektor.push_back(CTest.cntr);
     seedclass.threshold_notchange = true;
     
-    waitKey(3000);
+    waitKey(2500);
     destroyWindow("Contour of Segment");
     
     
