@@ -881,29 +881,30 @@ int main( )
    //------------------------ Scale of different Segment in the same Frame to build  gaussian model
         
         
-//        cout<< "templateScaleSameframe.size()" << templateScaleSameframe.size() << endl;
-//       
-////        for (int i = 0 ; i< templateScaleSameframe.size(); i++){
-////            cout<< templateScaleSameframe[i] << endl;
-////        }
-//        
-//        double sum = accumulate( templateScaleSameframe.begin(), templateScaleSameframe.end(), 0.0);
-//        double mean =  sum / templateScaleSameframe.size(); // 均值 average value
-//        
-//        double accum  = 0.0;
-//        for_each (templateScaleSameframe.begin(), templateScaleSameframe.end(), [&](const double d) {
-//            accum  += (d-mean)*(d-mean);
-//        });
-//        cout<< accum << endl;
-//        double stdev = sqrt(accum/(templateScaleSameframe.size()-1)); //方差 standard deviation
-//        
-//        for (int i = 0 ; i< templateScaleSameframe.size(); i++){
-//            
-//            if (templateScaleSameframe[i] > (mean + 1.64*stdev) && templateScaleSameframe[i] < (mean - 1.64*stdev))
-//            cout<< "the Scale of Segment " << i+1 << " is not qualified"<< endl;
-//            
-//            else cout<< "the Scale of Segment " << i+1 << " is qualified"<< endl;
-//        }
+        cout<< "templateScaleSameframe.size(): " << templateScaleSameframe.size() << endl;
+       
+        for (int i = 0 ; i< templateScaleSameframe.size(); i++){
+            cout<< templateScaleSameframe[i] << endl;
+        }
+        
+        double sum = accumulate( templateScaleSameframe.begin(), templateScaleSameframe.end(), 0.0);
+        double mean =  sum / templateScaleSameframe.size(); // 均值 average value
+        cout<< "mean " << mean << endl;
+        
+        double accum  = 0.0;
+        for_each (templateScaleSameframe.begin(), templateScaleSameframe.end(), [&](const double d) {
+            accum  += (d-mean)*(d-mean);
+        });
+        double stdev = sqrt(accum/(templateScaleSameframe.size()-1)); //方差 standard deviation
+        cout<< "stdev " << stdev << endl;
+        
+        for (int i = 0 ; i< templateScaleSameframe.size(); i++){
+            
+            if (templateScaleSameframe[i] > (mean + 1*stdev) && templateScaleSameframe[i] < (mean - 1*stdev))
+            cout<< "the Scale of Segment " << i+1 << " is not qualified"<< endl;
+            
+            else cout<< "the Scale of Segment " << i+1 << " is qualified"<< endl;
+        }
         
         // running time
         end = clock();
