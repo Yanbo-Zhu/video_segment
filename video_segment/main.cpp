@@ -880,7 +880,7 @@ int main( )
         
    //------------------------ Scale of different Segment in the same Frame to build  gaussian model
         
-        
+        cout<< endl << "Scale of different Segment in the same Frame to build  gaussian model "  << endl;
         cout<< "templateScaleSameframe.size(): " << templateScaleSameframe.size() << endl;
        
         for (int i = 0 ; i< templateScaleSameframe.size(); i++){
@@ -1023,22 +1023,22 @@ int main( )
         
 //------ check the current number of segments is enough or not
         
-//        while (vectorS.size() < 4){
-//            cout<< "The objekts are not enough" << endl << "Setting for New objeckt: "<< vectorS.size() +1 <<endl;
-//            //Initialseed newobject = Initialseed(frame);
-//            Initialseed newobject = Initialseed(frame, Width, Height);
-//            checkThreshold(frame, newobject, checkThresholditeration, repeat_thres);
-//
-//            if(checkThresholditeration>=1000 || repeat_thres){
-//                cout<< "this new random initial point can not become a available seed point " << endl;
-//                continue;
-//            }
-//
-//            else{
-//                cout<< endl << "New segment sucessfully found" << endl;
-//                vectorS.push_back(newobject);
-//            }
-//        }
+        while (vectorS.size() < Segmentinitialnum){
+            cout<< "The objekts are not enough" << endl << "Setting for New objeckt: "<< vectorS.size() +1 <<endl;
+            //Initialseed newobject = Initialseed(frame);
+            Initialseed newobject = Initialseed(frame, Width, Height);
+            checkThreshold(frame, newobject, checkThresholditeration, repeat_thres);
+
+            if(checkThresholditeration>=500 || repeat_thres){
+                cout<< "this new random initial point can not become a available seed point " << endl;
+                continue;
+            }
+
+            else{
+                cout<< endl << "New segment sucessfully found" << endl;
+                vectorS.push_back(newobject);
+            }
+        }
 
         
 //-------------define the stop-button and exit-button
@@ -1122,6 +1122,7 @@ int main( )
             waitKey(0);
             destroyWindow(Pixel_realtion_window);
         }
+        relationpointvektor.clear();
         
     }
     
@@ -1324,7 +1325,7 @@ void checkThreshold(Mat Frame, Initialseed &seedclass, int& iterationnum, bool& 
     repeat_thres = false;
     vector<double> Thresholdstack;
     
-    while (threshold_qualified && (iterationnum <1000) && (!repeat_thres)) {
+    while (threshold_qualified && (iterationnum <500) && (!repeat_thres)) {
         Mat Mattest =  Frame.clone();
         Mat Matcounter =  Frame.clone();
         Mat Mattest_Blur;
