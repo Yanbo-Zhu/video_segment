@@ -36,9 +36,6 @@ private:
     #define Point_mark_window " Drawing Point "
     
 public:
-    //Mat MatInBackup = firstFrame.clone();
-    
-    //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
 
     vector<Point> initialseedvektor;
     double differencegrow;
@@ -50,10 +47,8 @@ public:
     
     Initialseed();
     Initialseed(Mat Frame);
-    Initialseed(Mat Frame , int width, int height);
     Initialseed(int x, Mat firstFrame, int objektindex,  double defaultTH[], vector<vector<Point>> defaultSD);
     void modechoose(int x, Mat firstFrame, int objektindex,  double defaultTh[], vector<vector<Point>> defaultSD);
-    //void drawpoint(Mat firstFrame, vector<Point> initialseedvektor, Vec3b color);
     void drawpoint(Mat firstFrame, vector<Point> initialseedvektor);
     void newseed(Mat firstFrame);
     void randomseed(Mat firstFrame, int width, int height);

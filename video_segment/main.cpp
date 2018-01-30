@@ -40,13 +40,11 @@ int Segmentinitialnum;
 Size kernelsize(3,3);
 #define EPSILON 1e-13   // arrcuracy
 
-int Width ;
-int Height ;
-int checkThresholditeration ;
-bool repeat_thres(false);
 
-vector<Mat> channels;
-vector<Mat> channelsMatIn;
+int Threshoditerationmax = 500;
+
+//vector<Mat> channels;
+//vector<Mat> channelsMatIn;
 vector<Point> relationpointvektor;
 
 clock_t  clockBegin, clockEnd;
@@ -60,7 +58,7 @@ double averagevalue(int num, vector<double> array);
 double averagedifference(int num, vector<double> array);
 void on_MouseHandle(int event, int x, int y, int flags, void* param);
 double pixeldistance(Mat& img, vector<Point> pv);
-void checkThreshold(Mat Frame, Initialseed & seedclass, int& iterationnum, bool& repeat_thres);
+bool checkThreshold(Mat Frame, Initialseed & seed);
 //-------------------------------
 
 //setting for trackbar
@@ -82,55 +80,10 @@ void TrackBarFunc(int ,void(*))
     vc.set(CV_CAP_PROP_POS_FRAMES,controlRate);   //设置当前播放帧
 }
 
-//void PrintInt(const int&nData)
-//{
-//    cout<<nData<<endl;
-//}
-
 
 int main( )
 {
-//    vector<int> vecInt;
-//    for(int i=0; i<10;++i)
-//    {
-//        vecInt.push_back(i);
-//    }
-//    cout<<"向量中的内容为："<<endl;
-//    for_each(vecInt.begin(),vecInt.end(),PrintInt);
-//    cout<<"vector contains "<<vecInt.size()<<" elements"<<endl;
-//    vecInt.pop_back();//删除最后一个元素
-//    cout<<"删除最后一个元素后，vector contains "<<vecInt.size()<<" elements"<<endl;
-//    vector<int>::iterator k = vecInt.begin()+1;
-//    vecInt.erase(k);//删除第一个元素
-//    //vecInt.erase(k); //迭代器k已经失效，会出错
-//    cout<<"删除第一个元素后，vector contains "<<vecInt.size()<<" elements"<<endl;
-//    //vecInt.erase(vecInt.begin(),vecInt.end()); //删除所有元素
-//    //cout<<"删除所有元素后，vector contains "<<vecInt.size()<<"elements"<<endl; //输出为0
-//    vector<int>::iterator vecNewEnd =remove(vecInt.begin(),vecInt.end(),5); //删除元素
-//    cout<<"删除元素后，vector contains "<<vecInt.size()<<" elements"<<endl;
-//    cout<<"向量开始到新结束为止的元素："<<endl;
-//    for_each(vecInt.begin(),vecNewEnd,PrintInt);
-//    cout<<"向量中的元素："<<endl;
-//    for_each(vecInt.begin(),vecInt.end(),PrintInt);
-    
-    
-//    vector<double> v;
-//    double num_to_find= 5.5*5.5;//要查找的元素,类型要与vector<>类型一致
-//    for(double i=1.5;i<10;i++)
-//        v.push_back(i*i);
-//
-//    vector<double>::iterator iterM;
-//
-//    for (iterM = v.begin(); iterM != v.end(); iterM++)  {
-//        cout << *iterM << " ";
-//
-//        if(*iterM == num_to_find)
-//        {
-//            cout<< "25!!!" <<endl;
-//        }
-//    }
 
-    
 //--------------some default seed points when i choose 2 during modechoose
 // Point (x,y )  x= column  y = row
     vector<vector<Point>> defaultseed(4);
@@ -140,16 +93,10 @@ int main( )
     defaultseed[2].push_back(Point(530,234)); // white boot
     defaultseed[3].push_back(Point(491,356)); // black roof bottem
     double defaultThreshold[] = {5, 11, 12 ,8} ;
-    
-//    defaultseed[0].push_back(Point(531,240)); // white boot
-//    double defaultThreshold[] = {33} ;
-    
-//    cv::Mat image = cv::Mat::zeros(cv::Size(640, 480), CV_8UC3);
-//    //设置蓝色背景
-//    image.setTo(cv::Scalar(100, 0, 0));
+
     
 ///-------------------------------------- VideoCapture ----------------
-    //【1】读入视频
+    
     //VideoCapture vc;
     //vc.open( "/Users/yanbo/Desktop/source/Rotation_50m.mp4");
     char path[] = "/Users/yanbo/Desktop/source/" ;
@@ -173,8 +120,8 @@ int main( )
     int IndexFrame  = vc.get(CV_CAP_PROP_POS_FRAMES);
     int FPS  = vc.get(CV_CAP_PROP_FPS);
     int FRAME_COUNT = vc.get(CV_CAP_PROP_FRAME_COUNT);
-    Width = vc.get(CV_CAP_PROP_FRAME_WIDTH);
-    Height = vc.get(CV_CAP_PROP_FRAME_HEIGHT);
+    int Width = vc.get(CV_CAP_PROP_FRAME_WIDTH);
+    int Height = vc.get(CV_CAP_PROP_FRAME_HEIGHT);
     printf("Fourcc: %d / indexFrame: %d / fps: %d / Total Frame: %d / Width * Height : %d * %d / Width*Height/300 : %d / Width*Height/40: %d \n", Fourcc ,IndexFrame, FPS, FRAME_COUNT, Width, Height, Width*Height/250, Width*Height/50);
     
 //    string XXX = "Segment counter ";
@@ -230,14 +177,6 @@ int main( )
     strcat(savePathvideoGrow, ".mov");
     
     //char const *savePathvideo = "/Users/yanbo/Desktop/source/output/output2.txt";
-    if(remove(savePathvideoGrow)==0)
-    {
-        cout<<"Old Grow output video was deleted successful"<<endl;
-    }
-    else
-    {
-        cout<<"Old Grow output video was deleted failed"<<endl;
-    }
     
     VideoWriter vwGrow; //(filename, fourcc, fps, frameSize[, isColor])
     vwGrow.open( savePathvideoGrow, // 输出视频文件名
@@ -255,13 +194,14 @@ int main( )
     
     cout<<endl;
     
+//------------------------------------------------------
     Mat firstFrame;
     vc.read(firstFrame);
     
     int initialindex = 0;
     vc.set(CV_CAP_PROP_POS_FRAMES, 1);
     
-//---------------------- Setting the relation between real distrance and pixel distance
+//--------------- Setting the relation between real distrance and pixel distance
     
     Mat firstframeBackup; //= firstFrame.clone();
     firstFrame.copyTo(firstframeBackup);
@@ -287,12 +227,12 @@ int main( )
 //    }
 
     relationpointvektor.push_back(Point(272,437));
-     relationpointvektor.push_back(Point(329,335));
+    relationpointvektor.push_back(Point(329,335));
 //    relationpointvektor.push_back(Point(584,222));
 //    relationpointvektor.push_back(Point(497,268));
 
     double pixeld = pixeldistance(firstframeBackup, relationpointvektor);
-    cout<< "Pixeldistance: " << pixeld <<endl;
+    //cout<< "Pixeldistance: " << pixeld <<endl;
 
     imshow( Pixel_realtion_window , firstframeBackup );
     waitKey(1);
@@ -307,36 +247,19 @@ int main( )
     cout<<  distance << endl;
 
     double pixelrelation = distance/ pixeld;
-    cout<< "The relation: " << pixelrelation << " m/pixel \n" << endl;
+    cout<< "The relation: " << pixelrelation << " m/pixel \n" << endl<<endl;
     
 
 //-----------------------------finding first seed point---------------
-
-    
-    //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
-    
-//    cout<<"Plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points"<<endl;
-//    cin >> mode;
     
     cout<<"How many initial segment do you want: " <<endl;
     cin >> Segmentinitialnum;
     //Segmentnum  = 1;
     
-    //int arraynum = 10;
     Initialseed s[Segmentinitialnum];
     vector<Initialseed>  vectorS;
     //deque<Initialseed>  vectorS;
     
-//    // setting different color for segments
-//    RNG rng(time(0));
-//    //RNG& rng = theRNG();
-//    Vec3b color[arraynum];
-//    for( int i=0; i<arraynum; i++)
-//    {
-//        color[i] = Vec3b(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255));
-//        cout<< color[i]  << endl;
-//    }
-
     // ---------check weather input threshold is qualified or not
     
     int i =0;
@@ -346,69 +269,16 @@ int main( )
         cout<<"Plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points"<<endl;
         cin >> mode;
         s[i] = Initialseed(mode, firstFrame, i, defaultThreshold, defaultseed);
-        //Mat drawFrame = firstFrame.clone();
-        //s[i].drawpoint(drawFrame, s[i].initialseedvektor);
         
-        checkThreshold(firstFrame, s[i], checkThresholditeration, repeat_thres);
-        
-        if(checkThresholditeration>=1000 || repeat_thres){
-            cout<< "this new random initial point can not become a available seed point " << endl;
-            continue;
-        }
-        
-        else{
-            cout<< "object " << i << " was created successfully "<<endl;
+        if(checkThreshold(firstFrame, s[i])){
+            cout<< "Object " << i << " was created successfully "<<endl;
             vectorS.push_back( s[i] );
             i++;
         }
         
     }
     
-//    for( int i=0; i<Segmentinitialnum; i++)
-//    {
-//        printf("\n********************Setting for object %d ***************\n", i+1);
-//        s[i] = Initialseed(mode, firstFrame, i, defaultThreshold, defaultseed);
-//        //Mat drawFrame = firstFrame.clone();
-//        //s[i].drawpoint(drawFrame, s[i].initialseedvektor);
-//
-//        checkThreshold(firstFrame, s[i], checkThresholditeration, repeat_thres);
-//
-////        Regiongrowing RTest;
-////        Counter CTest;
-////        bool threshold_qualified(true);
-////
-////
-////        while (threshold_qualified) {
-////            Mat Mattest =  firstFrame.clone();
-////            Mat Matcounter =  firstFrame.clone();
-////            Mat Mattest_Blur;
-////            //Size kernelsize(5,5);
-////            GaussianBlur(Mattest, Mattest_Blur, kernelsize, 0, 0);
-////
-////            Mattest = RTest.RegionGrow(Mattest, Mattest_Blur , s[i].differencegrow, s[i].initialseedvektor);
-////            Matcounter = CTest.FindCounter(Mattest, Matcounter, s[i].color);
-////            imshow("Contour of Segment", Matcounter);
-////            waitKey(1);
-////            cout<<"Area: " << CTest.Area << endl;
-////            if (CTest.Area < (Width*Height/250)) s[i].differencegrow = s[i].differencegrow + 0.1;  // (Width*Height/250) = 2100   (Width*Height/50 )= 10000
-////            else if (CTest.Area <= (Width*Height/50) ) break;
-////            else  s[i].differencegrow = s[i].differencegrow - 0.1;
-////            cout<< "Threshold: " << s[i].differencegrow <<endl;
-////        }
-////        waitKey(0);
-////        destroyWindow("Contour of Segment");
-//        //cout<<"Area: " << CTest.Area << endl;
-//        //cout<< "Threshold: " << s[i].differencegrow <<endl;
-//    }
-    
-//    vector<Initialseed>  vectorS;
-    
-//    for( int i=0; i<Segmentinitialnum; i++)
-//    {
-//        vectorS.push_back(s[i]);
-//    }
-    
-//---------------------create text for recording the inital seed point before RG
+//------------------create text for recording the inital seed point before RG
     //char const *savePathtxt = "/Users/yanbo/Desktop/source/output/output2.txt";
     string savePathtxt;
     savePathtxt.assign(savePath);
@@ -459,7 +329,7 @@ int main( )
     bool stop(false);
     bool all_threshold_notchange(true);
     Mat frame_backup;
-    int indexFrame = 0;
+    int indexFrame;
     bool bSuccess;
     double runningtime = 0;
     clock_t start,end;
@@ -470,8 +340,8 @@ int main( )
         
         Mat frame;//定义一个Mat变量，用于存储每一帧的图像
         Mat MatOut;
-        Mat Matfinal;
-        int maxitrarion = 10;
+        
+        int Loopiterationmax = 10;
         vector<double> templateScaleSameframe;
         //Mat MatOut(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
         
@@ -480,11 +350,6 @@ int main( )
         Segmentnum = vectorS.size();
         cout<<"                             Amount of Segments: " << Segmentnum <<endl;
         
-//        all_threshold_notchange = true; //不能放在括号外  如果放在括号外 上一局的的all_threshold_notchange会影响
-//        for( int i=0; i<Segmentnum; i++)
-//        {
-//            all_threshold_notchange = all_threshold_notchange && vectorS[i].threshold_notchange;
-//        }
         
         if (all_threshold_notchange){    // if threshold for this frame did not change, read the next frame
             
@@ -501,13 +366,12 @@ int main( )
             }
         }
     
-        else{   // if threshold for this frame  changed , read the same frame
-            //frame = frame_backup.clone();
+        else{   // if threshold of any segment in this frame changed , read the same frame
             
             indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
             bool success = vc.set(CV_CAP_PROP_POS_FRAMES, indexFrame-1);
             if (!success) {
-                std::cout << "Cannot set frame position from video file at " << indexFrame-1 << std::endl;
+                cout << "Cannot set frame position from video file at " << indexFrame-1 << endl;
                 return -1;
             }
             
@@ -515,18 +379,8 @@ int main( )
             printf("\n----------------------------IndexFrame: %d ----------------------- \n ", indexFrame);
 
             bSuccess = vc.read(frame);
-
-//            indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
-//            printf("\n----------------------------IndexFrame: %d ----------------------- \n ", indexFrame);
-//
-//            success = vc.set(CV_CAP_PROP_POS_FRAMES, indexFrame-1);
-//            indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
-//            printf("\n----------------------------IndexFrame: %d ----------------------- \n ", indexFrame);
-            
-            //bSuccess = true;
         }
         
-        //若视频播放完成，退出循环
         if (frame.empty())
         {
             cout << "Video play over/ in loop" <<endl;
@@ -548,8 +402,7 @@ int main( )
         Regiongrowing R[Segmentnum];
         Counter C[Segmentnum];
         
-        Matfinal = frame.clone();
-        Mat Matsegment(frame.size(),CV_8UC3,Scalar(0,0,0));
+        Mat Matsegment;//(frame.size(),CV_8UC3,Scalar(0,0,0));
         Mat FramewithCounter = frame.clone();
         
 //----------------- add the text(frame index number) to written video frame
@@ -748,7 +601,7 @@ int main( )
                             vectorS[i].LoopThreshold = vectorS[i].LoopThreshold + 1;
                             //cout << "s[i].LoopThreshold: " << s[i].LoopThreshold  << endl;
                             
-                            if(vectorS[i].LoopThreshold > maxitrarion){
+                            if(vectorS[i].LoopThreshold > Loopiterationmax){
                                 //cout<< endl <<"######Delete this segment and Break the video becasue of infinitv Loop" << endl;
                                 break;
                             }
@@ -844,7 +697,7 @@ int main( )
                         vectorS[i].LoopThreshold = vectorS[i].LoopThreshold + 1;
                         //cout << "s[i].LoopThreshold: " << s[i].LoopThreshold  << endl;
                         
-                        if(vectorS[i].LoopThreshold > maxitrarion){
+                        if(vectorS[i].LoopThreshold > Loopiterationmax){
                             //cout<< "Delete this segment and Break the video becasue of infinitv Loop" << endl;
                             break;
                         }
@@ -867,7 +720,7 @@ int main( )
 
                 for(size_t j=0; j<R[i].seedtogether.size(); j++)
                 {
-                    Matfinal.at<Vec3b>(R[i].seedtogether[j]) = vectorS[i].color;
+                    
                     Matsegment.at<Vec3b>(R[i].seedtogether[j]) = vectorS[i].color;
                 }
                 
@@ -1001,7 +854,7 @@ int main( )
         //controlRate++; // for trackbar !!!!!!
 
         //imshow ("Matsegment", Matsegment);
-        //imshow ("segment", Matfinal);
+
         
         //imshow("segment counter", FramewithCounter);
         
@@ -1013,7 +866,7 @@ int main( )
         
         for( int i=0; i<vectorS.size(); i++){
             
-            if (vectorS[i].LoopThreshold > maxitrarion) {
+            if (vectorS[i].LoopThreshold > Loopiterationmax) {
                 cout<<endl << "####Delete objekt " << i+1 << " because of infinitv loop" << endl;
                 vector<Initialseed>::iterator iterdelete = vectorS.begin() + i ;
                 //deque<Initialseed>::iterator iterdelete = vectorS.begin() + i;
@@ -1021,20 +874,15 @@ int main( )
             }
         }
         
-//------ check the current number of segments is enough or not
+//------ check the  number of all segments. if segment amount is mot enough. add a new object
         
         while (vectorS.size() < Segmentinitialnum){
             cout<< "The objekts are not enough" << endl << "Setting for New objeckt: "<< vectorS.size() +1 <<endl;
             //Initialseed newobject = Initialseed(frame);
-            Initialseed newobject = Initialseed(frame, Width, Height);
-            checkThreshold(frame, newobject, checkThresholditeration, repeat_thres);
+            Initialseed newobject = Initialseed(frame);
+            
 
-            if(checkThresholditeration>=500 || repeat_thres){
-                cout<< "this new random initial point can not become a available seed point " << endl;
-                continue;
-            }
-
-            else{
+            if(checkThreshold(frame, newobject)){
                 cout<< endl << "New segment sucessfully found" << endl;
                 vectorS.push_back(newobject);
             }
@@ -1073,15 +921,9 @@ int main( )
             while(i<addnum){
                 cout<<"Setting for New projekt: "<< i+1 <<endl;
                 //Initialseed newobject = Initialseed(frame);
-                Initialseed newobject = Initialseed(frame, Width, Height);
-                checkThreshold(frame, newobject, checkThresholditeration, repeat_thres);
-                
-                if(checkThresholditeration>=1000 || repeat_thres){
-                    cout<< "this new random initial point can not become a available seed point " << endl;
-                    continue;
-                }
-                
-                else{
+                Initialseed newobject = Initialseed(frame);
+
+                if (checkThreshold(frame, newobject)){
                     cout<< endl << "New segment sucessfully found" << endl;
                     vectorS.push_back(newobject);
                     i++;
@@ -1316,66 +1158,73 @@ double pixeldistance(Mat& img, vector<Point> pv)
 //    line(img, pv[0], pv[1], Scalar(0, 0, 255),5,8,0);//随机颜色
 //}
 
-void checkThreshold(Mat Frame, Initialseed &seedclass, int& iterationnum, bool& repeat_thres){
+bool checkThreshold(Mat Frame, Initialseed &seed){
     
+    int width = Frame.cols;
+    int height = Frame.rows;
     Regiongrowing RTest;
     Counter CTest;
     bool threshold_qualified(true);
-    iterationnum = 0;
-    repeat_thres = false;
+    int iterationnum = 0;
+    bool repeat_thres = false;
     vector<double> Thresholdstack;
     
-    while (threshold_qualified && (iterationnum <500) && (!repeat_thres)) {
+    while ((iterationnum <Threshoditerationmax) && (!repeat_thres)) {
         Mat Mattest =  Frame.clone();
         Mat Matcounter =  Frame.clone();
         Mat Mattest_Blur;
         //Size kernelsize(5,5);
         GaussianBlur(Mattest, Mattest_Blur, Size(3,3), 0, 0);
         
-        Mattest = RTest.RegionGrow(Mattest, Mattest_Blur , seedclass.differencegrow, seedclass.initialseedvektor);
-        Matcounter = CTest.FindCounter(Mattest, Matcounter, seedclass.color);
+        Mattest = RTest.RegionGrow(Mattest, Mattest_Blur , seed.differencegrow, seed.initialseedvektor);
+        Matcounter = CTest.FindCounter(Mattest, Matcounter, seed.color);
         imshow("Contour of Segment", Matcounter);
         waitKey(100);
         cout<<"Area: " << CTest.Area << endl;
         
-        Thresholdstack.push_back(seedclass.differencegrow) ;
+        Thresholdstack.push_back(seed.differencegrow) ;
         
-        if (CTest.Area < (Width*Height/300)) seedclass.differencegrow = (seedclass.differencegrow + 0.05);  // (Width*Height/250) = 2100   (Width*Height/50 )= 10000
-        else if (CTest.Area <= (Width*Height/40) ) break;
-        else  seedclass.differencegrow = (seedclass.differencegrow - 0.05);
+        if (CTest.Area < (width*height/300)) seed.differencegrow = (seed.differencegrow + 0.1);  // (Width*Height/250) = 2100   (Width*Height/50 )= 10000
+        else if (CTest.Area <= (width*height/40) ) break;
+        else  seed.differencegrow = (seed.differencegrow - 0.1);
         
         iterationnum++;
         cout<< "iterationnum: " << iterationnum << endl;
         
         vector<double>::iterator iterfind2;
-        iterfind2 = find( Thresholdstack.begin(), Thresholdstack.end(), seedclass.differencegrow);
+        iterfind2 = find( Thresholdstack.begin(), Thresholdstack.end(), seed.differencegrow);
         
         if(iterfind2 != Thresholdstack.end()){
             cout << "New Threshlod ist already available Threshlod vector. " << endl;
             repeat_thres = true;
-            break;
         }
         
-        cout<< "Threshold: " << seedclass.differencegrow <<endl;
+        cout<< "Threshold: " << seed.differencegrow <<endl;
     }
     
-    seedclass.LoopThreshold = 1;
-    seedclass.data[3].push_back(1.0); // scale
-    seedclass.data[4].push_back(0.01); // ScaleDifference
-    seedclass.data[0].push_back(CTest.EWlong);    // Green line. long axis
-    seedclass.data[1].push_back(CTest.EWshort);   // lightly blue line . short axis
-    seedclass.data[2].push_back(CTest.Ratio);
-    seedclass.data[5].push_back(0.0); // RatioDifference
-    seedclass.data[6].push_back(CTest.Area);  // Area
-    seedclass.data[7].push_back(1.0);  // scaleArea
-    seedclass.initialseedvektor.clear();
-    //s[i].initialseedvektor.push_back(R[i].regioncenter);
-    seedclass.initialseedvektor.push_back(CTest.cntr);
-    seedclass.threshold_notchange = true;
+    if(iterationnum >=Threshoditerationmax || repeat_thres){
+        cout<< "This new random initial point can not become a available seed point " << endl;
+        threshold_qualified = false;
+    }
     
-    waitKey(2500);
+    seed.LoopThreshold = 1;
+    seed.data[3].push_back(1.0); // scale
+    seed.data[4].push_back(0.01); // ScaleDifference
+    seed.data[0].push_back(CTest.EWlong);    // Green line. long axis
+    seed.data[1].push_back(CTest.EWshort);   // lightly blue line . short axis
+    seed.data[2].push_back(CTest.Ratio);
+    seed.data[5].push_back(0.0); // RatioDifference
+    seed.data[6].push_back(CTest.Area);  // Area
+    seed.data[7].push_back(1.0);  // scaleArea
+    seed.initialseedvektor.clear();
+    //s[i].initialseedvektor.push_back(R[i].regioncenter);
+    seed.initialseedvektor.push_back(CTest.cntr);
+    seed.threshold_notchange = true;
+    
+    waitKey(0);
     destroyWindow("Contour of Segment");
     
+    return threshold_qualified;
     
 }
 
