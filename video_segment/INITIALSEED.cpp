@@ -13,7 +13,6 @@
 Initialseed :: Initialseed(){// constructor function
 }
 
-
 Initialseed :: Initialseed(Mat Frame ){
     int width = Frame.cols;
     int height = Frame.rows;
@@ -132,7 +131,7 @@ void Initialseed :: randomseed(Mat firstFrame, int width, int height)
     
     printf( "New random seed : (Row: %d, Column: %d) / ",   newrandomseed.y, newrandomseed.x );
     
-    differencegrow = 5;
+    differencegrow = 8;
     
 }
 
@@ -246,17 +245,4 @@ void Initialseed :: DrawLine( Mat &img, Point pt, Vec3b color )
 //    }
 //}
 
-//vector<vector<Point>> Initialseed :: set_defaultseed (vector<vector<Point>> seed, int x)
-//{
-//
-//    Point a[][2] ={{Point(100,100),Point(200,200) },{ Point(300,300), Point(400,400)} };
-//    for(size_t i=0; i<seed.size();i++){
-//        int length = sizeof(a[i]) / sizeof(a[i][0]);
-//
-//        for(size_t j=0; j<length; j++){
-//            seed[i].push_back(a[i][j]);
-//        }
-//    }
-//    return seed;
-//}
 

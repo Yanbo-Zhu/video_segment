@@ -13,9 +13,6 @@ vector <double> Ratiovecktor;
 Mat Counter::FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color)
 {
     Mat MatoutGray;
-    //Mat FramemitCounter = currentFrame.clone();
-    //Mat result (MatOut.size(),CV_8UC3, Scalar(0,0,0));
-    //Mat result = zeros(MatOut.clone();
     
     // dilate MatOut
     int elementSize  = 2;
@@ -25,7 +22,6 @@ Mat Counter::FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color)
     //morphologyEx(MatOut, MatOut, MORPH_CLOSE, element)
     
     cvtColor(MatOut,MatoutGray,CV_BGR2GRAY);
-    
     threshold(MatoutGray,MatoutGray,20,255,THRESH_BINARY);
     
     vector<Vec4i> hierarchy;
@@ -46,13 +42,12 @@ Mat Counter::FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color)
     
     for (size_t i = 0; i < contours.size(); i++)
     {
-        //cout<< "contours.size()" << contours.size() <<endl;
         // Calculate the area of each contour
         Area = contourArea(contours[i]);  // 面积就是包含了多少像素点
         
-        //cout << " area" <<area << endl;
         // Ignore contours that are too small or too large
         //if (area < 1e2 || 1e5 < area) continue;
+        
         // Draw each contour only for visualisation purposes
         drawContours(FramemitCounter, contours, static_cast<int>(i), color, 1, 8, hierarchy, 0);
         
@@ -60,18 +55,16 @@ Mat Counter::FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color)
         rectanglewidth = boundRect[i].width;
         rectangleheight = boundRect[i].height;
         diagonallength = pixeldistance(boundRect[i].tl(),  boundRect[i].br());
-//        circle( FramemitCounter, center[i], (int)radius[i], color, 1, 8, 0 ); // draw the circle 绘制圆形边框
+//      circle( FramemitCounter, center[i], (int)radius[i], color, 1, 8, 0 ); // draw the circle 绘制圆形边框
         
-        //drawContours(result, contours, -1, Scalar(0, 0, 255), 1, 8, hierarchy, 0);
         getOrientation(contours[i], FramemitCounter);
     }
-    
     
     return FramemitCounter;
 }
 
 
-double Counter::getOrientation(const vector<Point> &pts, Mat &img)
+void Counter::getOrientation(const vector<Point> &pts, Mat &img)
 {
     //Construct a buffer used by the pca analysis
     int sz = static_cast<int>(pts.size());
@@ -83,11 +76,10 @@ double Counter::getOrientation(const vector<Point> &pts, Mat &img)
     }
     //Perform PCA analysis
     PCA pca_analysis(data_pts, Mat(), CV_PCA_DATA_AS_ROW);
+    
     //Store the center of the object
-    //Point cntr = Point(static_cast<int>(pca_analysis.mean.at<double>(0, 0)), static_cast<int>(pca_analysis.mean.at<double>(0, 1)));
     cntr = Point(static_cast<int>(pca_analysis.mean.at<double>(0, 0)), static_cast<int>(pca_analysis.mean.at<double>(0, 1)));
     
-    //cout<< "Center of the object: Row " << cntr.y << " Column: " << cntr.x << endl;
     //Store the eigenvalues and eigenvectors
     vector<Point2d> eigen_vecs(2);
     vector<double> eigen_val(2);
@@ -99,13 +91,13 @@ double Counter::getOrientation(const vector<Point> &pts, Mat &img)
         eigen_val[i] = pca_analysis.eigenvalues.at<double>(0, i);
     }
     
-    //cout << "eigen_val[0]：" << eigen_val[0] <<endl;
     EWlong = eigen_val[0];
-    //cout << "eigen_val[1]：" << eigen_val[1] <<endl;
     EWshort = eigen_val[1];
     
     // Draw the principal components
     circle(img, cntr, 3, Scalar(255, 0, 255), 2);
+    
+    // 注意下面的参数
     Point p1 = cntr + 0.02 * Point(static_cast<int>(eigen_vecs[0].x * eigen_val[0]), static_cast<int>(eigen_vecs[0].y * eigen_val[0]));
     //cout<< "p1  Row:" << p1.y << "   Column: " << p1.x <<endl;
     Point p2 = cntr - 0.02 * Point(static_cast<int>(eigen_vecs[1].x * eigen_val[1]), static_cast<int>(eigen_vecs[1].y * eigen_val[1]));
@@ -118,15 +110,12 @@ double Counter::getOrientation(const vector<Point> &pts, Mat &img)
     Ratio = eigen_val[0]/ eigen_val[1];
     //cout<< "Ratio: " << Ratio <<endl;
     
-    //double angle = atan2(eigen_vecs[0].y, eigen_vecs[0].x); // orientation in radians
     double angle = atan2( - (eigen_vecs[0].y), eigen_vecs[0].x); // orientation in radians
     //cout<< "Eigenvektor long axis::   Vektor in Row-direction: " << eigen_vecs[0].y << " / Vektor in Column-direction: " << eigen_vecs[0].x <<endl;
-    //cout << "angle: " << angle << endl; // notice the reference line
+    
     Degree = angle * 180 / CV_PI; // convert radians to degrees (0-180 range)
-    //cout << "Degrees: " << Degree << endl;
     //cout << "Degrees: " << abs(degrees - 180) << endl; // angle in 0-360 degrees range
-    //cout << "angle: " << angle << endl;
-    return angle;
+    //return angle;
 }
 
 
@@ -137,8 +126,7 @@ double Counter::drawAxis(Mat& img, Point p, Point q, Scalar colour, const float 
     double twopixeldistance;
     angle = atan2( (double) p.y - q.y, (double) p.x - q.x ); // angle in radians
     hypotenuse = sqrt( (double) (p.y - q.y) * (p.y - q.y) + (p.x - q.x) * (p.x - q.x));
-    //double degrees = angle * 180 / CV_PI; // convert radians to degrees (0-180 range)
-    //cout << "Degrees: " << abs(degrees - 180) << endl; // angle in 0-360 degrees range
+    
     // Here we lengthen the arrow by a factor of scale
     q.x = (int) (p.x - scale * hypotenuse * cos(angle));
     q.y = (int) (p.y - scale * hypotenuse * sin(angle));
@@ -159,7 +147,6 @@ double Counter::drawAxis(Mat& img, Point p, Point q, Scalar colour, const float 
 
 double Counter::pixeldistance(Point p1, Point p2)
 {
-    //cout<< p1.x <<" "<< pv[1].x <<" "<< pv[0].y<<" "<<pv[1].y<<endl;
     double a = p1.x - p2.x;
     double b = p1.y - p2.y;
     return (sqrt((a*a)+(b*b))); // a^2 not equal to a*a. a^2 has differnt meaning in Opencv

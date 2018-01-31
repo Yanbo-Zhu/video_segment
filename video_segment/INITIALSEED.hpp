@@ -30,9 +30,9 @@ private:
     static void on_MouseHandle(int event, int x, int y, int flags, void* param);
     void on_Mouse(int event, int x, int y, int flags);
     void DrawLine( Mat &img, Point pt, Vec3b color  );
+    void drawpoint(Mat firstFrame, vector<Point> initialseedvektor);
     double thresholdvalue;
     Point g_pt;
-    vector<vector<Point>> set_defaultseed (vector<vector<Point>> seed, int x);
     #define Point_mark_window " Drawing Point "
     
 public:
@@ -49,11 +49,10 @@ public:
     Initialseed(Mat Frame);
     Initialseed(int x, Mat firstFrame, int objektindex,  double defaultTH[], vector<vector<Point>> defaultSD);
     void modechoose(int x, Mat firstFrame, int objektindex,  double defaultTh[], vector<vector<Point>> defaultSD);
-    void drawpoint(Mat firstFrame, vector<Point> initialseedvektor);
+    
     void newseed(Mat firstFrame);
     void randomseed(Mat firstFrame, int width, int height);
     
-    //vector<double> C;
 };
 
 

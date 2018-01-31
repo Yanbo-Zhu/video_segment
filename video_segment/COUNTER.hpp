@@ -28,10 +28,9 @@ class Counter
     
 private:
     double drawAxis(Mat&, Point, Point, Scalar, const float);
-    double getOrientation(const vector<Point> &, Mat&);
+    void getOrientation(const vector<Point> &, Mat&);
     double pixeldistance(Point p1, Point p2);
 
-    
 public:
     Mat FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color);
     double Ratio;
