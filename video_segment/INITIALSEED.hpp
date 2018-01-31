@@ -36,7 +36,8 @@ private:
     #define Point_mark_window " Drawing Point "
     
 public:
-
+    
+    Mat preSegment;
     vector<Point> initialseedvektor;
     double differencegrow;
     int LoopThreshold;

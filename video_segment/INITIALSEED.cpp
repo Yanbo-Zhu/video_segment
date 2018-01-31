@@ -32,6 +32,20 @@ Initialseed :: Initialseed(int x, Mat firstFrame, int objektindex,  double defau
     data.resize(8);
 }
 
+void Initialseed :: randomseed(Mat firstFrame, int width, int height)
+{
+    
+    Mat MatInBackup = firstFrame.clone();
+    RNG rng(time(0));
+    Point newrandomseed = Point(rng.uniform(0, width), rng.uniform(0, height));
+    
+    initialseedvektor.push_back(newrandomseed);
+    
+    printf( "New random seed : (Row: %d, Column: %d) / ",   newrandomseed.y, newrandomseed.x );
+    
+    differencegrow = 8;
+}
+
 void Initialseed :: modechoose(int x, Mat firstFrame, int objektindex,  double defaultTH[], vector<vector<Point>> defaultSD)
 {
     //Mat MatGrowCur(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
@@ -118,21 +132,6 @@ void Initialseed :: modechoose(int x, Mat firstFrame, int objektindex,  double d
             //break;
             
     }
-}
-
-void Initialseed :: randomseed(Mat firstFrame, int width, int height)
-{
-
-    Mat MatInBackup = firstFrame.clone();
-    RNG rng(time(0));
-    Point newrandomseed = Point(rng.uniform(0, width), rng.uniform(0, height));
-    
-    initialseedvektor.push_back(newrandomseed);
-    
-    printf( "New random seed : (Row: %d, Column: %d) / ",   newrandomseed.y, newrandomseed.x );
-    
-    differencegrow = 8;
-    
 }
 
 void Initialseed :: newseed(Mat firstFrame)

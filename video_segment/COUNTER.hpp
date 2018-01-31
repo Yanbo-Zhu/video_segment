@@ -32,7 +32,7 @@ private:
     double pixeldistance(Point p1, Point p2);
 
 public:
-    Mat FindCounter (Mat MatOut , Mat FramemitCounter, Vec3b color);
+    Mat FindCounter (Mat MatOut , Mat Frame, Vec3b color);
     double Ratio;
     double EWlong;
     double EWshort;

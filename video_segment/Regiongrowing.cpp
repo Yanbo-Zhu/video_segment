@@ -88,7 +88,7 @@ Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vecto
 
     regioncenter  = centerpoint(seedtogether);
     
-    Mat element = getStructuringElement(MORPH_RECT, Size(5,5));
+    Mat element = getStructuringElement(MORPH_RECT, Size(6,6));
     dilate(Segment,Segment, element);
     //imshow("Segment after dalite", Segment);
     //erode(Segment,Segment, element);

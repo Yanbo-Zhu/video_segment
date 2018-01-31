@@ -35,8 +35,10 @@ using namespace std;
 //-------global variable
 int mode;
 int Segmentnum;
-int Segmentinitialnum;
 int Threshoditerationmax = 500;
+double initialScalediff = 0.01;
+int considerNum = 10;
+int multipleScaleDiff = 10;
 double pixelrelation;
 
 Size kernelsize(3,3);
@@ -113,7 +115,7 @@ int main( )
     int FRAME_COUNT = vc.get(CV_CAP_PROP_FRAME_COUNT);
     int Width = vc.get(CV_CAP_PROP_FRAME_WIDTH);
     int Height = vc.get(CV_CAP_PROP_FRAME_HEIGHT);
-    printf("Fourcc: %d / indexFrame: %d / fps: %d / Total Frame: %d / Width * Height : %d * %d / Width*Height/300 : %d / Width*Height/40: %d \n", Fourcc ,IndexFrame, FPS, FRAME_COUNT, Width, Height, Width*Height/250, Width*Height/50);
+    printf("Fourcc: %d / indexFrame: %d / fps: %d / Total Frame: %d / Width * Height : %d * %d / Width*Height/300 : %d / Width*Height/40: %d \n", Fourcc ,IndexFrame, FPS, FRAME_COUNT, Width, Height, Width*Height/300, Width*Height/50);
     
 //    string XXX = "Segment counter ";
 //    char *windowName = new char[50];
@@ -240,6 +242,7 @@ int main( )
 //-----------------------------finding first seed point---------------
     
     cout<<"How many initial segment do you want: " <<endl;
+    int Segmentinitialnum;
     cin >> Segmentinitialnum;
     //Segmentnum  = 1;
     
@@ -388,7 +391,9 @@ int main( )
         Counter C[Segmentnum];
         
         Mat Matsegment= frame.clone(); // segment 整块的输出
-        Mat FramewithCounter = frame.clone(); // segment 的 counter 输出
+        Mat FramewithCounter; //= frame.clone(); // segment 的 counter 输出
+//        Mat Onlysegment (frame.size(),CV_8UC3,Scalar(0,0,0)); // for affine matrix
+//        Mat pre_onlysegment(frame.size(),CV_8UC3,Scalar(0,0,0));
         
 //----------------- add the text(frame index number) to written video frame
         
@@ -397,13 +402,13 @@ int main( )
         Point ptTopLeft(10, 10);
         Point* ptrTopLeft = &ptTopLeft;
         
-        Point ptTopright(FramewithCounter.cols-10, 10);
+        Point ptTopright(frame.cols-10, 10);
         Point* ptrTopright = &ptTopright;
         
-        Point ptBottomMiddle(FramewithCounter.cols/2, FramewithCounter.rows);  // for segment
+        Point ptBottomMiddle(frame.cols/2, frame.rows);  // for segment
         Point* ptrBottomMiddle = &ptBottomMiddle;
         
-        Point ptBottomMiddle2(FramewithCounter.cols/2, FramewithCounter.rows); //  for counter
+        Point ptBottomMiddle2(frame.cols/2, frame.rows); //  for counter
         Point* ptrBottomMiddle2 = &ptBottomMiddle2;
        
 //        for( int i=0; i<Segmentnum; i++)
@@ -432,14 +437,19 @@ int main( )
             {
                 printf("\n************* Objekt %d Information **********************", i+1);
                 printf("\n****** Cyele index for Threshold: %d\n", vectorS[i].LoopThreshold);
-                //MatOut = R[i].RegionGrow(frame, frame_Blur , s[i].differencegrow, s[i].initialseedvektor);
                 MatOut = R[i].RegionGrow(frame, frame_Blur , vectorS[i].differencegrow, vectorS[i].initialseedvektor);
                 
 //                double intensity =(MatOut.at<Vec3b>(vectorS[i].initialseedvektor.back())[0] + MatOut.at<Vec3b>(vectorS[i].initialseedvektor.back())[1] + MatOut.at<Vec3b>(vectorS[i].initialseedvektor.back())[2])/3.0 ;
 //                if (intensity == 0 )
 //                    continue;
+                Mat Affine = estimateRigidTransform(vectorS[i].preSegment,MatOut,true);
+                cout<<"Affine" << Affine<<endl;
                 
-                FramewithCounter = C[i].FindCounter(MatOut, FramewithCounter, vectorS[i].color);
+                
+                
+                // If true, the function finds an optimal affine transformation with no additional restrictions (6 degrees of freedom). Otherwise, the class of transformations to choose from is limited to combinations of translation, rotation, and uniform scaling (5 degrees of freedom).
+                
+                FramewithCounter = C[i].FindCounter(MatOut, frame, vectorS[i].color);
                 
                 //cout<< "Centre: Row " << C[i].cntr.y << " Column: " << C[i].cntr.x << endl;
                 
@@ -483,14 +493,12 @@ int main( )
     //            text.push_back(scaletext);
             
         //---------computeing the average scale and average Scale Difference
-                int considerNum = 10;
-                int multipleScaleDiff = 10;
                 
                 double averageScale = averagevalue(considerNum, vectorS[i].data[3]);
                 
                 cout <<"Average Scale of previous "<< considerNum <<" frames: " << averageScale<< endl;
                 
-                vector<double>::iterator iter;
+//                vector<double>::iterator iter;
 //                cout<< "ScaleDifference.size(): " << vectorS[i].data[4].size() << endl;
 //                cout << "ScaleDifference vector = " << endl;;
 //                for (iter= vectorS[i].data[4].begin(); iter != vectorS[i].data[4].end(); iter++)  {cout << *iter << " ";}
@@ -522,9 +530,6 @@ int main( )
 //                    cout << *iter << " ";
 //                }
                 
-//                double a = 5.4;
-//                vector<double>::iterator iterfind2;
-//                iterfind2  = find_if(vectorS[i].RGThreshold.begin(),vectorS[i].RGThreshold.end(),[a](double b) { return abs(a - b) < EPSILON; });
 
         //--------- update the thereshlod value for region growing if scale varies largely
                 //cout<< 0.2*vectorS[i].data[6].back() <<endl;
@@ -596,6 +601,7 @@ int main( )
                                 vectorS[i].data[6].push_back(C[i].Area);
                                 vectorS[i].data[7].push_back(scaleArea);
                                 
+                                vectorS[i].preSegment = MatOut.clone();
                                 vectorS[i].initialseedvektor.clear();
                                 //s[i].initialseedvektor.push_back(R[i].regioncenter);
                                 vectorS[i].initialseedvektor.push_back(C[i].cntr);
@@ -651,7 +657,6 @@ int main( )
                 }
                 
                 
-                
                 for(size_t j=0; j<R[i].seedtogether.size(); j++)
                 {
                     Matsegment.at<Vec3b>(R[i].seedtogether[j]) = vectorS[i].color;
@@ -698,10 +703,7 @@ int main( )
         char frameindex[10];
         sprintf( frameindex, "Frame %d",indexFrame);
         text.push_back(frameindex);
-        //FramewithCounter = putStats(text,FramewithCounter,Vec3b(255,255,255), ptrBottomMiddle2, 'b' );
-        //text.clear();
-        
-        
+    
         // ---  running time
         end = clock();
         runningtime = (double)(end - start) / CLOCKS_PER_SEC;
@@ -743,7 +745,6 @@ int main( )
         
         moveWindow(windowName, 700, 0); // int x = column, int y= row
         imshow(windowName, FramewithCounter);  //显示图像
-        
         // ---   Trackbar activate
         //TrackBarFunc(0,0);
         //controlRate++; // for trackbar !!!!!!
@@ -986,11 +987,11 @@ double averagevalue(int num, vector<double> array){
 double averagedifference(int num, vector<double> array){
     double average = abs(array.back());
     vector<double>::reverse_iterator it;
-    if (array.size() == 1){
-        average = 0.01;
-    }
+//    if (array.size() == 1){
+//        average = 0.01;
+//    }
     
-    else if (array.size()< num && array.size() > 1){
+    if (array.size()< num ){
         for(it = array.rbegin(); it!= array.rend(); it++)
         {
             average = (average + abs(*it))/2.0;
@@ -1049,23 +1050,26 @@ bool checkThreshold(Mat Frame, Initialseed &seed){
     int iterationnum = 0;
     bool repeat_thres = false;
     vector<double> Thresholdstack;
+    Mat Mattest;
+    Mat Matcounter;
     
     while ((iterationnum <Threshoditerationmax) && (!repeat_thres)) {
-        Mat Mattest =  Frame.clone();
-        Mat Matcounter =  Frame.clone();
+
+        
         Mat Mattest_Blur;
         //Size kernelsize(5,5);
-        GaussianBlur(Mattest, Mattest_Blur, Size(3,3), 0, 0);
+        GaussianBlur(Frame, Mattest_Blur, Size(3,3), 0, 0);
         
-        Mattest = RTest.RegionGrow(Mattest, Mattest_Blur , seed.differencegrow, seed.initialseedvektor);
-        Matcounter = CTest.FindCounter(Mattest, Matcounter, seed.color);
+        Mattest = RTest.RegionGrow(Frame, Mattest_Blur , seed.differencegrow, seed.initialseedvektor);
+        
+        Matcounter = CTest.FindCounter(Mattest, Frame, seed.color);
         imshow("Contour of Segment", Matcounter);
         waitKey(10);
         cout<< "iterationnum: " << iterationnum <<"/  Area: " << CTest.Area << endl;
         
         Thresholdstack.push_back(seed.differencegrow) ;
         
-        if (CTest.Area < (width*height/300)) seed.differencegrow = (seed.differencegrow + 0.1);  // (Width*Height/250) = 2100   (Width*Height/50 )= 10000
+        if (CTest.Area < (width*height/300)) seed.differencegrow = (seed.differencegrow + 0.1);  // (Width*Height/300) = 2000   (Width*Height/50 )= 10000
         else if (CTest.Area <= (width*height/40) ) break;
         else  seed.differencegrow = (seed.differencegrow - 0.1);
         
@@ -1093,7 +1097,7 @@ bool checkThreshold(Mat Frame, Initialseed &seed){
     seed.data[1].push_back(CTest.EWshort);   // lightly blue line . short axis
     seed.data[2].push_back(CTest.Ratio);
     seed.data[3].push_back(1.0); // scale
-    seed.data[4].push_back(0.01); // ScaleDifference
+    seed.data[4].push_back(initialScalediff); // ScaleDifference
     seed.data[5].push_back(0.0); // RatioDifference
     seed.data[6].push_back(CTest.Area);  // Area
     seed.data[7].push_back(1.0);  // scaleArea
@@ -1102,6 +1106,7 @@ bool checkThreshold(Mat Frame, Initialseed &seed){
     seed.initialseedvektor.push_back(CTest.cntr);
     seed.threshold_notchange = true;
     
+    seed.preSegment = Mattest.clone();
     waitKey(0);
     destroyWindow("Contour of Segment");
     
