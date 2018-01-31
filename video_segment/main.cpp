@@ -438,16 +438,40 @@ int main( )
                 printf("\n************* Objekt %d Information **********************", i+1);
                 printf("\n****** Cyele index for Threshold: %d\n", vectorS[i].LoopThreshold);
                 MatOut = R[i].RegionGrow(frame, frame_Blur , vectorS[i].differencegrow, vectorS[i].initialseedvektor);
-                
+
 //                double intensity =(MatOut.at<Vec3b>(vectorS[i].initialseedvektor.back())[0] + MatOut.at<Vec3b>(vectorS[i].initialseedvektor.back())[1] + MatOut.at<Vec3b>(vectorS[i].initialseedvektor.back())[2])/3.0 ;
 //                if (intensity == 0 )
 //                    continue;
-                Mat Affine = estimateRigidTransform(vectorS[i].preSegment,MatOut,true);
-                cout<<"Affine" << Affine<<endl;
-                
                 
                 
                 // If true, the function finds an optimal affine transformation with no additional restrictions (6 degrees of freedom). Otherwise, the class of transformations to choose from is limited to combinations of translation, rotation, and uniform scaling (5 degrees of freedom).
+                Mat Affine = estimateRigidTransform(vectorS[i].preSegment,MatOut,false);
+                //cout<<"Affine:" << endl << Affine<<endl;
+                
+                Mat A = Mat::zeros(2, 2, CV_64F);
+                for (int j = 0; j< A.rows; j++)
+                {
+                    for (int i = 0; i< A.cols; i++)
+                    {
+                        A.at<double>(j, i) = Affine.at<double>(j, i);
+                    } // end of line
+                }
+                double p =  sqrt( ( Affine.at<double>(0,0) * Affine.at<double>(0,0) ) + ( Affine.at<double>(0,1)* Affine.at<double>(0,1) ) );
+                double r = determinant(A)/p;
+                
+                Mat Scale = Mat::zeros(2, 2, CV_64F);
+                Scale.at<double>(0, 0) = p;
+                Scale.at<double>(1, 1) = r;
+                cout<<"Scale:" <<endl << Scale <<endl << endl;
+                cout<<"averageScale:" <<endl << (p+r)/2 <<endl << endl;
+                
+//                double angle = atan2(Affine.at<double>(1,0),Affine.at<double>(0,0));
+//                cout<<"angle:" <<endl << angle * 180/M_PI <<endl << endl;
+//
+//                double shear = ( Affine.at<double>(0,0) * Affine.at<double>(1,0)  + Affine.at<double>(0,1)* Affine.at<double>(1,1) ) / determinant(A) ;
+//                Mat Shearmatrix = Mat::eye(2, 2, CV_64F);
+//                Shearmatrix.at<double>(0, 1) = shear;
+//                cout<<"Shearmatrix:" <<endl << Shearmatrix <<endl << endl;
                 
                 FramewithCounter = C[i].FindCounter(MatOut, frame, vectorS[i].color);
                 
