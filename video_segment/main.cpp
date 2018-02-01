@@ -40,9 +40,10 @@ double initialScalediff = 0.01;
 int considerNum = 10;
 int multipleScaleDiff = 10;
 double pixelrelation;
+double Areadifferencefactor = 0.2;
 
 Size kernelsize(3,3);
-#define EPSILON 1e-13   // arrcuracy
+#define EPSILON 1e-13   // arrcuracy value
 vector<Point> relationpointvektor;
 clock_t  clockBegin, clockEnd;
 //#define windowName String(XXX) //播放窗口名称
@@ -475,9 +476,6 @@ int main( )
                 
                 FramewithCounter = C[i].FindCounter(MatOut, frame, vectorS[i].color);
                 
-                //cout<< "Centre: Row " << C[i].cntr.y << " Column: " << C[i].cntr.x << endl;
-                
-                
                 char Centre[50];
                 double B_Centre = frame.at<Vec3b>(C[i].cntr)[0];
                 double G_Centre = frame.at<Vec3b>(C[i].cntr)[1];
@@ -519,7 +517,6 @@ int main( )
         //---------computeing the average scale and average Scale Difference
                 
                 double averageScale = averagevalue(considerNum, vectorS[i].data[3]);
-                
                 cout <<"Average Scale of previous "<< considerNum <<" frames: " << averageScale<< endl;
                 
 //                vector<double>::iterator iter;
@@ -559,7 +556,7 @@ int main( )
                 //cout<< 0.2*vectorS[i].data[6].back() <<endl;
                 
                 double newthreshold;
-                if ( abs(Areadiffernce) <=  0.2*(vectorS[i].data[6].back()) )
+                if ( abs(Areadiffernce) <=  Areadifferencefactor *(vectorS[i].data[6].back()) )
                 {
                     printf("the Area of segment %d is stable (Area difference is smaller 0.2* Area in last frame) \n", i+1);
                     
@@ -722,7 +719,6 @@ int main( )
         
     //--------------------------
         
-        
         // Frameindex
         char frameindex[10];
         sprintf( frameindex, "Frame %d",indexFrame);
@@ -764,7 +760,7 @@ int main( )
         sprintf(relarion, "%.5fm/p", pixelrelation);
         text.push_back(relarion);
         
-        FramewithCounter= putStats(text,FramewithCounter, Vec3b(0,0,210), ptrTopright, 'r' );
+        FramewithCounter= putStats(text,FramewithCounter, Vec3b(0,0,200), ptrTopright, 'r' );
         text.clear();
         
         moveWindow(windowName, 700, 0); // int x = column, int y= row
@@ -1034,7 +1030,6 @@ double averagedifference(int num, vector<double> array){
 
 void on_MouseHandle(int event, int x, int y, int flags, void* param)
 {
-    
     Mat& image = *(Mat*) param;
     //Mat *im = reinterpret_cast<Mat*>(param);
     if( x < 0 || x >= image.cols || y < 0 || y >= image.rows )
@@ -1046,7 +1041,6 @@ void on_MouseHandle(int event, int x, int y, int flags, void* param)
         Point g_pt = Point(x, y);
         cout<<"Row: "<<y<<", Column: "<< x <<endl;
         line(image, g_pt, g_pt, Scalar(0, 0, 255),4,8,0);
-        //DrawLine( image, g_pt );//画线
         relationpointvektor.push_back(g_pt);
     }
 }
