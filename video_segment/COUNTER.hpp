@@ -37,7 +37,6 @@ public:
     double EWlong;
     double EWshort;
     Point cntr ;
-    //vector <vector<double> >Eigenvaluevector(2);
     double Degree;
     double Area;
     double rectanglewidth;

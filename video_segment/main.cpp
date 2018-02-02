@@ -36,7 +36,7 @@ using namespace std;
 int mode;
 int Segmentnum;
 int Threshoditerationmax = 500;
-double initialScalediff = 0.01;
+double initialScalediff = 0.007;
 int considerNum = 10;
 int multipleScaleDiff = 10;
 double pixelrelation;
@@ -81,12 +81,12 @@ int main( )
 //--------------some default seed points when i choose 2 during modechoose
 // Point (x,y )  x= column  y = row
     vector<vector<Point>> defaultseed(4);
-    defaultseed[0].push_back(Point(515,376)); // black roof 有缺陷 在中间  threshold 5
+    defaultseed[1].push_back(Point(515,376)); // black roof 有缺陷 在中间  threshold 5
     //defaultseed[0].push_back(Point(781,379)); // grass  threshold 4
-    defaultseed[1].push_back(Point(215,240)); // light blue roof left
+    defaultseed[0].push_back(Point(215,240)); // light blue roof left
     defaultseed[2].push_back(Point(530,234)); // white boot
     defaultseed[3].push_back(Point(491,356)); // black roof bottem
-    double defaultThreshold[] = {8, 11, 12 ,8} ;
+    double defaultThreshold[] = {11, 8, 12 ,8} ;
 
     
 ///--------- VideoCapture ----------------
@@ -389,10 +389,10 @@ int main( )
         //blur( image, out, Size(3, 3));
         
         Regiongrowing R[Segmentnum];
-        Counter C[Segmentnum];
+        //Counter C[Segmentnum];
         
         Mat Matsegment= frame.clone(); // segment 整块的输出
-        Mat FramewithCounter; //= frame.clone(); // segment 的 counter 输出
+        Mat FramewithCounter = frame.clone(); // segment 的 counter 输出
 //        Mat Onlysegment (frame.size(),CV_8UC3,Scalar(0,0,0)); // for affine matrix
 //        Mat pre_onlysegment(frame.size(),CV_8UC3,Scalar(0,0,0));
         
@@ -444,28 +444,30 @@ int main( )
 //                if (intensity == 0 )
 //                    continue;
                 
-                
                 // If true, the function finds an optimal affine transformation with no additional restrictions (6 degrees of freedom). Otherwise, the class of transformations to choose from is limited to combinations of translation, rotation, and uniform scaling (5 degrees of freedom).
+                
                 Mat Affine = estimateRigidTransform(vectorS[i].preSegment,MatOut,false);
                 //cout<<"Affine:" << endl << Affine<<endl;
-                
-                Mat A = Mat::zeros(2, 2, CV_64F);
-                for (int j = 0; j< A.rows; j++)
-                {
-                    for (int i = 0; i< A.cols; i++)
+            
+                if(!Affine.empty()){
+                    Mat A = Mat::zeros(2, 2, CV_64F);
+                    for (int j = 0; j< A.rows; j++)
                     {
-                        A.at<double>(j, i) = Affine.at<double>(j, i);
-                    } // end of line
+                        for (int i = 0; i< A.cols; i++)
+                        {
+                            A.at<double>(j, i) = Affine.at<double>(j, i);
+                        } // end of line
+                    }
+                    
+                    double p =  sqrt( ( Affine.at<double>(0,0) * Affine.at<double>(0,0) ) + ( Affine.at<double>(0,1)* Affine.at<double>(0,1) ) );
+                    double r = determinant(A)/p;
+                    
+                    Mat Scale = Mat::zeros(2, 2, CV_64F);
+                    Scale.at<double>(0, 0) = p;
+                    Scale.at<double>(1, 1) = r;
+                    cout<<"Scale:" <<endl << Scale <<endl << endl;
+                    cout<<"averageScale:" <<endl << (p+r)/2 << endl << endl;
                 }
-                double p =  sqrt( ( Affine.at<double>(0,0) * Affine.at<double>(0,0) ) + ( Affine.at<double>(0,1)* Affine.at<double>(0,1) ) );
-                double r = determinant(A)/p;
-                
-                Mat Scale = Mat::zeros(2, 2, CV_64F);
-                Scale.at<double>(0, 0) = p;
-                Scale.at<double>(1, 1) = r;
-                cout<<"Scale:" <<endl << Scale <<endl << endl;
-                cout<<"averageScale:" <<endl << (p+r)/2 <<endl << endl;
-                
 //                double angle = atan2(Affine.at<double>(1,0),Affine.at<double>(0,0));
 //                cout<<"angle:" <<endl << angle * 180/M_PI <<endl << endl;
 //
@@ -474,41 +476,47 @@ int main( )
 //                Shearmatrix.at<double>(0, 1) = shear;
 //                cout<<"Shearmatrix:" <<endl << Shearmatrix <<endl << endl;
                 
-                FramewithCounter = C[i].FindCounter(MatOut, frame, vectorS[i].color);
+                Mat Matoutbackup = MatOut.clone();
+                FramewithCounter = R[i].FindCounter(Matoutbackup, FramewithCounter, vectorS[i].color);
                 
-                char Centre[50];
-                double B_Centre = frame.at<Vec3b>(C[i].cntr)[0];
-                double G_Centre = frame.at<Vec3b>(C[i].cntr)[1];
-                double R_Centre = frame.at<Vec3b>(C[i].cntr)[2];
-                
-                sprintf(Centre, "Obj %d: Segment Centre(%d, %d) intensity: %.2f", i+1, C[i].cntr.y, C[i].cntr.x, (B_Centre+G_Centre+R_Centre)/3.0);
-                seedtext.push_back(Centre);
-                FramewithCounter = putStats(seedtext,FramewithCounter, vectorS[i].color, ptrTopLeft, 't');
-                seedtext.clear();
-                
-                cout << "EWlong: " << C[i].EWlong<<endl;
-                cout << "EWshort: " << C[i].EWshort<<endl;
+                //cout << "EWlong: " << R[i].EWlong<< endl;
+                //cout << "EWshort: " << R[i].EWshort<< endl;
                 //cout << "Ratio: "  << C[i].Ratio <<endl;
                 //cout << "Degree: "  << C[i].Degree <<endl;
                 //cout << "Rectangle width: "  << C[i].rectanglewidth <<endl;
                 //cout << "Rectangle width * pixelrelation : "  << C[i].rectanglewidth  * pixelrelation <<endl;
                 //cout << "Rectangle height: "  << C[i].rectangleheight <<endl;
-                cout << "contour area: "  << C[i].Area <<endl;
+                cout << "contour area: "  << R[i].Area << endl;
                 printf("Threshold: %.8f \n", vectorS[i].differencegrow );
-                
-                char Thereshold[15];
-                sprintf(Thereshold, "Threshold(obj %d): %.8f", i+1, vectorS[i].differencegrow );
-                text.push_back(Thereshold);
                
                 //double scale = ( (C[i].EWlong/vectorS[i].data[0].back()) + (C[i].EWshort/vectorS[i].data[1].back()) )/2 ;
-                double scale = sqrt( ( C[i].EWlong* C[i].EWshort)/(vectorS[i].data[0].back() * vectorS[i].data[1].back()) );
-                double scaleArea = sqrt( C[i].Area / vectorS[i].data[6].back() );
+                double scale = sqrt( ( R[i].EWlong* R[i].EWshort)/(vectorS[i].data[0].back() * vectorS[i].data[1].back()) );
+                double scaleArea = sqrt( R[i].Area / vectorS[i].data[6].back() );
                 //cout<< "EWlong[indexFrame-1] " << EWlong[indexFrame-1] << " EWlong[indexFrame-2] "<< EWlong[indexFrame-2] << endl;
                 //printf("Scale (index %d to %d): %lf \n", indexFrame, indexFrame-1, scale );
                 cout<< "Scale (index " << indexFrame << " to " << indexFrame-1<< "): " << scale <<endl;
                 cout<< endl;
                 
+                
                 templateScaleSameframe.push_back(scale);
+                
+                
+                // text infomation show in frame
+                char Centre[50];
+                double B_Centre = frame.at<Vec3b>(R[i].cntr)[0];
+                double G_Centre = frame.at<Vec3b>(R[i].cntr)[1];
+                double R_Centre = frame.at<Vec3b>(R[i].cntr)[2];
+                
+                sprintf(Centre, "Obj %d: Segment Centre(%d, %d) intensity: %.2f", i+1, R[i].cntr.y, R[i].cntr.x, (B_Centre + G_Centre + R_Centre) /3.0);
+                seedtext.push_back(Centre);
+                
+                FramewithCounter = putStats(seedtext, FramewithCounter, vectorS[i].color, ptrTopLeft, 't');
+                seedtext.clear();
+                
+                char Thereshold[15];
+                sprintf(Thereshold, "Threshold(obj %d): %.8f", i+1, vectorS[i].differencegrow );
+                text.push_back(Thereshold);
+                
                 
     //            char scaletext[30];
     //            sprintf(scaletext, "Scale (obj %d/index %d to %d): %.5f", i+1, indexFrame, indexFrame-1, s[i].data[3].back());
@@ -537,11 +545,11 @@ int main( )
                 
                 double averageRatio = averagevalue(considerNum, vectorS[i].data[2]);
                 double averageRatioDifference = averagedifference(considerNum, vectorS[i].data[5]);
-                double RatioDifference = C[i].Ratio - averageRatio;
+                double RatioDifference = R[i].Ratio - averageRatio;
                 //printf("Ratio Difference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, RatioDifference );
                 
         //------------ Area Difference
-                double Areadiffernce = C[i].Area - vectorS[i].data[6].back();
+                double Areadiffernce = R[i].Area - vectorS[i].data[6].back();
                 printf("Area Difference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, Areadiffernce );
                 cout<< "0.2* Area in last frame : " << 0.2*(vectorS[i].data[6].back())  << endl ;
     
@@ -613,19 +621,19 @@ int main( )
                         }
                             
                             while(test_threshold_notchange){
-                                vectorS[i].data[0].push_back(C[i].EWlong);   // Green line. long axis
-                                vectorS[i].data[1].push_back(C[i].EWshort);    // lightly blue line . short axis
-                                vectorS[i].data[2].push_back(C[i].Ratio);
+                                vectorS[i].data[0].push_back(R[i].EWlong);   // Green line. long axis
+                                vectorS[i].data[1].push_back(R[i].EWshort);    // lightly blue line . short axis
+                                vectorS[i].data[2].push_back(R[i].Ratio);
                                 vectorS[i].data[3].push_back(scale);
                                 vectorS[i].data[4].push_back(ScaleDifference);
                                 vectorS[i].data[5].push_back(RatioDifference);
-                                vectorS[i].data[6].push_back(C[i].Area);
+                                vectorS[i].data[6].push_back(R[i].Area);
                                 vectorS[i].data[7].push_back(scaleArea);
                                 
                                 vectorS[i].preSegment = MatOut.clone();
                                 vectorS[i].initialseedvektor.clear();
                                 //s[i].initialseedvektor.push_back(R[i].regioncenter);
-                                vectorS[i].initialseedvektor.push_back(C[i].cntr);
+                                vectorS[i].initialseedvektor.push_back(R[i].cntr);
                                 break;
                             }
                     }
@@ -787,7 +795,6 @@ int main( )
         }
         
 //------ check the  number of all segments. if segment amount is not enough. add a new object
-        
         while (vectorS.size() < Segmentnum){
             cout<< "The objekt amount are not enough" << endl << "Setting for New objeckt: "<< vectorS.size() +1 <<endl;
             //Initialseed newobject = Initialseed(frame);
@@ -1063,7 +1070,7 @@ bool checkThreshold(Mat Frame, Initialseed &seed){
     int width = Frame.cols;
     int height = Frame.rows;
     Regiongrowing RTest;
-    Counter CTest;
+    //Counter CTest;
     bool threshold_qualified(true);
     int iterationnum = 0;
     bool repeat_thres = false;
@@ -1079,16 +1086,16 @@ bool checkThreshold(Mat Frame, Initialseed &seed){
         GaussianBlur(Frame, Mattest_Blur, Size(3,3), 0, 0);
         
         Mattest = RTest.RegionGrow(Frame, Mattest_Blur , seed.differencegrow, seed.initialseedvektor);
+        Matcounter = RTest.FindCounter(Mattest, Frame, seed.color);
         
-        Matcounter = CTest.FindCounter(Mattest, Frame, seed.color);
         imshow("Contour of Segment", Matcounter);
         waitKey(10);
-        cout<< "iterationnum: " << iterationnum <<"/  Area: " << CTest.Area << endl;
+        cout<< "iterationnum: " << iterationnum <<"/  Area: " << RTest.Area << endl;
         
         Thresholdstack.push_back(seed.differencegrow) ;
         
-        if (CTest.Area < (width*height/300)) seed.differencegrow = (seed.differencegrow + 0.1);  // (Width*Height/300) = 2000   (Width*Height/50 )= 10000
-        else if (CTest.Area <= (width*height/40) ) break;
+        if (RTest.Area < (width*height/300)) seed.differencegrow = (seed.differencegrow + 0.1);  // (Width*Height/300) = 2000   (Width*Height/50 )= 10000
+        else if (RTest.Area <= (width*height/40) ) break;
         else  seed.differencegrow = (seed.differencegrow - 0.1);
         
         iterationnum++;
@@ -1111,17 +1118,17 @@ bool checkThreshold(Mat Frame, Initialseed &seed){
     
     seed.LoopThreshold = 1;
 
-    seed.data[0].push_back(CTest.EWlong);    // Green line. long axis
-    seed.data[1].push_back(CTest.EWshort);   // lightly blue line . short axis
-    seed.data[2].push_back(CTest.Ratio);
+    seed.data[0].push_back(RTest.EWlong);    // Green line. long axis
+    seed.data[1].push_back(RTest.EWshort);   // lightly blue line . short axis
+    seed.data[2].push_back(RTest.Ratio);
     seed.data[3].push_back(1.0); // scale
     seed.data[4].push_back(initialScalediff); // ScaleDifference
     seed.data[5].push_back(0.0); // RatioDifference
-    seed.data[6].push_back(CTest.Area);  // Area
+    seed.data[6].push_back(RTest.Area);  // Area
     seed.data[7].push_back(1.0);  // scaleArea
     
     seed.initialseedvektor.clear();
-    seed.initialseedvektor.push_back(CTest.cntr);
+    seed.initialseedvektor.push_back(RTest.cntr);
     seed.threshold_notchange = true;
     
     seed.preSegment = Mattest.clone();

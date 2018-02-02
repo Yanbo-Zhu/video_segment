@@ -8,14 +8,13 @@
 
 #include "COUNTER.hpp"
 
-vector <double> Ratiovecktor;
 
 Mat Counter::FindCounter (Mat MatOut , Mat Frame, Vec3b color)
 {
     Mat MatoutGray;
     Mat FramemitCounter = Frame.clone();
     // dilate MatOut
-    int elementSize  = 2;
+    int elementSize   = 2;
     Mat element = getStructuringElement(MORPH_RECT, Size(2*elementSize+1,2*elementSize+1));
     dilate(MatOut, MatOut, element);
     erode(MatOut, MatOut, element);
