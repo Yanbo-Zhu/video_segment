@@ -18,14 +18,17 @@
 #include <limits>  // numeric_limits<double>::epsilon(): 2.22045e-016
 #include <numeric>
 
+
+//#include "opencv2/features2d/features2d.hpp"
+
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
-#include <opencv2/xfeatures2d.hpp>
-#include "opencv2/features2d/features2d.hpp"
-
+#include "opencv2/calib3d/calib3d.hpp"
 #include "opencv2/videoio.hpp"
 #include <opencv2/opencv.hpp>
+#include <opencv2/xfeatures2d.hpp>
+#include <opencv2/xfeatures2d/nonfree.hpp>
 
 #include "INITIALSEED.hpp"
 #include "Regiongrowing.hpp"
@@ -434,7 +437,84 @@ int main( )
         cout<< "Feature detection and matching" <<endl;
         vector<Point2f> obj_last;
         vector<Point2f> obj_next;
-        Featurematch(preFrame, frame, obj_last, obj_next);
+        //Featurematch(preFrame, frame, obj_last, obj_next);
+        Mat preframe = preFrame.clone();
+        Mat nextframe = frame.clone();
+        int minHessian = 2000;//SURF算法中的hessian阈值    the higher the minHessian, the fewer keypoints you will obtain, but you expect them to be more repetitive
+        const int GOOD_PTS_MAX = 50;
+        const float GOOD_PORTION = 0.05;
+        //定义一个SurfFeatureDetector（SURF） 特征检测类对象
+        //Ptr<SURF> detector = xfeatures2d::SURF::create(minHessian);
+        //Ptr<SURF> f2d = xfeatures2d::SURF::create(minHessian);
+        //Ptr<ORB> f2d = ORB::create();
+        Ptr<SIFT> f2d = xfeatures2d::SIFT::create();
+        //SurfFeatureDetector detector( minHessian );  //opencv 2.0
+        
+        vector<KeyPoint> keypoints_pre, keypoints_next;//vector模板类，存放任意类型的动态数组
+        Mat descriptors_pre, descriptors_next;
+        
+        //    f2d->detect( preframe, keypoints_pre );
+        //    f2d->detect( nextframe, keypoints_next );
+        
+        //    Ptr<SURF> extractor = SURF::create();
+        //    //Ptr<SIFT> extractor = xfeatures2d::SIFT::create();
+        //    //SurfDescriptorExtractor extractor;
+        
+        //    f2d->compute( preframe, keypoints_pre, descriptors_pre );
+        //    f2d->compute( nextframe, keypoints_next, descriptors_next );
+        
+        
+        f2d->detectAndCompute(preframe, Mat(), keypoints_pre, descriptors_pre);
+        f2d->detectAndCompute(nextframe, Mat(), keypoints_next, descriptors_next);
+        
+        // Matching descriptor vectors using FLANN/BruteForce/ DescriptorMatcher matcher
+        //BFMatcher matcher;
+        //Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce");
+        //Ptr<DescriptorMatcher> matcher(new BFMatcher(NORM_HAMMING, true));
+        
+        FlannBasedMatcher matcher;
+        
+        vector< DMatch > matches;
+        matcher.match( descriptors_pre, descriptors_next, matches );
+        
+        
+        //-- Sort matches and preserve top 10% matches
+        sort(matches.begin(), matches.end());
+        vector< DMatch > good_matches;
+        //    double minDist = matches.front().distance;
+        //    double maxDist = matches.back().distance;
+        //    cout << "\nMax distance: " << maxDist << endl;
+        //    cout << "Min distance: " << minDist << endl;
+        
+        const int ptsPairs = min(GOOD_PTS_MAX, (int)(matches.size() * GOOD_PORTION));
+        for( int i = 0; i < ptsPairs; i++ )
+        {
+            good_matches.push_back( matches[i]);
+        }
+        
+        
+        cout << "Calculating homography matrice using " << ptsPairs << " point pairs." << endl;
+        
+        //绘制出匹配到的关键点   draw the Good Match pairs
+        Mat img_matches;
+        drawMatches( preframe, keypoints_pre, nextframe, keypoints_next,
+                    good_matches, img_matches, Scalar::all(-1), Scalar::all(-1),
+                    vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS  );
+        //        Mat out;
+        //        drawKeypoints(srcImage2, keypoints_next, out, Scalar::all(-1), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+        //        imshow("", out);
+        
+        //    vector<Point2f> obj_last;
+        //    vector<Point2f> obj_next;
+        
+        //从匹配成功的匹配对中获取关键点  -- Get the keypoints from the good matches
+        for( unsigned int i = 0; i < good_matches.size(); i++ )
+        {
+            obj_last.push_back( keypoints_pre[ good_matches[i].queryIdx ].pt );
+            obj_next.push_back( keypoints_next[ good_matches[i].trainIdx ].pt );
+        }
+        
+        
         Mat H_Featurematch = findHomography( obj_last, obj_next ,CV_RANSAC );
         //cout<<"Homography matrix:" <<endl << H <<endl << endl;;
         double scaleFreaturematch = decomposematrix(H_Featurematch);
@@ -1186,37 +1266,34 @@ void Featurematch(Mat preframe , Mat nextframe, vector<Point2f>& obj_last, vecto
     const int GOOD_PTS_MAX = 50;
     const float GOOD_PORTION = 0.05;
     //定义一个SurfFeatureDetector（SURF） 特征检测类对象
-    //Ptr<SURF> detector = xfeatures2d::SURF::create(minHessian);
-    //Ptr<SURF> surf = xfeatures2d::SURF::create(minHessian);
-    Ptr<ORB> orb = ORB::create();
-    //Ptr<SIFT> sift = xfeatures2d::SIFT::create();
-    //SurfFeatureDetector detector( minHessian );  //opencv 2.0
-    
+
+    Ptr<SURF> f2d = xfeatures2d::SURF::create(minHessian);
+    //Ptr<ORB> f2d = ORB::create();
+    //Ptr<SIFT> f2d = xfeatures2d::SIFT::create();
+
     vector<KeyPoint> keypoints_pre, keypoints_next;//vector模板类，存放任意类型的动态数组
     Mat descriptors_pre, descriptors_next;
     
-    //        detector->detect( srcImage1, keypoints_pre );
-    //        detector->detect( srcImage2, keypoints_next );
-    //
-    //        //Calculate descriptors (feature vectors)
-    //
-    //        Ptr<SURF> extractor = SURF::create();
-    //        //Ptr<SIFT> extractor = xfeatures2d::SIFT::create();
-    //        //SurfDescriptorExtractor extractor;
-    //
-    //        extractor->compute( srcImage1, keypoints_pre, descriptors_pre );
-    //        extractor->compute( srcImage2, keypoints_next, descriptors_next );
+    //Ptr<SURF> detector = xfeatures2d::SURF::create(minHessian);
+//    f2d->detect( preframe, keypoints_pre );
+//    f2d->detect( nextframe, keypoints_next );
+//    Ptr<SURF> extractor = SURF::create();
+//    //Ptr<SIFT> extractor = xfeatures2d::SIFT::create();
+    //SurfFeatureDetector detector( minHessian );  //opencv 2.0
+//    //SurfDescriptorExtractor extractor;
+//    f2d->compute( preframe, keypoints_pre, descriptors_pre );
+//    f2d->compute( nextframe, keypoints_next, descriptors_next );
     
     
-    orb->detectAndCompute(preframe, Mat(), keypoints_pre, descriptors_pre);
-    orb->detectAndCompute(nextframe, Mat(), keypoints_next, descriptors_next);
+    f2d->detectAndCompute(preframe, Mat(), keypoints_pre, descriptors_pre);
+    f2d->detectAndCompute(nextframe, Mat(), keypoints_next, descriptors_next);
     
     // Matching descriptor vectors using FLANN/BruteForce/ DescriptorMatcher matcher
-    BFMatcher matcher;
+    //BFMatcher matcher;
     //Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce");
     //Ptr<DescriptorMatcher> matcher(new BFMatcher(NORM_HAMMING, true));
     
-    //FlannBasedMatcher matcher;
+    FlannBasedMatcher matcher;
     
     vector< DMatch > matches;
     matcher.match( descriptors_pre, descriptors_next, matches );
@@ -1273,7 +1350,6 @@ void Featurematch(Mat preframe , Mat nextframe, vector<Point2f>& obj_last, vecto
         good_matches.push_back( matches[i]);
     }
 
-    
     cout << "Calculating homography matrice using " << ptsPairs << " point pairs." << endl;
     
     //绘制出匹配到的关键点   draw the Good Match pairs
@@ -1320,7 +1396,7 @@ void Featurematch(Mat preframe , Mat nextframe, vector<Point2f>& obj_last, vecto
 }
 
 double decomposematrix(Mat H){
-    double averageScale = 0.0;
+    double averageScale = 1.0;
     if(!H.empty()){
         //        Mat Traslation = H.col(2);
         //        cout<<"Traslation:" <<endl << Traslation <<endl<< endl;;
