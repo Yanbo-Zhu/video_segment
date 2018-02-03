@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4CC87C762025EAE3000DF832 /* Opticalflow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CC87C742025EAE3000DF832 /* Opticalflow.cpp */; };
 		A906D5C71F978BE9009FB5DA /* COUNTER.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A906D5C51F978BE9009FB5DA /* COUNTER.cpp */; };
 		A922A5071F7453E70072A454 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A922A5061F7453E70072A454 /* main.cpp */; };
 		A9847E301F7AB75A00C93A01 /* INITIALSEED.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A9847E2E1F7AB75A00C93A01 /* INITIALSEED.cpp */; };
@@ -26,6 +27,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4CC87C742025EAE3000DF832 /* Opticalflow.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Opticalflow.cpp; sourceTree = "<group>"; };
+		4CC87C752025EAE3000DF832 /* Opticalflow.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Opticalflow.hpp; sourceTree = "<group>"; };
 		A906D5C51F978BE9009FB5DA /* COUNTER.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = COUNTER.cpp; sourceTree = "<group>"; };
 		A906D5C61F978BE9009FB5DA /* COUNTER.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = COUNTER.hpp; sourceTree = "<group>"; };
 		A922A5031F7453E60072A454 /* video_segment */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = video_segment; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -67,6 +70,8 @@
 			isa = PBXGroup;
 			children = (
 				A922A5061F7453E70072A454 /* main.cpp */,
+				4CC87C742025EAE3000DF832 /* Opticalflow.cpp */,
+				4CC87C752025EAE3000DF832 /* Opticalflow.hpp */,
 				A9847E2E1F7AB75A00C93A01 /* INITIALSEED.cpp */,
 				A9847E2F1F7AB75A00C93A01 /* INITIALSEED.hpp */,
 				A98CF8E31F8BEA9100BCFDD3 /* Regiongrowing.cpp */,
@@ -136,6 +141,7 @@
 			files = (
 				A906D5C71F978BE9009FB5DA /* COUNTER.cpp in Sources */,
 				A922A5071F7453E70072A454 /* main.cpp in Sources */,
+				4CC87C762025EAE3000DF832 /* Opticalflow.cpp in Sources */,
 				A9847E301F7AB75A00C93A01 /* INITIALSEED.cpp in Sources */,
 				A98CF8E51F8BEA9100BCFDD3 /* Regiongrowing.cpp in Sources */,
 			);
