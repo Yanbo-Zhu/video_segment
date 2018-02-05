@@ -18,9 +18,7 @@
 #include <limits>  // numeric_limits<double>::epsilon(): 2.22045e-016
 #include <numeric>
 
-
 //#include "opencv2/features2d/features2d.hpp"
-
 #include "opencv2/core/core.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -29,6 +27,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/xfeatures2d.hpp>
 #include <opencv2/xfeatures2d/nonfree.hpp>
+#include "opencv2/features2d/features2d.hpp"
 
 #include "INITIALSEED.hpp"
 #include "Regiongrowing.hpp"
@@ -40,8 +39,7 @@ using namespace std;
 using namespace cv::xfeatures2d;
 
 //-------global variable
-int mode;
-int Segmentnum;
+// region growing
 int Threshoditerationmax = 500;
 double initialScalediff = 0.007;
 int considerNum = 10;
@@ -58,10 +56,6 @@ clock_t  clockBegin, clockEnd;
 //#define windowName String(XXX) //播放窗口名称
 
 // Opical flow
-int maxCount = 100;    // 检测的最大特征数
-int gridnum = 8;
-int currentmaxnum= gridnum*gridnum;    //  current trackbarvalue
-
 vector<vector<Point2f> > points(2);    // point0为特征点的原来位置，point1为特征点的新位置  point0:the points which his flow needs to be found.  point1: calculated new positions of input features in the second image.
 vector<Point2f> initial;    // 初始化跟踪点的位置
 
@@ -76,12 +70,6 @@ bool checkThreshold(Mat Frame, Initialseed & seed);
 void Featurematch(Mat preframe , Mat nextframe, vector<Point2f>& obj_last, vector<Point2f>& obj_next);
 double decomposematrix(Mat H);
 
-//void Opticalflow(Mat preframe , Mat nextframe, Mat& output, vector<Point2f>& features_pre, vector<Point2f>& features_next);
-//void gridpoint(int num, Mat image, vector<Point2f>& output);
-//bool addNewPoints(vector<Point2f> pointvektor);
-//bool subtractPoints(vector<Point2f> pointvektor);
-//bool acceptTrackedPoint(int i, vector<uchar> status, vector<Point2f> pointvektor1, vector<Point2f> pointvektor2);
-//bool acceptTrackedPoint_move(int i, vector<uchar> status, vector<Point2f> pointvektor1, vector<Point2f> pointvektor2);
 
 //setting for trackbar
 char const *windowName= "Segment counter "; //播放窗口名称
@@ -114,7 +102,6 @@ int main( )
     defaultseed[2].push_back(Point(530,234)); // white boot
     defaultseed[3].push_back(Point(491,356)); // black roof bottem
     double defaultThreshold[] = {11, 8, 12 ,8} ;
-
     
 ///--------- VideoCapture ----------------
     
@@ -138,12 +125,12 @@ int main( )
     }
     
     int Fourcc = static_cast<int>(vc.get( CV_CAP_PROP_FOURCC ));
-    int IndexFrame  = vc.get(CV_CAP_PROP_POS_FRAMES);
+    //int IndexFrame  = vc.get(CV_CAP_PROP_POS_FRAMES);
     int FPS  = vc.get(CV_CAP_PROP_FPS);
     int FRAME_COUNT = vc.get(CV_CAP_PROP_FRAME_COUNT);
     int Width = vc.get(CV_CAP_PROP_FRAME_WIDTH);
     int Height = vc.get(CV_CAP_PROP_FRAME_HEIGHT);
-    printf("Fourcc: %d / indexFrame: %d / fps: %d / Total Frame: %d / Width * Height : %d * %d / Width*Height/300 : %d / Width*Height/40: %d \n", Fourcc ,IndexFrame, FPS, FRAME_COUNT, Width, Height, Width*Height/300, Width*Height/50);
+    printf("Fourcc: %d / fps: %d / Total Frame: %d / Width*Height : %d*%d = %d / Width*Height/300 : %d / Width*Height/40: %d \n", Fourcc, FPS, FRAME_COUNT, Width, Height, Width*Height, Width*Height/300, Width*Height/50);
     
 //    string XXX = "Segment counter ";
 //    char *windowName = new char[50];
@@ -163,16 +150,17 @@ int main( )
     char savePathvideo[50] ;
     strcpy(savePathvideo,savePath);
     strcat(savePathvideo, ".mov");
+    remove(savePathvideo);
     
     //char const *savePathvideo = "/Users/yanbo/Desktop/source/output/output2.txt";
-    if(remove(savePathvideo)==0)
-    {
-        cout<<"Old output video delete successful"<<endl;
-    }
-    else
-    {
-        cout<<"Old output video delete failed"<<endl;
-    }
+//    if(remove(savePathvideo)==0)
+//    {
+//        cout<<"Old output video delete successful"<<endl;
+//    }
+//    else
+//    {
+//        cout<<"Old output video delete failed"<<endl;
+//    }
     
     VideoWriter vw; //(filename, fourcc, fps, frameSize[, isColor])
     
@@ -195,6 +183,7 @@ int main( )
     strcpy(savePathvideoGrow,savePath);
     strcat(savePathvideoGrow,"_Grow");
     strcat(savePathvideoGrow, ".mov");
+    remove(savePathvideoGrow);
     
     //char const *savePathvideo = "/Users/yanbo/Desktop/source/output/output2.txt";
     VideoWriter vwGrow; //(filename, fourcc, fps, frameSize[, isColor])
@@ -211,8 +200,6 @@ int main( )
         return 1;
     }
     
-    cout<<endl;
-    
 //------------------------------------------------------
     Mat firstFrame;
     vc.read(firstFrame);
@@ -226,9 +213,10 @@ int main( )
     firstFrame.copyTo(firstframeBackup);
 
     cout<<"Setting the relation between real distrance and pixel distance"<<endl;
-    cout<<"Please mark two point on the image"<<endl;
+    cout<<" Please mark two point on the image"<<endl;
     //char const *Pixel_realtion_window= "Pixel-distance relation";
     #define Pixel_realtion_window "Pixel-distance relation"
+    
 //    namedWindow( Pixel_realtion_window );
 //
 //    setMouseCallback(Pixel_realtion_window,on_MouseHandle,(void*)&firstframeBackup);
@@ -257,16 +245,16 @@ int main( )
     waitKey(1);
     //destroyWindow(Pixel_realtion_window);
     //destroyAllWindows();
-
-    cout<< "Please input the real distance (m) for this line"<<endl;
+ 
+    cout<< " Please input the real distance (m) for this line"<<endl;
     double distance;
     //cin >> distance;
 
-    distance = 10;
+    distance = 100;
     cout<<  distance << endl;
 
     pixelrelation = distance/ pixeld;
-    cout<< "The relation: " << pixelrelation << " m/pixel \n" << endl<<endl;
+    cout<< " The relation: " << pixelrelation << " m/pixel \n" <<endl;
     
 
 //-----------------------------finding first seed point---------------
@@ -286,6 +274,7 @@ int main( )
     {
         printf("\n********************Setting for object %d ***************\n", i+1);
         cout<<"Plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points"<<endl;
+        int mode;
         cin >> mode;
         s[i] = Initialseed(mode, firstFrame, i, defaultThreshold, defaultseed);
         
@@ -319,7 +308,7 @@ int main( )
     outputtext << "The relation: " << pixelrelation << " m/pixel \n" << endl;
     relationpointvektor.clear();
     
-    for( int i=0; i<Segmentinitialnum; i++)
+    for( int i=0; i< Segmentinitialnum; i++)
     {
         outputtext << "Objekt: " << i+1 << endl;
         outputtext << "Initial Threshold: " << s[i].differencegrow << endl;
@@ -358,6 +347,7 @@ int main( )
         
         Mat frame;//定义一个Mat变量，用于存储每一帧的图像
         Mat MatOut;
+        int Segmentnum;
         
         vector<double> templateScaleSameframe;
         //Mat MatOut(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
@@ -371,7 +361,7 @@ int main( )
         if (all_threshold_notchange){    // if threshold for this frame did not change, read the next frame
             
             indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
-            printf("\n----------------------------IndexFrame: %d ----------------------- \n ", indexFrame);
+            printf("\n----------------------------IndexFrame: %d -----------------------\n", indexFrame);
             bSuccess = vc.read(frame); // read a new frame from video
             frame_backup = frame.clone();
             
@@ -393,7 +383,7 @@ int main( )
             }
             
             indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
-            printf("\n----------------------------IndexFrame: %d -----------------------\n ", indexFrame);
+            printf("\n----------------------------IndexFrame: %d -----------------------\n", indexFrame);
 
             bSuccess = vc.read(frame);
         }
@@ -437,83 +427,7 @@ int main( )
         cout<< "Feature detection and matching" <<endl;
         vector<Point2f> obj_last;
         vector<Point2f> obj_next;
-        //Featurematch(preFrame, frame, obj_last, obj_next);
-        Mat preframe = preFrame.clone();
-        Mat nextframe = frame.clone();
-        int minHessian = 2000;//SURF算法中的hessian阈值    the higher the minHessian, the fewer keypoints you will obtain, but you expect them to be more repetitive
-        const int GOOD_PTS_MAX = 50;
-        const float GOOD_PORTION = 0.05;
-        //定义一个SurfFeatureDetector（SURF） 特征检测类对象
-        //Ptr<SURF> detector = xfeatures2d::SURF::create(minHessian);
-        //Ptr<SURF> f2d = xfeatures2d::SURF::create(minHessian);
-        //Ptr<ORB> f2d = ORB::create();
-        Ptr<SIFT> f2d = xfeatures2d::SIFT::create();
-        //SurfFeatureDetector detector( minHessian );  //opencv 2.0
-        
-        vector<KeyPoint> keypoints_pre, keypoints_next;//vector模板类，存放任意类型的动态数组
-        Mat descriptors_pre, descriptors_next;
-        
-        //    f2d->detect( preframe, keypoints_pre );
-        //    f2d->detect( nextframe, keypoints_next );
-        
-        //    Ptr<SURF> extractor = SURF::create();
-        //    //Ptr<SIFT> extractor = xfeatures2d::SIFT::create();
-        //    //SurfDescriptorExtractor extractor;
-        
-        //    f2d->compute( preframe, keypoints_pre, descriptors_pre );
-        //    f2d->compute( nextframe, keypoints_next, descriptors_next );
-        
-        
-        f2d->detectAndCompute(preframe, Mat(), keypoints_pre, descriptors_pre);
-        f2d->detectAndCompute(nextframe, Mat(), keypoints_next, descriptors_next);
-        
-        // Matching descriptor vectors using FLANN/BruteForce/ DescriptorMatcher matcher
-        //BFMatcher matcher;
-        //Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce");
-        //Ptr<DescriptorMatcher> matcher(new BFMatcher(NORM_HAMMING, true));
-        
-        FlannBasedMatcher matcher;
-        
-        vector< DMatch > matches;
-        matcher.match( descriptors_pre, descriptors_next, matches );
-        
-        
-        //-- Sort matches and preserve top 10% matches
-        sort(matches.begin(), matches.end());
-        vector< DMatch > good_matches;
-        //    double minDist = matches.front().distance;
-        //    double maxDist = matches.back().distance;
-        //    cout << "\nMax distance: " << maxDist << endl;
-        //    cout << "Min distance: " << minDist << endl;
-        
-        const int ptsPairs = min(GOOD_PTS_MAX, (int)(matches.size() * GOOD_PORTION));
-        for( int i = 0; i < ptsPairs; i++ )
-        {
-            good_matches.push_back( matches[i]);
-        }
-        
-        
-        cout << "Calculating homography matrice using " << ptsPairs << " point pairs." << endl;
-        
-        //绘制出匹配到的关键点   draw the Good Match pairs
-        Mat img_matches;
-        drawMatches( preframe, keypoints_pre, nextframe, keypoints_next,
-                    good_matches, img_matches, Scalar::all(-1), Scalar::all(-1),
-                    vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS  );
-        //        Mat out;
-        //        drawKeypoints(srcImage2, keypoints_next, out, Scalar::all(-1), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
-        //        imshow("", out);
-        
-        //    vector<Point2f> obj_last;
-        //    vector<Point2f> obj_next;
-        
-        //从匹配成功的匹配对中获取关键点  -- Get the keypoints from the good matches
-        for( unsigned int i = 0; i < good_matches.size(); i++ )
-        {
-            obj_last.push_back( keypoints_pre[ good_matches[i].queryIdx ].pt );
-            obj_next.push_back( keypoints_next[ good_matches[i].trainIdx ].pt );
-        }
-        
+        Featurematch(preFrame, frame, obj_last, obj_next);
         
         Mat H_Featurematch = findHomography( obj_last, obj_next ,CV_RANSAC );
         //cout<<"Homography matrix:" <<endl << H <<endl << endl;;
@@ -533,10 +447,13 @@ int main( )
         Mat output = frame.clone();
         
         Opticalflow OP;
-        OP.Opticalflowtrack(preFrame , frame, output, points, initial);
+        OP.trackpath(preFrame , frame, output, points, initial);
         imshow("Optical flow", output);
         
-        Mat H_OP = findHomography( obj_last, obj_next ,CV_RANSAC );
+        vector<vector<Point2f> > matchingpairs(2);
+        OP.matchedpairs(preFrame, frame, matchingpairs);
+        
+        Mat H_OP = findHomography( matchingpairs[0], matchingpairs[1] ,CV_RANSAC );
         double scaleOP = decomposematrix(H_OP);
         cout<< "Scale (optical flow):" << scaleOP << endl;
         
@@ -552,14 +469,10 @@ int main( )
         //blur( image, out, Size(3, 3));
         
         Regiongrowing R[Segmentnum];
-        //Counter C[Segmentnum];
-        
+    
         Mat Matsegment= frame.clone(); // segment 整块的输出
         Mat FramewithCounter = frame.clone(); // segment 的 counter 输出
-        
         Mat framethreemethode = frame.clone(); //
-//        Mat Onlysegment (frame.size(),CV_8UC3,Scalar(0,0,0)); // for affine matrix
-//        Mat pre_onlysegment(frame.size(),CV_8UC3,Scalar(0,0,0));
         
 // ------------
        
@@ -591,15 +504,13 @@ int main( )
                 printf("\n****** Cyele index for Threshold: %d\n", vectorS[i].LoopThreshold);
                 MatOut = R[i].RegionGrow(frame, frame_Blur , vectorS[i].differencegrow, vectorS[i].initialseedvektor);
 
-                
                 // If true, the function finds an optimal affine transformation with no additional restrictions (6 degrees of freedom). Otherwise, the class of transformations to choose from is limited to combinations of translation, rotation, and uniform scaling (5 degrees of freedom).
                 
                 Mat Affine = estimateRigidTransform(vectorS[i].preSegment,MatOut,false);  // estimateRigidTransform 有可能得到的 matrix 为0矩阵
                 //cout<<"Affine:" << endl << Affine<<endl;
-                
-                
                 double scaleRG = decomposematrix(Affine);
                 cout<< "scale RG :" << scaleRG << endl;
+                
                 
                 Mat Matoutbackup = MatOut.clone();
                 FramewithCounter = R[i].FindCounter(Matoutbackup, FramewithCounter, vectorS[i].color);
@@ -718,7 +629,7 @@ int main( )
                         
                         printf("RG_Threshold for next loop %f \n", vectorS[i].differencegrow);
 
-                        //vc.set(CV_CAP_PROP_POS_FRAMES, indexFrame);
+                        //vc.set(CV_CAP_PROP_POS_FRAMES, indexFrame);  // 此处ser frame index 会引起死机
                         vectorS[i].threshold_notchange = false;
                     }
                 
@@ -769,7 +680,6 @@ int main( )
                     newthreshold = vectorS[i].differencegrow - (0.05/ pow(2, vectorS[i].LoopThreshold - 1));
                     }
                     
-                    //printf("new RG_Threshold: %f \n", newthreshold);
                     cout<<"new RG_Threshold: " <<  newthreshold << endl;
                   
                     vector<double>::iterator iterfind2;
@@ -1265,8 +1175,8 @@ void Featurematch(Mat preframe , Mat nextframe, vector<Point2f>& obj_last, vecto
     int minHessian = 2000;//SURF算法中的hessian阈值    the higher the minHessian, the fewer keypoints you will obtain, but you expect them to be more repetitive
     const int GOOD_PTS_MAX = 50;
     const float GOOD_PORTION = 0.05;
-    //定义一个SurfFeatureDetector（SURF） 特征检测类对象
-
+    
+    //define Feature Detector and extractor（SURF） 特征检测类对象
     Ptr<SURF> f2d = xfeatures2d::SURF::create(minHessian);
     //Ptr<ORB> f2d = ORB::create();
     //Ptr<SIFT> f2d = xfeatures2d::SIFT::create();
@@ -1283,7 +1193,6 @@ void Featurematch(Mat preframe , Mat nextframe, vector<Point2f>& obj_last, vecto
 //    //SurfDescriptorExtractor extractor;
 //    f2d->compute( preframe, keypoints_pre, descriptors_pre );
 //    f2d->compute( nextframe, keypoints_next, descriptors_next );
-    
     
     f2d->detectAndCompute(preframe, Mat(), keypoints_pre, descriptors_pre);
     f2d->detectAndCompute(nextframe, Mat(), keypoints_next, descriptors_next);
@@ -1333,7 +1242,7 @@ void Featurematch(Mat preframe , Mat nextframe, vector<Point2f>& obj_last, vecto
     //            }
     //        }
     
-    // lowe's algotithm for select best matcher-- page 415 /418
+    // lowe's algotithm for select best matcher-- page 415 /418 书： 学习opencv3
     
     
     //-- Sort matches and preserve top 10% matches
@@ -1430,6 +1339,11 @@ double decomposematrix(Mat H){
         //        cout<<"Shearmatrix:" <<endl << Shearmatrix <<endl << endl;
         
     }
+    
+    else{
+        cout<<"Homography matrix is empty" << endl;
+    }
+    
     return averageScale;
 }
 

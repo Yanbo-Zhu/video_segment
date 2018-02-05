@@ -8,7 +8,7 @@
 
 #include "Opticalflow.hpp"
 
-void Opticalflow:: Opticalflowtrack (Mat preframe , Mat nextframe, Mat& output, vector<vector<Point2f> >& points, vector<Point2f>& initial){
+void Opticalflow:: trackpath(Mat preframe , Mat nextframe, Mat output, vector<vector<Point2f> >& points, vector<Point2f>& initial){
     
     Mat nextframe_gray;
     Mat preframe_gray;
@@ -117,6 +117,48 @@ void Opticalflow:: Opticalflowtrack (Mat preframe , Mat nextframe, Mat& output, 
     }
 }
 
+void Opticalflow:: matchedpairs(Mat preframe , Mat nextframe, vector<vector<Point2f> >& matchedpairs){
+    
+    Mat nextframe_gray;
+    Mat preframe_gray;
+    cvtColor(preframe, preframe_gray, COLOR_BGR2GRAY);
+    cvtColor(nextframe, nextframe_gray, COLOR_BGR2GRAY);
+    //OpenCV2版为： cvtColor(frame, gray, CV_BGR2GRAY);
+    
+    // ------- 为了计算相邻两帧间的homography matrix
+    
+    vector<Point2f> features_pre;
+    vector<Point2f> features_next;
+    vector<uchar> status2;
+    vector<float> err2;
+    
+    // ----   为了计算相邻两帧间的homography matrix
+    gridpoint(gridnum, preframe, features_pre);
+    // goodFeaturesToTrack(srcImage1_gray, features_pre, currentmaxnum, qLevel, minDist, Mat(),3,true, 0.04);
+    
+    calcOpticalFlowPyrLK(preframe, nextframe, features_pre, features_next, status2, err2);
+    
+    int t = 0;
+    for (size_t i=0; i<features_next.size(); i++)
+    {
+        if (acceptTrackedPoint(i, status2, features_pre, features_next))
+        {
+            features_pre[t] = features_pre[i];
+            features_next[t++] = features_next[i];
+        }
+    }
+    
+    cout<< "match pair (interfarme) number: "<< t<< endl;
+    features_pre.resize(t);
+    features_next.resize(t);
+    
+    matchedpairs[0].assign(features_pre.begin(), features_pre.end());
+    matchedpairs[1].assign(features_next.begin(), features_next.end());
+
+}
+
+
+
 bool Opticalflow:: addNewPoints(vector<Point2f> pointvektor)
 {
     return pointvektor.size() <= currentmaxnum;
@@ -138,8 +180,7 @@ bool Opticalflow:: acceptTrackedPoint(int i, vector<uchar> status, vector<Point2
     return status[i] && ((abs(pointvektor1[i].x - pointvektor2[i].x) + abs(pointvektor1[i].y - pointvektor2[i].y)) > 0.2);
 }
 
-
-//---------------------------------------------------------------------
+// grid point of original image
 void Opticalflow:: gridpoint(int num, Mat image, vector<Point2f>& output){
     output.clear();
     for(int i=1; i<num+1; i++){
@@ -149,6 +190,4 @@ void Opticalflow:: gridpoint(int num, Mat image, vector<Point2f>& output){
             //line(image, pt, pt, Scalar(0, 0, 255),4,8,0);
         }
     }
-    //    imshow("", image);
-    //    waitKey();
 }

@@ -38,8 +38,8 @@ private:
     int currentmaxnum= gridnum*gridnum;    //  current trackbarvalue
     
 public:
-    void Opticalflowtrack(Mat preframe , Mat nextframe, Mat& output, vector<vector<Point2f> >& points, vector<Point2f>& initial);
-
+    void trackpath(Mat preframe , Mat nextframe, Mat output, vector<vector<Point2f> >& points, vector<Point2f>& initial);
+    void matchedpairs(Mat preframe , Mat nextframe, vector<vector<Point2f> >& matchedpairs);
 };
 
 #endif /* Opticalflow_hpp */
