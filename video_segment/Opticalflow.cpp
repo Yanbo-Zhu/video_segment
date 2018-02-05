@@ -47,7 +47,7 @@ void Opticalflow:: trackpath(Mat preframe , Mat nextframe, Mat output, vector<ve
         }
     }
     
-    cout<< "match pair (interfarme) number: "<< t<< endl;
+    //cout<< "match pair (interfarme) number: "<< t<< endl;
     features_pre.resize(t);
     features_next.resize(t);
     
@@ -105,7 +105,7 @@ void Opticalflow:: trackpath(Mat preframe , Mat nextframe, Mat output, vector<ve
         }
     }
     
-    cout<< "match pairs (optical flow) number: "<< k<< endl;
+    //cout<< "match pairs (optical flow) number: "<< k<< endl;
     points[1].resize(k);
     initial.resize(k);
     

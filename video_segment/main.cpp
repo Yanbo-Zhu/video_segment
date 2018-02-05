@@ -33,6 +33,7 @@
 #include "Regiongrowing.hpp"
 #include "Opticalflow.hpp"
 //#include "COUNTER.hpp"
+#include "Function.hpp"
 
 using namespace cv;
 using namespace std;
@@ -40,8 +41,7 @@ using namespace cv::xfeatures2d;
 
 //-------global variable
 // region growing
-int Threshoditerationmax = 500;
-double initialScalediff = 0.007;
+
 int considerNum = 10;
 int multipleScaleDiff = 10;
 double pixelrelation;
@@ -65,7 +65,6 @@ double averagevalue(int num, vector<double> array);
 double averagedifference(int num, vector<double> array);
 void on_MouseHandle(int event, int x, int y, int flags, void* param);
 double pixeldistance(Mat& img, vector<Point> pv);
-bool checkThreshold(Mat Frame, Initialseed & seed);
 
 void Featurematch(Mat preframe , Mat nextframe, vector<Point2f>& obj_last, vector<Point2f>& obj_next);
 double decomposematrix(Mat H);
@@ -96,12 +95,12 @@ int main( )
 //--------------some default seed points when i choose 2 during modechoose
 // Point (x,y )  x= column  y = row
     vector<vector<Point>> defaultseed(4);
-    defaultseed[1].push_back(Point(515,376)); // black roof 有缺陷 在中间  threshold 5
+    defaultseed[0].push_back(Point(515,376)); // black roof 有缺陷 在中间  threshold 5
     //defaultseed[0].push_back(Point(781,379)); // grass  threshold 4
-    defaultseed[0].push_back(Point(215,240)); // light blue roof left
+    defaultseed[1].push_back(Point(215,240)); // light blue roof left
     defaultseed[2].push_back(Point(530,234)); // white boot
     defaultseed[3].push_back(Point(491,356)); // black roof bottem
-    double defaultThreshold[] = {11, 8, 12 ,8} ;
+    double defaultThreshold[] = {6, 11, 12 ,8} ;
     
 ///--------- VideoCapture ----------------
     
@@ -204,6 +203,7 @@ int main( )
     Mat firstFrame;
     vc.read(firstFrame);
     Mat preFrame = firstFrame.clone();
+    //Mat preallsegment(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
     
     //vc.set(CV_CAP_PROP_POS_FRAMES, 1);
     
@@ -278,7 +278,7 @@ int main( )
         cin >> mode;
         s[i] = Initialseed(mode, firstFrame, i, defaultThreshold, defaultseed);
         
-        if(checkThreshold(firstFrame, s[i])){
+        if(s[i].checkThreshold(firstFrame)){
             cout<< "Object " << i << " was created successfully "<<endl;
             vectorS.push_back( s[i] );
             i++;
@@ -338,15 +338,21 @@ int main( )
     Mat frame_backup;
     int indexFrame;
     bool bSuccess;
-    double runningtime = 0;
+    double totaltime = 0;
+    double totoalRGtime = 0;
+    double totoalOPtime = 0;
+    double totoalFMtime = 0;
+    
     clock_t start,end;
+    
+    clock_t start_RG, end_RG, start_OP, end_OP, start_FM, end_FM;
     start = clock();
     
     while(!stop)
     {
         
         Mat frame;//定义一个Mat变量，用于存储每一帧的图像
-        Mat MatOut;
+        
         int Segmentnum;
         
         vector<double> templateScaleSameframe;
@@ -407,7 +413,13 @@ int main( )
         vector<string> scaletext;
         vector<string> seedtext;
         vector<string> Thresholdtext;
+        vector<string> timetext;
+        
         char Buffer[60];
+        char Scalechar[70];
+        char Timechar[70];
+        char Totoaltimechar[70];
+        
         Point ptTopLeft(10, 10);
         Point* ptrTopLeft = &ptTopLeft;
         
@@ -422,8 +434,12 @@ int main( )
         
         Point ptBottomMiddle2(frame.cols/2, frame.rows); //  for counter
         Point* ptrBottomMiddle2 = &ptBottomMiddle2;
+        
+        Point ptBottomMiddle3(frame.cols/2, frame.rows); //  for time value (three methode in same frame )
+        Point* ptrBottomMiddle3 = &ptBottomMiddle3;
 
 // --------  Feature detection and classic matching method
+        start_FM = clock();
         cout<< "Feature detection and matching" <<endl;
         vector<Point2f> obj_last;
         vector<Point2f> obj_next;
@@ -437,12 +453,16 @@ int main( )
         sprintf( Buffer, "Frame %d", indexFrame);
         scaletext.push_back(Buffer);
         
-        sprintf(Buffer, "Scale Feature match (index %d to %d): %.5f", indexFrame, indexFrame-1, scaleFreaturematch);
-        scaletext.push_back(Buffer);
+        sprintf(Scalechar , "Scale (index %d to %d)/ FM: %.7f/ ", indexFrame, indexFrame-1, scaleFreaturematch);
+        end_FM = clock();
+        
+        sprintf(Timechar, "Time of Frameindex %d/ FM: %.5f/ ",indexFrame, (double)(end_FM - start_FM) / CLOCKS_PER_SEC);
         
         cout<<endl;
         
 // --------  optical flow
+        start_OP = clock();
+        
         cout<< "Optical flow" <<endl;
         Mat output = frame.clone();
         
@@ -457,23 +477,28 @@ int main( )
         double scaleOP = decomposematrix(H_OP);
         cout<< "Scale (optical flow):" << scaleOP << endl;
         
-        sprintf(Buffer, "Scale Optical flow (index %d to %d): %.5f", indexFrame, indexFrame-1, scaleOP);
-        scaletext.push_back(Buffer);
+        sprintf(Scalechar+ strlen(Scalechar), "OP: %.7f/ ", scaleOP);
+        
+        end_OP = clock();
+        
+        sprintf(Timechar+strlen(Timechar), "OP: %.5f/ ", (double)(end_OP - start_OP) / CLOCKS_PER_SEC);
         
         cout<<endl;
         
 // -------------------------------
+        
         
         Mat frame_Blur;
         GaussianBlur(frame, frame_Blur, kernelsize,0,0);
         //blur( image, out, Size(3, 3));
         
         Regiongrowing R[Segmentnum];
-    
+        
         Mat Matsegment= frame.clone(); // segment 整块的输出
         Mat FramewithCounter = frame.clone(); // segment 的 counter 输出
         Mat framethreemethode = frame.clone(); //
-        
+        Mat MatOut;
+        Mat Matallsegment(frame.size(),CV_8UC3,Scalar(0,0,0));
 // ------------
        
 //        for( int i=0; i<Segmentnum; i++)
@@ -498,19 +523,22 @@ int main( )
 //        text.clear();
         
  //------------------------------------------------------------------
+        start_RG = clock();
+        
             for( int i=0; i<Segmentnum; i++)
             {
                 printf("\n************* Objekt %d Information **********************", i+1);
                 printf("\n****** Cyele index for Threshold: %d\n", vectorS[i].LoopThreshold);
                 MatOut = R[i].RegionGrow(frame, frame_Blur , vectorS[i].differencegrow, vectorS[i].initialseedvektor);
-
-                // If true, the function finds an optimal affine transformation with no additional restrictions (6 degrees of freedom). Otherwise, the class of transformations to choose from is limited to combinations of translation, rotation, and uniform scaling (5 degrees of freedom).
                 
                 Mat Affine = estimateRigidTransform(vectorS[i].preSegment,MatOut,false);  // estimateRigidTransform 有可能得到的 matrix 为0矩阵
                 //cout<<"Affine:" << endl << Affine<<endl;
-                double scaleRG = decomposematrix(Affine);
-                cout<< "scale RG :" << scaleRG << endl;
+                        double scaleRG_Affine = decomposematrix(Affine);
+                       cout<< "scale RG Affine:" << scaleRG_Affine << endl;
                 
+                addWeighted(Matallsegment, 1, MatOut, 1, 0.0, Matallsegment);
+
+                // If true, the function finds an optimal affine transformation with no additional restrictions (6 degrees of freedom). Otherwise, the class of transformations to choose from is limited to combinations of translation, rotation, and uniform scaling (5 degrees of freedom).
                 
                 Mat Matoutbackup = MatOut.clone();
                 FramewithCounter = R[i].FindCounter(Matoutbackup, FramewithCounter, vectorS[i].color);
@@ -655,7 +683,7 @@ int main( )
                                 vectorS[i].data[6].push_back(R[i].Area);
                                 vectorS[i].data[7].push_back(scaleArea);
                                 
-                                vectorS[i].preSegment = MatOut.clone();
+                                vectorS[i].preSegment  = MatOut.clone();
                                 vectorS[i].initialseedvektor.clear();
                                 //s[i].initialseedvektor.push_back(R[i].regioncenter);
                                 vectorS[i].initialseedvektor.push_back(R[i].cntr);
@@ -713,6 +741,7 @@ int main( )
                 for(size_t j=0; j<R[i].seedtogether.size(); j++)
                 {
                     Matsegment.at<Vec3b>(R[i].seedtogether[j]) = vectorS[i].color;
+                    //Matallsegment.at<Vec3b>(R[i].seedtogether[j]) = frame.at<Vec3b>(R[i].seedtogether[j]);
                 }
                 
                 Matsegment = putStats(Thresholdtext, Matsegment, vectorS[i].color, ptrBottomMiddle, 'b' );
@@ -721,6 +750,11 @@ int main( )
                 seedtext.clear();
                 
             }////segment big循环在这里截止
+   
+        end_RG = clock();
+        sprintf( Timechar+strlen(Timechar), "RG: %.5f", (double)(end_RG - start_RG) / CLOCKS_PER_SEC);
+        timetext.push_back(Timechar);
+        totoalRGtime +=(double)(end_RG - start_RG) / CLOCKS_PER_SEC;
         
    //------------------------ Scale of different Segment in the same Frame to build  gaussian model
         
@@ -749,6 +783,7 @@ int main( )
             else cout<< "the Scale of Segment " << i+1 << " is qualified"<< endl;
         }
         
+
     //--------------------------
         
         // Frameindex
@@ -757,10 +792,10 @@ int main( )
     
         // ---  running time
         end = clock();
-        runningtime = (double)(end - start) / CLOCKS_PER_SEC;
+        totaltime = (double)(end - start) / CLOCKS_PER_SEC;
         //printf( "%f seconds\n", (double)(end - start) / CLOCKS_PER_SEC); // 在linux系统下，CLOCKS_PER_SEC 是1000000，表示的是微秒。 CLOCKS_PER_SEC，它用来表示一秒钟会有多少个时钟计时单元
         
-        sprintf(Buffer, "%f s", runningtime );
+        sprintf(Buffer, "%f s", totaltime );
         text.push_back(Buffer);
         
         // update bool all_threshold_notchange
@@ -783,16 +818,28 @@ int main( )
             averageScaleoneFrame /= Segmentnum;
             cout<< "average Scale of all Segment in same Frame: " << averageScaleoneFrame<<endl;
             
-            sprintf(Buffer, "Scale RG (index %d to %d): %.5f", indexFrame, indexFrame-1, averageScaleoneFrame);
-            scaletext.push_back(Buffer);
+            sprintf(Scalechar+strlen(Scalechar), "RG: %.7f", averageScaleoneFrame);
+            scaletext.push_back(Scalechar);
 
             pixelrelation /= averageScaleoneFrame;
             cout<< "Pixelrelation: " << pixelrelation << "m/pixel"<<endl;
             
+            //for optical flow and freature match
             preFrame = frame.clone();
             swap(points[1], points[0]);
+            
+            // for show time of OP FM and RG
+            totoalFMtime +=(double)(end_FM - start_FM) / CLOCKS_PER_SEC;
+            sprintf(Totoaltimechar, "Totaltime/ FM: %.5f/ ", totoalFMtime);
+            
+            totoalOPtime +=(double)(end_OP - start_OP) / CLOCKS_PER_SEC;
+            sprintf(Totoaltimechar +strlen(Totoaltimechar), "OP: %.5f/ ", totoalOPtime);
+            
+            sprintf(Totoaltimechar +strlen(Totoaltimechar), "RG: %.5f", totoalRGtime);
+            timetext.push_back(Totoaltimechar);
         }
         
+        framethreemethode = putStats(timetext,framethreemethode, Vec3b(0,0,170), ptrBottomMiddle3, 'b' );
         framethreemethode = putStats(scaletext,framethreemethode, Vec3b(200,0,0), ptrTopLeft2, 't' );
         imshow(" framethreemethode ", framethreemethode);
 
@@ -816,7 +863,6 @@ int main( )
 //-------------delete the unuseful segment
         
         for( int i=0; i<vectorS.size(); i++){
-            
             if (vectorS[i].LoopThreshold > Loopiterationmax) {
                 cout<<endl << "!!!! Delete objekt " << i+1 << " because of infinitv loop" << endl << endl;
                 vector<Initialseed>::iterator iterdelete = vectorS.begin() + i ;
@@ -831,7 +877,7 @@ int main( )
             //Initialseed newobject = Initialseed(frame);
             Initialseed newobject = Initialseed(frame);
         
-            if(checkThreshold(frame, newobject)){
+            if(newobject.checkThreshold(frame)){
                 cout<< endl << "New segment sucessfully found" << endl;
                 vectorS.push_back(newobject);
             }
@@ -870,7 +916,7 @@ int main( )
                 
                 Initialseed newobject = Initialseed(frame);
 
-                if (checkThreshold(frame, newobject)){
+                if (newobject.checkThreshold(frame)){
                     cout<< endl << "New segment sucessfully found" << endl;
                     vectorS.push_back(newobject);
                     i++;
@@ -915,7 +961,7 @@ int main( )
     
     ofstream outputtext2;
     outputtext2.open(savePathtxt,ios::out|ios::app);
-    outputtext2 << "Duration: " << runningtime << "s" << endl;
+    outputtext2 << "Duration: " << totaltime << "s" << endl;
     outputtext2.close();
     
     vc.release();
@@ -1089,85 +1135,6 @@ double pixeldistance(Mat& img, vector<Point> pv)
     return(sqrt(a*a+b*b)); // a^2 not equal to a*a. a^2 has differnt meaning in Opencv
 }
 
-
-bool checkThreshold(Mat Frame, Initialseed &seed){
-    
-    int width = Frame.cols;
-    int height = Frame.rows;
-    Regiongrowing RTest;
-    //Counter CTest;
-    bool threshold_qualified(true);
-    int iterationnum = 0;
-    bool repeat_thres = false;
-    vector<double> Thresholdstack;
-    Mat Mattest;
-    Mat Matcounter;
-    
-    while ((iterationnum <Threshoditerationmax) && (!repeat_thres)) {
-
-        
-        Mat Mattest_Blur;
-        GaussianBlur(Frame, Mattest_Blur, Size(3,3), 0, 0);
-        
-        Mattest = RTest.RegionGrow(Frame, Mattest_Blur , seed.differencegrow, seed.initialseedvektor);
-        Matcounter = RTest.FindCounter(Mattest, Frame, seed.color);
-        
-        imshow("Contour of Segment", Matcounter);
-        waitKey(10);
-        cout<< "iterationnum: " << iterationnum <<"/  Area: " << RTest.Area << endl;
-        
-        Thresholdstack.push_back(seed.differencegrow) ;
-        
-        if (RTest.Area < (width*height/300)) seed.differencegrow = (seed.differencegrow + 0.1);  // (Width*Height/300) = 2000   (Width*Height/50 )= 10000
-        else if (RTest.Area <= (width*height/40) ) break;
-        else  seed.differencegrow = (seed.differencegrow - 0.1);
-        
-        iterationnum++;
-        
-        vector<double>::iterator iterfind2;
-        iterfind2 = find( Thresholdstack.begin(), Thresholdstack.end(), seed.differencegrow);
-        
-        if(iterfind2 != Thresholdstack.end()){
-            cout << "New Threshlod ist already available Threshlod vector. " << endl;
-            repeat_thres = true;
-        }
-        
-        cout<< "Threshold: " << seed.differencegrow <<endl;
-    }
-    
-    if(iterationnum >=Threshoditerationmax || repeat_thres){
-        cout<< "This new random initial point can not become a available seed point " << endl;
-        threshold_qualified = false;
-    }
-    
-    else{
-        // create new object sucessfully
-            waitKey(0);
-    }
-    
-    
-    seed.LoopThreshold = 1;
-
-    seed.data[0].push_back(RTest.EWlong);    // Green line. long axis
-    seed.data[1].push_back(RTest.EWshort);   // lightly blue line . short axis
-    seed.data[2].push_back(RTest.Ratio);
-    seed.data[3].push_back(1.0); // scale
-    seed.data[4].push_back(initialScalediff); // ScaleDifference
-    seed.data[5].push_back(0.0); // RatioDifference
-    seed.data[6].push_back(RTest.Area);  // Area
-    seed.data[7].push_back(1.0);  // scaleArea
-    
-    seed.initialseedvektor.clear();
-    seed.initialseedvektor.push_back(RTest.cntr);
-    seed.threshold_notchange = true;
-    
-    seed.preSegment = Mattest.clone();
-    destroyWindow("Contour of Segment");
-    
-    return threshold_qualified;
-}
-
-
 void Featurematch(Mat preframe , Mat nextframe, vector<Point2f>& obj_last, vector<Point2f>& obj_next){
     
     int minHessian = 2000;//SURF算法中的hessian阈值    the higher the minHessian, the fewer keypoints you will obtain, but you expect them to be more repetitive
@@ -1302,48 +1269,7 @@ void Featurematch(Mat preframe , Mat nextframe, vector<Point2f>& obj_last, vecto
 
 }
 
-double decomposematrix(Mat H){
-    double averageScale = 1.0;
-    if(!H.empty()){
-        //        Mat Traslation = H.col(2);
-        //        cout<<"Traslation:" <<endl << Traslation <<endl<< endl;;
-        
-        Mat A = Mat::zeros(2, 2, CV_64F);
-        for (int j = 0; j< A.rows; j++)
-        {
-            for (int i = 0; i< A.cols; i++)
-            {
-                A.at<double>(j, i) = H.at<double>(j, i);
-            } // end of line
-        }
-        
-        double p =  sqrt( ( H.at<double>(0,0) * H.at<double>(0,0) ) + ( H.at<double>(0,1)*H.at<double>(0,1) ) );
-        double r = determinant(A)/p;
-        
-        Mat Scale = Mat::zeros(2, 2, CV_64F);
-        Scale.at<double>(0, 0) = p;
-        Scale.at<double>(1, 1) = r;
-        //cout<<"Scale:" <<endl << Scale <<endl << endl;
-        
-        averageScale = (p+r)/2;
-        //cout<<"averageScale:" <<endl << averageScale <<endl << endl;
-        
-        //        double angle = atan2(H.at<double>(1,0),H.at<double>(0,0));
-        //        cout<<"angle:" <<endl << angle * 180/M_PI <<endl << endl;
-        
-        //        double shear = ( H.at<double>(0,0) * H.at<double>(1,0)  + H.at<double>(0,1)* H.at<double>(1,1) ) / determinant(A) ;
-        //        Mat Shearmatrix = Mat::eye(2, 2, CV_64F);
-        //        Shearmatrix.at<double>(0, 1) = shear;
-        //        cout<<"Shearmatrix:" <<endl << Shearmatrix <<endl << endl;
-        
-    }
-    
-    else{
-        cout<<"Homography matrix is empty" << endl;
-    }
-    
-    return averageScale;
-}
+
 
 
 

@@ -20,6 +20,8 @@
 #include <iostream>
 #include <time.h>
 
+#include "Regiongrowing.hpp"
+
 using namespace cv;
 using namespace std;
 
@@ -37,10 +39,11 @@ private:
     double thresholdvalue;
     Point g_pt;
     #define Point_mark_window " Drawing Point "
+    int Threshoditerationmax = 500;
+    double initialScalediff = 0.007;
     
 public:
     
-    Mat preSegment;
     vector<Point> initialseedvektor;
     double differencegrow;
     int LoopThreshold;
@@ -48,6 +51,7 @@ public:
     bool threshold_notchange = true;
     Vec3b color;
     vector < vector<double> >data;
+    Mat preSegment;
     
     Initialseed();
     Initialseed(Mat Frame);
@@ -56,6 +60,7 @@ public:
     
     void newseed(Mat firstFrame);
     void randomseed(Mat firstFrame, int width, int height);
+    bool checkThreshold(Mat Frame);
     
 };
 

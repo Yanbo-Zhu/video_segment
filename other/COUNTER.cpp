@@ -48,7 +48,7 @@ Mat Counter::FindCounter (Mat MatOut , Mat Frame, Vec3b color)
         //if (area < 1e2 || 1e5 < area) continue;
         
         // Draw each contour only for visualisation purposes
-        drawContours(FramemitCounter, contours, static_cast<int>(i), color, 1, 8, hierarchy, 0);
+        drawContours(FramemitCounter, contours, static_cast<int>(i), color, 2, 8, hierarchy, 0);
         
         rectangle( FramemitCounter, boundRect[i].tl(), boundRect[i].br(), color, 1, 8, 0 );// 绘制边框矩形
         rectanglewidth = boundRect[i].width;

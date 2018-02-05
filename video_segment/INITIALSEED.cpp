@@ -228,6 +228,83 @@ void Initialseed :: DrawLine( Mat &img, Point pt, Vec3b color )
     //line(img, pt, pt, Scalar(0,0,255),thickness,lineType,0); //随机颜色
 }
 
+bool Initialseed :: checkThreshold(Mat Frame){
+
+    int width = Frame.cols;
+    int height = Frame.rows;
+    Regiongrowing RTest;
+    //Counter CTest;
+    bool threshold_qualified(true);
+    int iterationnum = 0;
+    bool repeat_thres = false;
+    vector<double> Thresholdstack;
+    Mat Mattest;
+    Mat Matcounter;
+
+    while ((iterationnum <Threshoditerationmax) && (!repeat_thres)) {
+
+
+        Mat Mattest_Blur;
+        GaussianBlur(Frame, Mattest_Blur, Size(3,3), 0, 0);
+
+        Mattest = RTest.RegionGrow(Frame, Mattest_Blur , this->differencegrow, this->initialseedvektor);
+        Matcounter = RTest.FindCounter(Mattest, Frame, this->color);
+
+        imshow("Contour of Segment", Matcounter);
+        waitKey(10);
+        cout<< "iterationnum: " << iterationnum <<"/  Area: " << RTest.Area << endl;
+
+        Thresholdstack.push_back(this->differencegrow) ;
+
+        if (RTest.Area < (width*height/300)) this->differencegrow = (this->differencegrow + 0.1);  // (Width*Height/300) = 2000   (Width*Height/50 )= 10000
+        else if (RTest.Area <= (width*height/40) ) break;
+        else  this->differencegrow = (this->differencegrow - 0.1);
+
+        iterationnum++;
+
+        vector<double>::iterator iterfind2;
+        iterfind2 = find( Thresholdstack.begin(), Thresholdstack.end(), this->differencegrow);
+
+        if(iterfind2 != Thresholdstack.end()){
+            cout << "New Threshlod ist already available Threshlod vector. " << endl;
+            repeat_thres = true;
+        }
+
+        cout<< "Threshold: " << this->differencegrow <<endl;
+    }
+
+    if(iterationnum >=Threshoditerationmax || repeat_thres){
+        cout<< "This new random initial point can not become a available seed point " << endl;
+        threshold_qualified = false;
+    }
+
+    else{
+        // create new object sucessfully
+        this->LoopThreshold = 1;
+
+        this->data[0].push_back(RTest.EWlong);    // Green line. long axis
+        this->data[1].push_back(RTest.EWshort);   // lightly blue line . short axis
+        this->data[2].push_back(RTest.Ratio);
+        this->data[3].push_back(1.0); // scale
+        this->data[4].push_back(initialScalediff); // ScaleDifference
+        this->data[5].push_back(0.0); // RatioDifference
+        this->data[6].push_back(RTest.Area);  // Area
+        this->data[7].push_back(1.0);  // scaleArea
+        
+        this->preSegment  = Mattest.clone();
+        this->initialseedvektor.clear();
+        this->initialseedvektor.push_back(RTest.cntr);
+        this->threshold_notchange = true;
+
+        waitKey(0);
+    }
+
+    destroyWindow("Contour of Segment");
+
+    return threshold_qualified;
+}
+
+
 //void MyClass::on_Mouse(int event, int x, int y)
 //{
 //    switch (event)
