@@ -53,7 +53,7 @@ Size kernelsize(3,3);
 #define EPSILON 1e-13   // arrcuracy value
 vector<Point> relationpointvektor;
 clock_t  clockBegin, clockEnd;
-//#define windowName String(XXX) //播放窗口名称
+//#define windowNameRG String(XXX) //播放窗口名称
 
 // Opical flow
 vector<vector<Point2f> > points(2);    // point0为特征点的原来位置，point1为特征点的新位置  point0:the points which his flow needs to be found.  point1: calculated new positions of input features in the second image.
@@ -71,7 +71,9 @@ double decomposematrix(Mat H);
 
 
 //setting for trackbar
-char const *windowName= "Segment counter "; //播放窗口名称
+char const *windowNameRG = "Region growing ";
+char const *windowNameOP = "Optical flow";
+
 char const *trackBarName="Frame index";    //trackbar控制条名称
 double totalFrame=1.0;     //视频总帧数
 //double currentFrame=1.0;    //当前播放帧
@@ -91,7 +93,7 @@ void TrackBarFunc(int ,void(*))
 
 int main( )
 {
-
+    
 //--------------some default seed points when i choose 2 during modechoose
 // Point (x,y )  x= column  y = row
     vector<vector<Point>> defaultseed(4);
@@ -100,7 +102,7 @@ int main( )
     defaultseed[1].push_back(Point(215,240)); // light blue roof left
     defaultseed[2].push_back(Point(530,234)); // white boot
     defaultseed[3].push_back(Point(491,356)); // black roof bottem
-    double defaultThreshold[] = {6, 11, 12 ,8} ;
+    double defaultThreshold[] = {5, 11, 12 ,8} ;
     
 ///--------- VideoCapture ----------------
     
@@ -132,9 +134,9 @@ int main( )
     printf("Fourcc: %d / fps: %d / Total Frame: %d / Width*Height : %d*%d = %d / Width*Height/300 : %d / Width*Height/40: %d \n", Fourcc, FPS, FRAME_COUNT, Width, Height, Width*Height, Width*Height/300, Width*Height/50);
     
 //    string XXX = "Segment counter ";
-//    char *windowName = new char[50];
-//    strcat(windowName,XXX.c_str());
-//    strcat(windowName,videofilename.c_str());
+//    char *windowNameRG = new char[50];
+//    strcat(windowNameRG,XXX.c_str());
+//    strcat(windowNameRG,videofilename.c_str());
     
 //-------------------------------------- VideoWriter ----------------
 
@@ -279,7 +281,7 @@ int main( )
         s[i] = Initialseed(mode, firstFrame, i, defaultThreshold, defaultseed);
         
         if(s[i].checkThreshold(firstFrame)){
-            cout<< "Object " << i << " was created successfully "<<endl;
+            cout<< "Object " << i+1 << " was created successfully "<<endl;
             vectorS.push_back( s[i] );
             i++;
         }
@@ -326,9 +328,9 @@ int main( )
     totalFrame = vc.get(CV_CAP_PROP_FRAME_COUNT);  //获取总帧数
     frameRate = vc.get(CV_CAP_PROP_FPS);   //获取帧率
     double pauseTime=1000/frameRate; // 由帧率计算两幅图像间隔时间
-    namedWindow(windowName, WINDOW_NORMAL);
+    namedWindow(windowNameRG, WINDOW_NORMAL);
     //在图像窗口上创建控制条
-    createTrackbar(trackBarName,windowName,&trackbarValue,trackbarMax,TrackBarFunc);
+    createTrackbar(trackBarName,windowNameRG,&trackbarValue,trackbarMax,TrackBarFunc);
     //TrackBarFunc(0,0);
     
 //------------------------------- Start to apply Segmentation-method in Video
@@ -342,6 +344,7 @@ int main( )
     double totoalRGtime = 0;
     double totoalOPtime = 0;
     double totoalFMtime = 0;
+    double AccumscaleRG = 1.0, AccumscaleOP = 1.0, AccumscaleFM = 1.0;
     
     clock_t start,end;
     
@@ -419,6 +422,7 @@ int main( )
         char Scalechar[70];
         char Timechar[70];
         char Totoaltimechar[70];
+        char Acscale[70];
         
         Point ptTopLeft(10, 10);
         Point* ptrTopLeft = &ptTopLeft;
@@ -464,14 +468,21 @@ int main( )
         start_OP = clock();
         
         cout<< "Optical flow" <<endl;
-        Mat output = frame.clone();
+        Mat OPoutput = frame.clone();
         
         Opticalflow OP;
-        OP.trackpath(preFrame , frame, output, points, initial);
-        imshow("Optical flow", output);
+        
+        if(all_threshold_notchange){
+        OP.trackpath(preFrame , frame, OPoutput, points, initial);
+        swap(points[1], points[0]);
+        moveWindow(windowNameOP, 400, 500); // int x = column, int y= row
+        imshow(windowNameOP, OPoutput);  //显示图像
+        }
         
         vector<vector<Point2f> > matchingpairs(2);
         OP.matchedpairs(preFrame, frame, matchingpairs);
+        
+        //swap(points[1], points[0]);
         
         Mat H_OP = findHomography( matchingpairs[0], matchingpairs[1] ,CV_RANSAC );
         double scaleOP = decomposematrix(H_OP);
@@ -826,7 +837,6 @@ int main( )
             
             //for optical flow and freature match
             preFrame = frame.clone();
-            swap(points[1], points[0]);
             
             // for show time of OP FM and RG
             totoalFMtime +=(double)(end_FM - start_FM) / CLOCKS_PER_SEC;
@@ -837,6 +847,17 @@ int main( )
             
             sprintf(Totoaltimechar +strlen(Totoaltimechar), "RG: %.5f", totoalRGtime);
             timetext.push_back(Totoaltimechar);
+            
+            // accumulated Scale for op/fm /rg
+            AccumscaleFM *= scaleFreaturematch;
+            sprintf(Acscale, "Accumulated Sclae/ FM: %.7f/ ", AccumscaleFM);
+            
+            AccumscaleOP *= scaleOP;
+            sprintf(Acscale+strlen(Acscale), "OP: %.7f/ ", AccumscaleOP);
+            
+            AccumscaleRG *= averageScaleoneFrame;
+            sprintf(Acscale+strlen(Acscale), "RG: %.7f/ ", AccumscaleRG);
+            scaletext.push_back(Acscale);
         }
         
         framethreemethode = putStats(timetext,framethreemethode, Vec3b(0,0,170), ptrBottomMiddle3, 'b' );
@@ -849,8 +870,8 @@ int main( )
         FramewithCounter= putStats(text,FramewithCounter, Vec3b(0,0,200), ptrTopright, 'r' );
         text.clear();
         
-        moveWindow(windowName, 700, 0); // int x = column, int y= row
-        imshow(windowName, FramewithCounter);  //显示图像
+        moveWindow(windowNameRG, 700, 0); // int x = column, int y= row
+        imshow(windowNameRG, FramewithCounter);  //显示图像
         // ---   Trackbar activate
         //TrackBarFunc(0,0);
         //controlRate++; // for trackbar !!!!!!
@@ -924,7 +945,7 @@ int main( )
             }
         }
         
-        if(keycode  == 114){  // 114 =  r
+        if(keycode  == 109){  // 109 =  m
             Mat FramewithCounterBackup;
             FramewithCounter.copyTo(FramewithCounterBackup);
             cout <<endl<<"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;

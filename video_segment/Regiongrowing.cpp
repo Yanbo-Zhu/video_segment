@@ -90,7 +90,9 @@ Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vecto
     
     Mat element = getStructuringElement(MORPH_RECT, Size(2*elementSize+1,2*elementSize+1));
     dilate(Segment,Segment, element);
-
+    dilate(Segment,Segment, element);
+    erode(Segment,Segment, element);
+    
     return Segment;
 }
 
