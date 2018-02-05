@@ -53,10 +53,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4C97F3B120287A8900E359AC /* other */ = {
+			isa = PBXGroup;
+			children = (
+				A906D5C51F978BE9009FB5DA /* COUNTER.cpp */,
+				A906D5C61F978BE9009FB5DA /* COUNTER.hpp */,
+			);
+			path = other;
+			sourceTree = "<group>";
+		};
 		A922A4FA1F7453E60072A454 = {
 			isa = PBXGroup;
 			children = (
 				4C1D6FB520261ECA00E54DF5 /* libopencv_xfeatures2d.3.3.0.dylib */,
+				4C97F3B120287A8900E359AC /* other */,
 				A922A5051F7453E60072A454 /* video_segment */,
 				A922A5041F7453E60072A454 /* Products */,
 			);
@@ -80,8 +90,6 @@
 				A9847E2F1F7AB75A00C93A01 /* INITIALSEED.hpp */,
 				A98CF8E31F8BEA9100BCFDD3 /* Regiongrowing.cpp */,
 				A98CF8E41F8BEA9100BCFDD3 /* Regiongrowing.hpp */,
-				A906D5C51F978BE9009FB5DA /* COUNTER.cpp */,
-				A906D5C61F978BE9009FB5DA /* COUNTER.hpp */,
 			);
 			path = video_segment;
 			sourceTree = "<group>";

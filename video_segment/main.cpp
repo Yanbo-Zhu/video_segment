@@ -26,8 +26,8 @@
 #include "opencv2/videoio.hpp"
 #include <opencv2/opencv.hpp>
 #include <opencv2/xfeatures2d.hpp>
-#include <opencv2/xfeatures2d/nonfree.hpp>
-#include "opencv2/features2d/features2d.hpp"
+//#include <opencv2/xfeatures2d/nonfree.hpp>
+//#include "opencv2/features2d/features2d.hpp"
 
 #include "INITIALSEED.hpp"
 #include "Regiongrowing.hpp"
@@ -437,7 +437,7 @@ int main( )
         sprintf( Buffer, "Frame %d", indexFrame);
         scaletext.push_back(Buffer);
         
-        sprintf(Buffer, "Scale Feature match (obj %d/index %d to %d): %.5f", i+1, indexFrame, indexFrame-1, scaleFreaturematch);
+        sprintf(Buffer, "Scale Feature match (index %d to %d): %.5f", indexFrame, indexFrame-1, scaleFreaturematch);
         scaletext.push_back(Buffer);
         
         cout<<endl;
@@ -457,7 +457,7 @@ int main( )
         double scaleOP = decomposematrix(H_OP);
         cout<< "Scale (optical flow):" << scaleOP << endl;
         
-        sprintf(Buffer, "Scale Optical flow (obj %d/index %d to %d): %.5f", i+1, indexFrame, indexFrame-1, scaleOP);
+        sprintf(Buffer, "Scale Optical flow (index %d to %d): %.5f", indexFrame, indexFrame-1, scaleOP);
         scaletext.push_back(Buffer);
         
         cout<<endl;
@@ -783,7 +783,7 @@ int main( )
             averageScaleoneFrame /= Segmentnum;
             cout<< "average Scale of all Segment in same Frame: " << averageScaleoneFrame<<endl;
             
-            sprintf(Buffer, "Scale RG (obj %d/index %d to %d): %.5f", i+1, indexFrame, indexFrame-1, averageScaleoneFrame);
+            sprintf(Buffer, "Scale RG (index %d to %d): %.5f", indexFrame, indexFrame-1, averageScaleoneFrame);
             scaletext.push_back(Buffer);
 
             pixelrelation /= averageScaleoneFrame;
@@ -830,8 +830,7 @@ int main( )
             cout<< "The objekt amount are not enough" << endl << "Setting for New objeckt: "<< vectorS.size() +1 <<endl;
             //Initialseed newobject = Initialseed(frame);
             Initialseed newobject = Initialseed(frame);
-            
-
+        
             if(checkThreshold(frame, newobject)){
                 cout<< endl << "New segment sucessfully found" << endl;
                 vectorS.push_back(newobject);
@@ -878,7 +877,6 @@ int main( )
                 }
             }
         }
-        
         
         if(keycode  == 114){  // 114 =  r
             Mat FramewithCounterBackup;
