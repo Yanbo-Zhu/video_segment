@@ -34,12 +34,12 @@ private:
     void gridpoint(int num, Mat image, vector<Point2f>& output);
     
     int maxCount = 100;    // 检测的最大特征数
-    int gridnum = 8;
+    int gridnum = 9;
     int currentmaxnum= gridnum*gridnum;    //  current trackbarvalue
     
     //goodFeaturesToTrack()
     double qLevel = 0.05;    // 特征检测的等级
-    double minDist = 10.0;    // 两特征点之间的最小距离
+    double minDist = 8.0;    // 两特征点之间的最小距离
     
 public:
     void trackpath(Mat preframe , Mat nextframe, Mat output, vector<vector<Point2f> >& points, vector<Point2f>& initial);

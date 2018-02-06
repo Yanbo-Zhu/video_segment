@@ -217,7 +217,6 @@ void Initialseed :: on_Mouse(int event, int x, int y, int flags)
     }
 }
 
-
 void Initialseed :: DrawLine( Mat &img, Point pt, Vec3b color )
 {
     //RNG rng(time(0));
@@ -228,8 +227,9 @@ void Initialseed :: DrawLine( Mat &img, Point pt, Vec3b color )
     //line(img, pt, pt, Scalar(0,0,255),thickness,lineType,0); //随机颜色
 }
 
-bool Initialseed :: checkThreshold(Mat Frame){
+bool Initialseed :: checkThreshold(Mat frame){
 
+    Mat Frame = frame.clone();
     int width = Frame.cols;
     int height = Frame.rows;
     Regiongrowing RTest;
@@ -242,18 +242,19 @@ bool Initialseed :: checkThreshold(Mat Frame){
     Mat Matcounter;
 
     while ((iterationnum <Threshoditerationmax) && (!repeat_thres)) {
-
-
+        
+        
         Mat Mattest_Blur;
         GaussianBlur(Frame, Mattest_Blur, Size(3,3), 0, 0);
 
         Mattest = RTest.RegionGrow(Frame, Mattest_Blur , this->differencegrow, this->initialseedvektor);
+        
         Matcounter = RTest.FindCounter(Mattest, Frame, this->color);
-
         imshow("Contour of Segment", Matcounter);
-        waitKey(10);
-        cout<< "iterationnum: " << iterationnum <<"/  Area: " << RTest.Area << endl;
-
+        waitKey(100);
+        
+        cout<< "iterationnum: " << iterationnum <<"/ Area: " << RTest.Area <<"/ Threshold: "<< this->differencegrow << endl;
+        
         Thresholdstack.push_back(this->differencegrow) ;
 
         if (RTest.Area < (width*height/300)) this->differencegrow = (this->differencegrow + 0.1);  // (Width*Height/300) = 2000   (Width*Height/50 )= 10000
@@ -270,7 +271,7 @@ bool Initialseed :: checkThreshold(Mat Frame){
             repeat_thres = true;
         }
 
-        cout<< "Threshold: " << this->differencegrow <<endl;
+        //cout<< "Threshold: " << this->differencegrow <<endl;
     }
 
     if(iterationnum >=Threshoditerationmax || repeat_thres){
@@ -300,7 +301,7 @@ bool Initialseed :: checkThreshold(Mat Frame){
     }
 
     destroyWindow("Contour of Segment");
-
+    
     return threshold_qualified;
 }
 

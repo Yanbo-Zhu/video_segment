@@ -138,26 +138,36 @@ double Regiongrowing:: differenceValue(Mat MatIn, Point oneseed, Point nextseed,
     //printf("BGR_nextSEED : %f, %f, %f \n", B_nextseed, G_nextseed, R_nextseed );
     
     // 像素相减 x-y
-    double B_diff1 = (B - MatIn.at<Vec3b>(nextseed)[0])*(B - MatIn.at<Vec3b>(nextseed)[0]);
-    double G_diff1 = (G - MatIn.at<Vec3b>(nextseed)[1])*(G - MatIn.at<Vec3b>(nextseed)[1]);
-    double R_diff1 = (R - MatIn.at<Vec3b>(nextseed)[2])*(R - MatIn.at<Vec3b>(nextseed)[2]);
-    double d1 = B_diff1 + G_diff1 + R_diff1;
+//    double B_diff1 = (B - MatIn.at<Vec3b>(nextseed)[0])*(B - MatIn.at<Vec3b>(nextseed)[0]);
+//    double G_diff1 = (G - MatIn.at<Vec3b>(nextseed)[1])*(G - MatIn.at<Vec3b>(nextseed)[1]);
+//    double R_diff1 = (R - MatIn.at<Vec3b>(nextseed)[2])*(R - MatIn.at<Vec3b>(nextseed)[2]);
+    double B_diff1 = abs(B - MatIn.at<Vec3b>(nextseed)[0]);
+    double G_diff1 = abs(G - MatIn.at<Vec3b>(nextseed)[1]);
+    double R_diff1 = abs(R - MatIn.at<Vec3b>(nextseed)[2]);
+    double d1 = (B_diff1 + G_diff1 + R_diff1)/3.0;
 
     // x-b
-    double B_diff2 = (B_nextseed - MatIn.at<Vec3b>(oneseed)[0])*(B_nextseed - MatIn.at<Vec3b>(oneseed)[0]);
-    double G_diff2 = (G_nextseed - MatIn.at<Vec3b>(oneseed)[1])*(G_nextseed - MatIn.at<Vec3b>(oneseed)[1]);
-    double R_diff2 = (R_nextseed - MatIn.at<Vec3b>(oneseed)[2])*(R_nextseed - MatIn.at<Vec3b>(oneseed)[2]);
-    double d2 = B_diff2 + G_diff2 + R_diff2;
+//    double B_diff2 = (B_nextseed - MatIn.at<Vec3b>(oneseed)[0])*(B_nextseed - MatIn.at<Vec3b>(oneseed)[0]);
+//    double G_diff2 = (G_nextseed - MatIn.at<Vec3b>(oneseed)[1])*(G_nextseed - MatIn.at<Vec3b>(oneseed)[1]);
+//    double R_diff2 = (R_nextseed - MatIn.at<Vec3b>(oneseed)[2])*(R_nextseed - MatIn.at<Vec3b>(oneseed)[2]);
+    double B_diff2 = abs(B_nextseed - MatIn.at<Vec3b>(oneseed)[0]);
+    double G_diff2 = abs(G_nextseed - MatIn.at<Vec3b>(oneseed)[1]);
+    double R_diff2 = abs(R_nextseed - MatIn.at<Vec3b>(oneseed)[2]);
+    double d2 = (B_diff2 + G_diff2 + R_diff2)/3;
     
     // y - a
-    double B_diff3 = (B_oneseed - MatIn.at<Vec3b>(nextseed)[0])*(B_oneseed - MatIn.at<Vec3b>(nextseed)[0]);
-    double G_diff3 = (G_oneseed - MatIn.at<Vec3b>(nextseed)[1])*(G_oneseed - MatIn.at<Vec3b>(nextseed)[1]);
-    double R_diff3 = (R_oneseed - MatIn.at<Vec3b>(nextseed)[2])*(R_oneseed - MatIn.at<Vec3b>(nextseed)[2]);
-    double d3 = B_diff3 + G_diff3 + R_diff3;
+//    double B_diff3 = (B_oneseed - MatIn.at<Vec3b>(nextseed)[0])*(B_oneseed - MatIn.at<Vec3b>(nextseed)[0]);
+//    double G_diff3 = (G_oneseed - MatIn.at<Vec3b>(nextseed)[1])*(G_oneseed - MatIn.at<Vec3b>(nextseed)[1]);
+//    double R_diff3 = (R_oneseed - MatIn.at<Vec3b>(nextseed)[2])*(R_oneseed - MatIn.at<Vec3b>(nextseed)[2]);
+    double B_diff3 = abs(B_oneseed - MatIn.at<Vec3b>(nextseed)[0]);
+    double G_diff3 = abs(G_oneseed - MatIn.at<Vec3b>(nextseed)[1]);
+    double R_diff3 = abs(R_oneseed - MatIn.at<Vec3b>(nextseed)[2]);
+    double d3 = (B_diff3 + G_diff3 + R_diff3)/3;
     //printf("d3 : %f \n", d3);
     
-    double d = sqrt(d1 + d2 + d3);
-    //printf("d : %f \n", d);
+    //double d = sqrt(d1 + d2 + d3);
+    double d =  (d1 + d2 + d3);
+    //printf("d: %f \n", d);
     return d;
 }
 
@@ -185,8 +195,9 @@ Regiongrowing:: ~Regiongrowing(){
 
 
 //------------------ 原counter 的 function
-Mat Regiongrowing::FindCounter (Mat segment , Mat Frame, Vec3b color)
+Mat Regiongrowing::FindCounter (Mat segment , Mat frame, Vec3b color)
 {
+    Mat Frame = frame.clone();
     Mat MatoutGray;
     
     cvtColor(segment,MatoutGray,CV_BGR2GRAY);

@@ -34,7 +34,7 @@ private:
     double drawAxis(Mat&, Point, Point, Scalar, const float);
     void getOrientation(const vector<Point> &, Mat&);
     double pixeldistance(Point p1, Point p2);
-    int elementSize   = 2;
+    int elementSize   = 2.0;
     
 public:
     
@@ -42,6 +42,7 @@ public:
     //Point regioncenter ;
     vector<Point> seedtogether;
     ~Regiongrowing();
+    double touchbordernum = 0.0;
     
     //--- 原 Counter
     Mat FindCounter (Mat MatOut , Mat Frame, Vec3b color);

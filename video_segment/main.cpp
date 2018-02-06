@@ -46,7 +46,7 @@ int FPSfacotr = 7 ;
 // region growing
 int considerNum = 10;
 int multipleScaleDiff = 10;
-double pixelrelation;
+
 double Areadifferencefactor = 0.2 ;
 double confidenceintervalfactor = 1.04 ;
 int Loopiterationmax = 10;
@@ -267,7 +267,7 @@ int main( )
 //    relationpointvektor.push_back(Point(497,268));
 
     double pixeld = pixeldistance(firstframeBackup, relationpointvektor);
-    //cout<< "Pixeldistance: " << pixeld <<endl;
+    cout<< "Pixeldistance: " << pixeld <<endl;
 
     imshow( Pixel_realtion_window , firstframeBackup );
     waitKey(1);
@@ -280,9 +280,10 @@ int main( )
 
     distance = 100;
     cout<<  distance << endl;
-
-    pixelrelation = distance/ pixeld;
-    cout<< " The relation: " << pixelrelation << " m/pixel \n" <<endl;
+    
+    double initialpixelrelation;
+    initialpixelrelation = distance/ pixeld;
+    cout<< " The relation: " << initialpixelrelation << " m/pixel \n" <<endl;
     
 
 //-----------------------------finding first seed point---------------
@@ -333,7 +334,7 @@ int main( )
         outputtext << "Row: " << relationpointvektor[i].y << " Column: "  << relationpointvektor[i].x << endl;
     }
     outputtext << "Pixeldistance: " << pixeld << " Real distance: " << distance <<endl;
-    outputtext << "The relation: " << pixelrelation << " m/pixel \n" << endl;
+    outputtext << "The relation: " << initialpixelrelation << " m/pixel \n" << endl;
     relationpointvektor.clear();
     
     for( int i=0; i< Segmentinitialnum; i++)
@@ -372,6 +373,8 @@ int main( )
     double totoalRGtime = 0, totoalOPtime = 0, totoalFMtime = 0;
     double AccumscaleRG = 1.0, AccumscaleOP = 1.0, AccumscaleFM = 1.0;
     clock_t start_RG, end_RG, start_OP, end_OP, start_FM, end_FM;
+    
+    double relationRG = initialpixelrelation , relationOP = initialpixelrelation, relationFM = initialpixelrelation;
     
     //start = clock();
     
@@ -440,14 +443,16 @@ int main( )
         vector<string> scaletext; // three methods
         vector<string> seedtext;  // RG
         vector<string> Thresholdtext; // RG
-        vector<string> timetext; // three methods
+        vector<string> timetext; // three methods  time and pixel relation
         vector<string> optext; // Optical flow / Scale/ frame index / time
+        vector<string> pixelrelatext; // three methods pixel relation
         
         char Buffer[60];
         char Scalechar[70];
         char Timechar[70];
         char Totoaltimechar[70];
         char Acscale[70];
+        char pixelrela[70];
         
         Point ptTopLeft(10, 10);
         Point* ptrTopLeft = &ptTopLeft;
@@ -475,7 +480,7 @@ int main( )
         Featurematch(preFrame, frame, obj_last, obj_next);
         
         Mat H_Featurematch = findHomography( obj_last, obj_next ,CV_RANSAC );
-        //cout<<"Homography matrix:" <<endl << H <<endl << endl;;
+        //cout<<"Homography matrix:" <<endl << H_Featurematch <<endl << endl;
         double scaleFreaturematch = decomposematrix(H_Featurematch);
         cout<< "Scale (Freaturematch):" << scaleFreaturematch << endl;
         
@@ -528,9 +533,9 @@ int main( )
         cout<<endl;
         
 // -------------------------------
-        cout<< "Region growing" <<endl;
+        cout<< "Region growing" ;
         start_RG = clock();
-        Mat frame_Blur;
+        Mat frame_Blur = frame.clone();
         GaussianBlur(frame, frame_Blur, kernelsize,0,0);
         //blur( image, out, Size(3, 3));
         
@@ -579,7 +584,6 @@ int main( )
 //                cout<< "scale RG Affine:" << scaleRG_Affine << endl;
                 
                 addWeighted(Matallsegment, 1, MatOut, 1, 0.0, Matallsegment);
-
 
                 Mat Matoutbackup = MatOut.clone();
                 FramewithCounter = R[i].FindCounter(Matoutbackup, FramewithCounter, vectorS[i].color);
@@ -861,22 +865,16 @@ int main( )
             
             sprintf(Scalechar+strlen(Scalechar), "RG: %.7f", averageScaleoneFrame);
             scaletext.push_back(Scalechar);
-
-            pixelrelation /= averageScaleoneFrame;
-            cout<< "Pixelrelation: " << pixelrelation << "m/pixel"<<endl;
+            
+            // pixelrelation for 3 method
+            relationRG /= averageScaleoneFrame;
+            cout<< "Pixelrelation: " << relationRG << "m/pixel"<<endl;
+            
+            relationOP /= scaleOP;
+            relationFM /= scaleFreaturematch;
             
             //for optical flow and freature match
             preFrame = frame.clone();
-            
-            // for show time of OP FM and RG
-            totoalFMtime +=(double)(end_FM - start_FM) / CLOCKS_PER_SEC;
-            sprintf(Totoaltimechar, "Totaltime/ FM: %.5f/ ", totoalFMtime);
-            
-            totoalOPtime +=(double)(end_OP - start_OP) / CLOCKS_PER_SEC;
-            sprintf(Totoaltimechar +strlen(Totoaltimechar), "OP: %.5f/ ", totoalOPtime);
-            
-            sprintf(Totoaltimechar +strlen(Totoaltimechar), "RG: %.5f", totoalRGtime);
-            timetext.push_back(Totoaltimechar);
             
             // accumulated Scale for op/fm /rg
             AccumscaleFM *= scaleFreaturematch;
@@ -888,13 +886,27 @@ int main( )
             AccumscaleRG *= averageScaleoneFrame;
             sprintf(Acscale+strlen(Acscale), "RG: %.7f/ ", AccumscaleRG);
             scaletext.push_back(Acscale);
+            
+            // for show time of OP FM and RG
+            totoalFMtime +=(double)(end_FM - start_FM) / CLOCKS_PER_SEC;
+            sprintf(Totoaltimechar, "Totaltime/ FM: %.5f/ ", totoalFMtime);
+            
+            totoalOPtime +=(double)(end_OP - start_OP) / CLOCKS_PER_SEC;
+            sprintf(Totoaltimechar +strlen(Totoaltimechar), "OP: %.5f/ ", totoalOPtime);
+            
+            sprintf(Totoaltimechar +strlen(Totoaltimechar), "RG: %.5f", totoalRGtime);
+            timetext.push_back(Totoaltimechar);
+            
+            // pixel relation three menthod
+            sprintf(pixelrela, "Pixel relation/ FM: %.6f/ OP: %.6f/ RG: %.6f", relationFM, relationOP,  relationRG);
+            timetext.push_back(pixelrela);
         }
         
         framethreemethode = putStats(timetext,framethreemethode, Vec3b(0,0,170), ptrBottomMiddle3, 'b' );
-        framethreemethode = putStats(scaletext,framethreemethode, Vec3b(200,0,0), ptrTopLeft2, 't' );
+        framethreemethode = putStats(scaletext,framethreemethode, Vec3b(0,230,230), ptrTopLeft2, 't' );
         imshow(" framethreemethode ", framethreemethode);
 
-        sprintf(Buffer, "%.5fm/p", pixelrelation);
+        sprintf(Buffer, "%.5fm/p", relationRG);
         text.push_back(Buffer);
         
         FramewithCounter= putStats(text,FramewithCounter, Vec3b(0,0,170), ptrTopright, 'r' );
@@ -998,7 +1010,7 @@ int main( )
             
             double pixeld = pixeldistance(FramewithCounterBackup, relationpointvektor);
             cout<< "Pixeldistance: " << pixeld <<endl;
-            cout<< "The real length: " << pixelrelation * pixeld  << " m \n" << endl;
+            cout<< "The real length: " << relationRG * pixeld  << " m \n" << endl;
             
             imshow( Pixel_realtion_window, FramewithCounterBackup );
             waitKey(0);

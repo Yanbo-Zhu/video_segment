@@ -41,9 +41,10 @@ private:
     #define Point_mark_window " Drawing Point "
     int Threshoditerationmax = 500;
     double initialScalediff = 0.007;
+
     
 public:
-    
+
     vector<Point> initialseedvektor;
     double differencegrow;
     int LoopThreshold;
