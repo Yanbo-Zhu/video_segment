@@ -41,7 +41,7 @@ using namespace cv::xfeatures2d;
 
 //-------global variable
 
-int FPSfacotr = 7 ;
+int FPSfacotr = 6 ;
 
 // region growing
 int considerNum = 10;
@@ -49,7 +49,7 @@ int multipleScaleDiff = 10;
 
 double Areadifferencefactor = 0.2 ;
 double confidenceintervalfactor = 1.04 ;
-int Loopiterationmax = 10;
+int Loopiterationmax = 20;
 
 Size kernelsize(3,3);
 #define EPSILON 1e-13   // arrcuracy value
@@ -98,21 +98,32 @@ int main( )
     
 //--------------some default seed points when i choose 2 during modechoose
 // Point (x,y )  x= column  y = row
+    
+    //70_20_descend"
     vector<vector<Point>> defaultseed(4);
     defaultseed[0].push_back(Point(515,376)); // black roof 有缺陷 在中间  threshold 5
-    //defaultseed[0].push_back(Point(781,379)); // grass  threshold 4
+    defaultseed[3].push_back(Point(781,379)); // grass  threshold 4
     defaultseed[1].push_back(Point(215,240)); // light blue roof left
     defaultseed[2].push_back(Point(530,234)); // white boot
-    defaultseed[3].push_back(Point(491,356)); // black roof bottem
-    double defaultThreshold[] = {6, 11, 12 ,8} ;
+    //defaultseed[3].push_back(Point(491,356)); // black roof bottem threshold: 8
+    double defaultThreshold[] = {6, 11, 12 ,4} ;
+    
+//    //skew_descend
+//    vector<vector<Point>> defaultseed(4);
+//    defaultseed[0].push_back(Point(449,236)); // swimming pool 有缺陷 在中间  threshold 8
+//    //defaultseed[0].push_back(Point(781,379)); // grass  threshold 4
+//    defaultseed[1].push_back(Point(215,240)); // light blue roof left
+//    defaultseed[2].push_back(Point(530,234)); // white boot
+//    defaultseed[3].push_back(Point(491,356)); // black roof bottem
+//    double defaultThreshold[] = {8, 11, 12 ,8} ;
     
 ///--------- VideoCapture ----------------
     
     //VideoCapture vc;
     //vc.open( "/Users/yanbo/Desktop/source/Rotation_50m.mp4");
     char path[] = "/Users/yanbo/Desktop/source/" ;
+    //string videofilename = "70_20_descend";
     string videofilename = "70_20_descend";
-    //string videofilename = "skew_descend";
     //string videofilename = "swiss_rotation";
     string videoInputpath;
     videoInputpath.assign(path);
@@ -146,7 +157,7 @@ int main( )
     strcpy(savePath,path);
     strcat(savePath,"output/");
     strcat(savePath,videofilename.c_str());
-    strcat(savePath,"_output_1");     // savePath::  /Users/yanbo/Desktop/source/output/70_20_descend_output
+    strcat(savePath,"_output_2");     // savePath::  /Users/yanbo/Desktop/source/output/70_20_descend_output
     cout<< "savePath: " << savePath <<endl;
     cout<<endl;
     
@@ -787,6 +798,11 @@ int main( )
                 {
                     Matsegment.at<Vec3b>(R[i].seedtogether[j]) = vectorS[i].color;
                     //Matallsegment.at<Vec3b>(R[i].seedtogether[j]) = frame.at<Vec3b>(R[i].seedtogether[j]);
+                    if (R[i].seedtogether[j].x == 0 || R[i].seedtogether[j].y == 0 || R[i].seedtogether[j].x == (frame.cols-1) || (R[i].seedtogether[j].y == (frame.rows-1)) )
+                    {
+                        R[i].touchbordernum++;
+                    }
+                    //cout<< "R[i].touchbordernum++:" << R[i].touchbordernum++ << endl;
                 }
                 
                 //Matsegment = putStats(Thresholdtext, Matsegment, vectorS[i].color, ptrBottomMiddle, 'b' );
@@ -902,7 +918,7 @@ int main( )
             timetext.push_back(pixelrela);
         }
         
-        framethreemethode = putStats(timetext,framethreemethode, Vec3b(0,0,170), ptrBottomMiddle3, 'b' );
+        framethreemethode = putStats(timetext,framethreemethode, Vec3b(0,0,200), ptrBottomMiddle3, 'b' );
         framethreemethode = putStats(scaletext,framethreemethode, Vec3b(0,230,230), ptrTopLeft2, 't' );
         imshow(" framethreemethode ", framethreemethode);
 
@@ -926,7 +942,7 @@ int main( )
 //-------------delete the unuseful segment
         
         for( int i=0; i<vectorS.size(); i++){
-            if (vectorS[i].LoopThreshold > Loopiterationmax) {
+            if (vectorS[i].LoopThreshold > Loopiterationmax || R[i].touchbordernum > 200) {
                 cout<<endl << "!!!! Delete objekt " << i+1 << " because of infinitv loop" << endl << endl;
                 vector<Initialseed>::iterator iterdelete = vectorS.begin() + i ;
                 //deque<Initialseed>::iterator iterdelete = vectorS.begin() + i;
@@ -949,7 +965,7 @@ int main( )
         
 //-------------define the button
         
-        int keycode = waitKey(0); // equal to  waitKey(10);  //延时10ms
+        int keycode = waitKey(100); // equal to  waitKey(10);  //延时10ms
         
         if(keycode  == ' ')   //32是空格键的ASCII值
             waitKey(0);

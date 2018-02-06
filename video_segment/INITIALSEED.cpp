@@ -297,7 +297,7 @@ bool Initialseed :: checkThreshold(Mat frame){
         this->initialseedvektor.push_back(RTest.cntr);
         this->threshold_notchange = true;
 
-        waitKey(0);
+        //waitKey(0);
     }
 
     destroyWindow("Contour of Segment");

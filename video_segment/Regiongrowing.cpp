@@ -66,7 +66,7 @@ Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vecto
             //if(nextseed.x >0 && nextseed.x<(MatIn.cols-1) && nextseed.y>0 && nextseed.y<(MatIn.rows-1))
             //if ( nextseed.x  >0 && nextseed.x  < (MatIn.cols-1) && nextseed.y <(MatIn.rows-1) && nextseed.y >0 )
 
-            if (nextseed.x < 0 || nextseed.y < 0 || nextseed.x > (MatIn.cols-2) || (nextseed.y > MatIn.rows-2))
+            if (nextseed.x < 1 || nextseed.y < 1 || nextseed.x > (MatIn.cols-2) || (nextseed.y > MatIn.rows-2))
                 continue;
             
             if(MatLabel.at<uchar>(nextseed) != 255 )

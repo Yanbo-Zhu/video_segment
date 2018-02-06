@@ -172,12 +172,12 @@ bool Opticalflow:: subtractPoints(vector<Point2f> pointvektor)
 // brief: 决定哪些跟踪点被接受
 bool Opticalflow:: acceptTrackedPoint_move(int i, vector<uchar> status, vector<Point2f> pointvektor1, vector<Point2f> pointvektor2)
 {
-    return status[i] && ((abs(pointvektor1[i].x - pointvektor2[i].x) + abs(pointvektor1[i].y - pointvektor2[i].y)) >0.2);
+    return status[i] && ((abs(pointvektor1[i].x - pointvektor2[i].x) + abs(pointvektor1[i].y - pointvektor2[i].y)) >1);
 }
 
 bool Opticalflow:: acceptTrackedPoint(int i, vector<uchar> status, vector<Point2f> pointvektor1, vector<Point2f> pointvektor2)
 {
-    return status[i] && ((abs(pointvektor1[i].x - pointvektor2[i].x) + abs(pointvektor1[i].y - pointvektor2[i].y)) > 0.2);
+    return status[i] ; //&& ((abs(pointvektor1[i].x - pointvektor2[i].x) + abs(pointvektor1[i].y - pointvektor2[i].y)) > 0.);
 }
 
 // grid point of original image
