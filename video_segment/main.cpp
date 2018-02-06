@@ -40,13 +40,15 @@ using namespace std;
 using namespace cv::xfeatures2d;
 
 //-------global variable
-// region growing
 
+int FPSfacotr = 7 ;
+
+// region growing
 int considerNum = 10;
 int multipleScaleDiff = 10;
 double pixelrelation;
 double Areadifferencefactor = 0.2 ;
-double confidenceintervalfactor = 0.68 ;
+double confidenceintervalfactor = 1.04 ;
 int Loopiterationmax = 10;
 
 Size kernelsize(3,3);
@@ -67,7 +69,7 @@ void on_MouseHandle(int event, int x, int y, int flags, void* param);
 double pixeldistance(Mat& img, vector<Point> pv);
 
 void Featurematch(Mat preframe , Mat nextframe, vector<Point2f>& obj_last, vector<Point2f>& obj_next);
-double decomposematrix(Mat H);
+//double decomposematrix(Mat H);
 
 
 //setting for trackbar
@@ -102,7 +104,7 @@ int main( )
     defaultseed[1].push_back(Point(215,240)); // light blue roof left
     defaultseed[2].push_back(Point(530,234)); // white boot
     defaultseed[3].push_back(Point(491,356)); // black roof bottem
-    double defaultThreshold[] = {5, 11, 12 ,8} ;
+    double defaultThreshold[] = {6, 11, 12 ,8} ;
     
 ///--------- VideoCapture ----------------
     
@@ -138,20 +140,21 @@ int main( )
 //    strcat(windowNameRG,XXX.c_str());
 //    strcat(windowNameRG,videofilename.c_str());
     
-//-------------------------------------- VideoWriter ----------------
+//-------------------------------------- VideoWriter Region growing ----------------
 
     char *savePath = new char[50];
     strcpy(savePath,path);
     strcat(savePath,"output/");
     strcat(savePath,videofilename.c_str());
-    strcat(savePath,"_output_11");     // savePath::  /Users/yanbo/Desktop/source/output/70_20_descend_output
+    strcat(savePath,"_output_1");     // savePath::  /Users/yanbo/Desktop/source/output/70_20_descend_output
     cout<< "savePath: " << savePath <<endl;
     cout<<endl;
     
-    char savePathvideo[50] ;
-    strcpy(savePathvideo,savePath);
-    strcat(savePathvideo, ".mov");
-    remove(savePathvideo);
+    char savePathvideoRG[50] ;
+    strcpy(savePathvideoRG,savePath);
+    strcat(savePathvideoRG, "_RG");
+    strcat(savePathvideoRG, ".mov");
+    remove(savePathvideoRG);
     
     //char const *savePathvideo = "/Users/yanbo/Desktop/source/output/output2.txt";
 //    if(remove(savePathvideo)==0)
@@ -163,39 +166,62 @@ int main( )
 //        cout<<"Old output video delete failed"<<endl;
 //    }
     
-    VideoWriter vw; //(filename, fourcc, fps, frameSize[, isColor])
+    VideoWriter vwRG; //(filename, fourcc, fps, frameSize[, isColor])
     
-    vw.open( savePathvideo, // 输出视频文件名
+    vwRG.open( savePathvideoRG, // 输出视频文件名
             (int)vc.get( CV_CAP_PROP_FOURCC ),//CV_FOURCC('S', 'V', 'Q', '3'), // //CV_FOURCC('8', 'B', 'P', 'S'), // 也可设为CV_FOURCC_PROMPT，在运行时选取 //fourcc – 4-character code of codec used to compress the frames.
-            (double)(vc.get( CV_CAP_PROP_FPS )/6), // 视频帧率
+            (double)(vc.get( CV_CAP_PROP_FPS )/FPSfacotr), // 视频帧率
             Size( (int)vc.get( CV_CAP_PROP_FRAME_WIDTH ),
                  (int)vc.get( CV_CAP_PROP_FRAME_HEIGHT ) ), // 视频大小
             true ); // 是否输出彩色视频
     
-    if (!vw.isOpened())
+    if (!vwRG.isOpened())
     {
         cout << "Failed to write the video! \n" << endl;
         return 1;
     }
     
-//---------------- MatGrow Videowriter
+//---------------- Three method Videowriter
     
-    char savePathvideoGrow[50] ;
-    strcpy(savePathvideoGrow,savePath);
-    strcat(savePathvideoGrow,"_Grow");
-    strcat(savePathvideoGrow, ".mov");
-    remove(savePathvideoGrow);
+    char savePathvideo3m[50] ;
+    strcpy(savePathvideo3m,savePath);
+    strcat(savePathvideo3m,"_threemethod");
+    strcat(savePathvideo3m, ".mov");
+    remove(savePathvideo3m);
     
     //char const *savePathvideo = "/Users/yanbo/Desktop/source/output/output2.txt";
-    VideoWriter vwGrow; //(filename, fourcc, fps, frameSize[, isColor])
-    vwGrow.open( savePathvideoGrow, // 输出视频文件名
+    VideoWriter vw3method; //(filename, fourcc, fps, frameSize[, isColor])
+    vw3method.open( savePathvideo3m, // 输出视频文件名
             (int)vc.get( CV_CAP_PROP_FOURCC ),//CV_FOURCC('S', 'V', 'Q', '3'), // //CV_FOURCC('8', 'B', 'P', 'S'), // 也可设为CV_FOURCC_PROMPT，在运行时选取 //fourcc – 4-character code of codec used to compress the frames.
-            (double)(vc.get( CV_CAP_PROP_FPS )/6), // 视频帧率
+            (double)(vc.get( CV_CAP_PROP_FPS )/FPSfacotr), // 视频帧率
             Size( (int)vc.get( CV_CAP_PROP_FRAME_WIDTH ),
                  (int)vc.get( CV_CAP_PROP_FRAME_HEIGHT ) ), // 视频大小
             true ); // 是否输出彩色视频
     
-    if (!vwGrow.isOpened())
+    if (!vw3method.isOpened())
+    {
+        cout << "Failed to write the video! \n" << endl;
+        return 1;
+    }
+
+//---------------- optical tracking path Videowriter
+    
+    char savePathvideoOP[50] ;
+    strcpy(savePathvideoOP,savePath);
+    strcat(savePathvideoOP,"_OP");
+    strcat(savePathvideoOP, ".mov");
+    remove(savePathvideoOP);
+    
+    //char const *savePathvideo = "/Users/yanbo/Desktop/source/output/output2.txt";
+    VideoWriter vwop; //(filename, fourcc, fps, frameSize[, isColor])
+    vwop.open( savePathvideoOP, // 输出视频文件名
+                   (int)vc.get( CV_CAP_PROP_FOURCC ),//CV_FOURCC('S', 'V', 'Q', '3'), // //CV_FOURCC('8', 'B', 'P', 'S'), // 也可设为CV_FOURCC_PROMPT，在运行时选取 //fourcc – 4-character code of codec used to compress the frames.
+                   (double)(vc.get( CV_CAP_PROP_FPS )/FPSfacotr), // 视频帧率
+                   Size( (int)vc.get( CV_CAP_PROP_FRAME_WIDTH ),
+                        (int)vc.get( CV_CAP_PROP_FRAME_HEIGHT ) ), // 视频大小
+                   true ); // 是否输出彩色视频
+    
+    if (!vwop.isOpened())
     {
         cout << "Failed to write the video! \n" << endl;
         return 1;
@@ -340,16 +366,14 @@ int main( )
     Mat frame_backup;
     int indexFrame;
     bool bSuccess;
-    double totaltime = 0;
-    double totoalRGtime = 0;
-    double totoalOPtime = 0;
-    double totoalFMtime = 0;
+    //double totaltime = 0;
+    //clock_t start,end;
+    
+    double totoalRGtime = 0, totoalOPtime = 0, totoalFMtime = 0;
     double AccumscaleRG = 1.0, AccumscaleOP = 1.0, AccumscaleFM = 1.0;
-    
-    clock_t start,end;
-    
     clock_t start_RG, end_RG, start_OP, end_OP, start_FM, end_FM;
-    start = clock();
+    
+    //start = clock();
     
     while(!stop)
     {
@@ -364,13 +388,13 @@ int main( )
         cout <<"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
         
         Segmentnum = vectorS.size();
-        cout<<"                  Amount of Segments: " << Segmentnum <<endl;
+        //cout<<"                  Amount of Segments: " << Segmentnum <<endl;
         
         
         if (all_threshold_notchange){    // if threshold for this frame did not change, read the next frame
             
             indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
-            printf("\n----------------------------IndexFrame: %d -----------------------\n", indexFrame);
+            printf("\n----------------IndexFrame: %d -----------------\n", indexFrame);
             bSuccess = vc.read(frame); // read a new frame from video
             frame_backup = frame.clone();
             
@@ -392,7 +416,7 @@ int main( )
             }
             
             indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
-            printf("\n----------------------------IndexFrame: %d -----------------------\n", indexFrame);
+            printf("\n-----------------IndexFrame: %d ------------------\n", indexFrame);
 
             bSuccess = vc.read(frame);
         }
@@ -412,11 +436,12 @@ int main( )
 
 //----------------- add the text(frame index number) to written video frame
         
-        vector<string> text; //frameindex time relation
-        vector<string> scaletext;
-        vector<string> seedtext;
-        vector<string> Thresholdtext;
-        vector<string> timetext;
+        vector<string> text; // RG frameindex time relation
+        vector<string> scaletext; // three methods
+        vector<string> seedtext;  // RG
+        vector<string> Thresholdtext; // RG
+        vector<string> timetext; // three methods
+        vector<string> optext; // Optical flow / Scale/ frame index / time
         
         char Buffer[60];
         char Scalechar[70];
@@ -427,13 +452,13 @@ int main( )
         Point ptTopLeft(10, 10);
         Point* ptrTopLeft = &ptTopLeft;
         
-        Point ptTopLeft2(10, 10);
+        Point ptTopLeft2(10, 10);     // for time value (three methode in same frame )
         Point* ptrTopLeft2 = &ptTopLeft2;
         
-        Point ptTopright(frame.cols-10, 10);
+        Point ptTopright(frame.cols-10, 10); // RG time/ Frame index/ relation
         Point* ptrTopright = &ptTopright;
         
-        Point ptBottomMiddle(frame.cols/2, frame.rows);  // for segment
+        Point ptBottomMiddle(frame.cols/2, frame.rows);  // for optical flow / Scale value/ Frame index
         Point* ptrBottomMiddle = &ptBottomMiddle;
         
         Point ptBottomMiddle2(frame.cols/2, frame.rows); //  for counter
@@ -472,13 +497,6 @@ int main( )
         
         Opticalflow OP;
         
-        if(all_threshold_notchange){
-        OP.trackpath(preFrame , frame, OPoutput, points, initial);
-        swap(points[1], points[0]);
-        moveWindow(windowNameOP, 400, 500); // int x = column, int y= row
-        imshow(windowNameOP, OPoutput);  //显示图像
-        }
-        
         vector<vector<Point2f> > matchingpairs(2);
         OP.matchedpairs(preFrame, frame, matchingpairs);
         
@@ -492,13 +510,26 @@ int main( )
         
         end_OP = clock();
         
+        if(all_threshold_notchange){
+            OP.trackpath(preFrame , frame, OPoutput, points, initial);
+            swap(points[1], points[0]);
+            
+            sprintf( Buffer, "Frame: %d/Scale: %.7f/Interframe Time: %.5f", indexFrame, scaleOP, (double)(end_OP - start_OP) / CLOCKS_PER_SEC);
+            optext.push_back(Buffer);
+            OPoutput = putStats(optext, OPoutput, Vec3b(0,0,170), ptrBottomMiddle, 'b' );
+            
+            moveWindow(windowNameOP, 400, 500); // int x = column, int y= row
+            imshow(windowNameOP, OPoutput);  //显示图像
+            vwop << OPoutput;
+        }
+        
         sprintf(Timechar+strlen(Timechar), "OP: %.5f/ ", (double)(end_OP - start_OP) / CLOCKS_PER_SEC);
         
         cout<<endl;
         
 // -------------------------------
-        
-        
+        cout<< "Region growing" <<endl;
+        start_RG = clock();
         Mat frame_Blur;
         GaussianBlur(frame, frame_Blur, kernelsize,0,0);
         //blur( image, out, Size(3, 3));
@@ -534,23 +565,22 @@ int main( )
 //        text.clear();
         
  //------------------------------------------------------------------
-        start_RG = clock();
         
             for( int i=0; i<Segmentnum; i++)
             {
-                printf("\n************* Objekt %d Information **********************", i+1);
-                printf("\n****** Cyele index for Threshold: %d\n", vectorS[i].LoopThreshold);
+                printf("\n** Objekt %d Information ****************", i+1);
+                printf("\n** Cyele index for Threshold: %d\n", vectorS[i].LoopThreshold);
                 MatOut = R[i].RegionGrow(frame, frame_Blur , vectorS[i].differencegrow, vectorS[i].initialseedvektor);
                 
-                Mat Affine = estimateRigidTransform(vectorS[i].preSegment,MatOut,false);  // estimateRigidTransform 有可能得到的 matrix 为0矩阵
-                //cout<<"Affine:" << endl << Affine<<endl;
-                        double scaleRG_Affine = decomposematrix(Affine);
-                       cout<< "scale RG Affine:" << scaleRG_Affine << endl;
+             // If true, the function finds an optimal affine transformation with no additional restrictions (6 degrees of freedom). Otherwise, the class of transformations to choose from is limited to combinations of translation, rotation, and uniform scaling (5 degrees of freedom).
+//                Mat Affine = estimateRigidTransform(vectorS[i].preSegment,MatOut,false);  // estimateRigidTransform 有可能得到的 matrix 为0矩阵
+//                //cout<<"Affine:" << endl << Affine<<endl;
+//                double scaleRG_Affine = decomposematrix(Affine);
+//                cout<< "scale RG Affine:" << scaleRG_Affine << endl;
                 
                 addWeighted(Matallsegment, 1, MatOut, 1, 0.0, Matallsegment);
 
-                // If true, the function finds an optimal affine transformation with no additional restrictions (6 degrees of freedom). Otherwise, the class of transformations to choose from is limited to combinations of translation, rotation, and uniform scaling (5 degrees of freedom).
-                
+
                 Mat Matoutbackup = MatOut.clone();
                 FramewithCounter = R[i].FindCounter(Matoutbackup, FramewithCounter, vectorS[i].color);
                 
@@ -579,7 +609,7 @@ int main( )
                 double G_Centre = frame.at<Vec3b>(R[i].cntr)[1];
                 double R_Centre = frame.at<Vec3b>(R[i].cntr)[2];
                 
-                sprintf(Buffer, "Obj %d: Segment Centre(%d, %d) intensity: %.2f", i+1, R[i].cntr.y, R[i].cntr.x, (B_Centre + G_Centre + R_Centre) /3.0);
+                sprintf(Buffer, "%d: (%d,%d)/intensity: %.2f/Scale: %.5f", i+1, R[i].cntr.y, R[i].cntr.x, (B_Centre + G_Centre + R_Centre) /3.0 , scale);
                 seedtext.push_back(Buffer);
                 
                 FramewithCounter = putStats(seedtext, FramewithCounter, vectorS[i].color, ptrTopLeft, 't');
@@ -630,7 +660,7 @@ int main( )
                 double newthreshold;
                 if ( abs(Areadiffernce) <=  Areadifferencefactor *(vectorS[i].data[6].back()) )
                 {
-                    printf("the Area of segment %d is stable (Area difference is smaller 0.2* Area in last frame) \n", i+1);
+                    //printf("the Area of segment %d is stable (Area difference is smaller 0.2* Area in last frame) \n", i+1);
                     
                     if (abs(ScaleDifference) > multipleScaleDiff * averageScaleDifference ) {
                         
@@ -707,7 +737,7 @@ int main( )
                 
                 else { // Area of segment is unstable / abs(Areadiffernce) >  0.2*(vectorS[i].data[6].back()
                     
-                    cout<<"Area of segment " << i+1 <<" is unstable" << endl;
+                    //cout<<"Area of segment " << i+1 <<" is unstable" << endl;
                     
                     if (Areadiffernce <0){
                     printf("!!!!!!!!!!!Update / the current segment is too small\n");
@@ -755,7 +785,7 @@ int main( )
                     //Matallsegment.at<Vec3b>(R[i].seedtogether[j]) = frame.at<Vec3b>(R[i].seedtogether[j]);
                 }
                 
-                Matsegment = putStats(Thresholdtext, Matsegment, vectorS[i].color, ptrBottomMiddle, 'b' );
+                //Matsegment = putStats(Thresholdtext, Matsegment, vectorS[i].color, ptrBottomMiddle, 'b' );
                 FramewithCounter = putStats(Thresholdtext, FramewithCounter, vectorS[i].color, ptrBottomMiddle2, 'b' );
                 Thresholdtext.clear();
                 seedtext.clear();
@@ -769,7 +799,7 @@ int main( )
         
    //------------------------ Scale of different Segment in the same Frame to build  gaussian model
         
-        cout<< endl << "Scale of different Segment in the same Frame to build gaussian model "  << endl;
+        cout<< endl << "***build gaussian model (Scale of different objects in the same Frame)"  << endl;
        
         for (int i = 0 ; i< templateScaleSameframe.size(); i++){
             cout<< templateScaleSameframe[i] << " ";
@@ -802,11 +832,11 @@ int main( )
         text.push_back(Buffer);
     
         // ---  running time
-        end = clock();
-        totaltime = (double)(end - start) / CLOCKS_PER_SEC;
+        //end = clock();
+        //totaltime = (double)(end - start) / CLOCKS_PER_SEC;
         //printf( "%f seconds\n", (double)(end - start) / CLOCKS_PER_SEC); // 在linux系统下，CLOCKS_PER_SEC 是1000000，表示的是微秒。 CLOCKS_PER_SEC，它用来表示一秒钟会有多少个时钟计时单元
         
-        sprintf(Buffer, "%f s", totaltime );
+        sprintf(Buffer, "%f s", totoalRGtime );
         text.push_back(Buffer);
         
         // update bool all_threshold_notchange
@@ -825,7 +855,7 @@ int main( )
                 averageScaleoneFrame += vectorS[i].data[7].back();
             }
             
-            cout<< endl << "*************************************************" <<endl;
+            cout<< endl << "****************" <<endl;
             averageScaleoneFrame /= Segmentnum;
             cout<< "average Scale of all Segment in same Frame: " << averageScaleoneFrame<<endl;
             
@@ -867,7 +897,7 @@ int main( )
         sprintf(Buffer, "%.5fm/p", pixelrelation);
         text.push_back(Buffer);
         
-        FramewithCounter= putStats(text,FramewithCounter, Vec3b(0,0,200), ptrTopright, 'r' );
+        FramewithCounter= putStats(text,FramewithCounter, Vec3b(0,0,170), ptrTopright, 'r' );
         text.clear();
         
         moveWindow(windowNameRG, 700, 0); // int x = column, int y= row
@@ -878,8 +908,8 @@ int main( )
 
         //imshow ("Matsegment", Matsegment);
 
-        vw << FramewithCounter;
-        vwGrow << Matsegment;
+        vwRG << FramewithCounter;
+        vw3method << framethreemethode;
         
 //-------------delete the unuseful segment
         
@@ -982,12 +1012,13 @@ int main( )
     
     ofstream outputtext2;
     outputtext2.open(savePathtxt,ios::out|ios::app);
-    outputtext2 << "Duration: " << totaltime << "s" << endl;
+    //outputtext2 << "Duration: " << totaltime << "s" << endl;
     outputtext2.close();
     
     vc.release();
-    vw.release();
-    vwGrow.release();
+    vwRG.release();
+    vw3method.release();
+    vwop.release();
     //destroyAllWindows();
     
 /****************** play the written video */
@@ -1038,7 +1069,7 @@ int main( )
 //insert text lines to video frame
 Mat putStats(vector<string> stats, Mat frame,Vec3b color, Point* origin, char word ){ // 也可用 Point& pt
     int font_face = FONT_HERSHEY_COMPLEX_SMALL;
-    double font_scale = 0.9;
+    double font_scale = 0.85;
     int thickness = 1;
     int baseline;
 
