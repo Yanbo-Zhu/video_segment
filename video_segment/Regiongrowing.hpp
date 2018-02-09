@@ -34,7 +34,7 @@ private:
     double drawAxis(Mat&, Point, Point, Scalar, const float);
     void getOrientation(const vector<Point> &, Mat&);
     double pixeldistance(Point p1, Point p2);
-    int elementSize   = 2.0;
+    int elementSize   = 3;
     
 public:
     

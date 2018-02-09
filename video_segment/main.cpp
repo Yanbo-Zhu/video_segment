@@ -50,6 +50,7 @@ int multipleScaleDiff = 10;
 double Areadifferencefactor = 0.2 ;
 double confidenceintervalfactor = 1.04 ;
 int Loopiterationmax = 20;
+double thresholdstep = 0.1;
 
 Size kernelsize(3,3);
 #define EPSILON 1e-13   // arrcuracy value
@@ -122,8 +123,9 @@ int main( )
     //VideoCapture vc;
     //vc.open( "/Users/yanbo/Desktop/source/Rotation_50m.mp4");
     char path[] = "/Users/yanbo/Desktop/source/" ;
+    string videofilename = "skew_descend";
     //string videofilename = "70_20_descend";
-    string videofilename = "70_20_descend";
+    //string videofilename = "70_20_descend";
     //string videofilename = "swiss_rotation";
     string videoInputpath;
     videoInputpath.assign(path);
@@ -241,6 +243,8 @@ int main( )
 //------------------------------------------------------
     Mat firstFrame;
     vc.read(firstFrame);
+    Mat firstFrame_blur = firstFrame.clone();
+    GaussianBlur(firstFrame, firstFrame_blur, kernelsize,0,0);
     Mat preFrame = firstFrame.clone();
     //Mat preallsegment(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
     
@@ -318,7 +322,7 @@ int main( )
         cin >> mode;
         s[i] = Initialseed(mode, firstFrame, i, defaultThreshold, defaultseed);
         
-        if(s[i].checkThreshold(firstFrame)){
+        if(s[i].checkThreshold(firstFrame_blur)){
             cout<< "Object " << i+1 << " was created successfully "<<endl;
             vectorS.push_back( s[i] );
             i++;
@@ -535,7 +539,7 @@ int main( )
             OPoutput = putStats(optext, OPoutput, Vec3b(0,0,170), ptrBottomMiddle, 'b' );
             
             moveWindow(windowNameOP, 400, 500); // int x = column, int y= row
-            imshow(windowNameOP, OPoutput);  //显示图像
+            //imshow(windowNameOP, OPoutput);  //显示图像
             vwop << OPoutput;
         }
         
@@ -557,6 +561,27 @@ int main( )
         Mat framethreemethode = frame.clone(); //
         Mat MatOut;
         Mat Matallsegment(frame.size(),CV_8UC3,Scalar(0,0,0));
+        
+//        for (int i = 0; i< frame_Blur.rows; i++){
+//            double B = frame_Blur.at<Vec3b>(0, i)[0];
+//             double G = frame_Blur.at<Vec3b>(0, i)[1];
+//             double R = frame_Blur.at<Vec3b>(0, i)[2];
+//
+//            double B1 = frame_Blur.at<Vec3b>(1, i)[0];
+//            double G1 = frame_Blur.at<Vec3b>(1, i)[1];
+//            double R1 = frame_Blur.at<Vec3b>(1, i)[2];
+//
+//            double B2 = frame_Blur.at<Vec3b>(2, i)[0];
+//            double G2 = frame_Blur.at<Vec3b>(2, i)[1];
+//            double R2 = frame_Blur.at<Vec3b>(2, i)[2];
+//
+//            double B3 = frame_Blur.at<Vec3b>(3, i)[0];
+//            double G3 = frame_Blur.at<Vec3b>(3, i)[1];
+//            double R3 = frame_Blur.at<Vec3b>(3, i)[2];
+//
+//            cout<<"intensity " << (B+G+R)/3.0 << "  " << (B1+G1+R1)/3.0 << "  " << (B2+G2+R2)/3.0 << "  " << (B3+G3+R3)/3.0  << endl;
+//        }
+        
 // ------------
        
 //        for( int i=0; i<Segmentnum; i++)
@@ -680,11 +705,11 @@ int main( )
                     if (abs(ScaleDifference) > multipleScaleDiff * averageScaleDifference ) {
                         
                         if ( ScaleDifference > 0.0){
-                            newthreshold = vectorS[i].differencegrow - (0.03 / pow(2, vectorS[i].LoopThreshold - 1));
+                            newthreshold = vectorS[i].differencegrow - (thresholdstep / pow(2, vectorS[i].LoopThreshold - 1));
                             printf("!!!!!!!!!!!Update/ the threshlod value will be decreased/ Segment is too lagre (scale difference positive) \n");
                         }
                         else{
-                            newthreshold = vectorS[i].differencegrow + (0.03/ pow(2, vectorS[i].LoopThreshold - 1));
+                            newthreshold = vectorS[i].differencegrow + (thresholdstep / pow(2, vectorS[i].LoopThreshold - 1));
                             printf("!!!!!!!!!!!Update/ the threshlod value will be increased/ Segment is too small (scale difference negative) \n");
                         }
 
@@ -756,12 +781,12 @@ int main( )
                     
                     if (Areadiffernce <0){
                     printf("!!!!!!!!!!!Update / the current segment is too small\n");
-                    newthreshold = vectorS[i].differencegrow + (0.05/ pow(2, vectorS[i].LoopThreshold - 1));
+                    newthreshold = vectorS[i].differencegrow + (thresholdstep / pow(2, vectorS[i].LoopThreshold - 1));
                     }
                     
                     else {
                     printf("!!!!!!!!!!!Update threshlod value becasue segment is too large \n");
-                    newthreshold = vectorS[i].differencegrow - (0.05/ pow(2, vectorS[i].LoopThreshold - 1));
+                    newthreshold = vectorS[i].differencegrow - (thresholdstep / pow(2, vectorS[i].LoopThreshold - 1));
                     }
                     
                     cout<<"new RG_Threshold: " <<  newthreshold << endl;
@@ -798,19 +823,24 @@ int main( )
                 {
                     Matsegment.at<Vec3b>(R[i].seedtogether[j]) = vectorS[i].color;
                     //Matallsegment.at<Vec3b>(R[i].seedtogether[j]) = frame.at<Vec3b>(R[i].seedtogether[j]);
-                    if (R[i].seedtogether[j].x == 0 || R[i].seedtogether[j].y == 0 || R[i].seedtogether[j].x == (frame.cols-1) || (R[i].seedtogether[j].y == (frame.rows-1)) )
+                    
+                    
+                    if (R[i].seedtogether[j].x == 2 || R[i].seedtogether[j].y == 2 || R[i].seedtogether[j].x == (frame.cols-3) || (R[i].seedtogether[j].y == (frame.rows-3)) )
                     {
+                        cout<< R[i].seedtogether[j] << endl;
                         R[i].touchbordernum++;
                     }
                     //cout<< "R[i].touchbordernum++:" << R[i].touchbordernum++ << endl;
                 }
+                
+                cout<< "objekt " << i+1 << " touch num " << R[i].touchbordernum << endl;
                 
                 //Matsegment = putStats(Thresholdtext, Matsegment, vectorS[i].color, ptrBottomMiddle, 'b' );
                 FramewithCounter = putStats(Thresholdtext, FramewithCounter, vectorS[i].color, ptrBottomMiddle2, 'b' );
                 Thresholdtext.clear();
                 seedtext.clear();
                 
-            }////segment big循环在这里截止
+            }//segment big循环在这里截止
    
         end_RG = clock();
         sprintf( Timechar+strlen(Timechar), "RG: %.5f", (double)(end_RG - start_RG) / CLOCKS_PER_SEC);
@@ -920,8 +950,8 @@ int main( )
         
         framethreemethode = putStats(timetext,framethreemethode, Vec3b(0,0,200), ptrBottomMiddle3, 'b' );
         framethreemethode = putStats(scaletext,framethreemethode, Vec3b(0,230,230), ptrTopLeft2, 't' );
-        imshow(" framethreemethode ", framethreemethode);
-
+        //imshow(" framethreemethode ", framethreemethode);
+        
         sprintf(Buffer, "%.5fm/p", relationRG);
         text.push_back(Buffer);
         
@@ -942,7 +972,7 @@ int main( )
 //-------------delete the unuseful segment
         
         for( int i=0; i<vectorS.size(); i++){
-            if (vectorS[i].LoopThreshold > Loopiterationmax || R[i].touchbordernum > 200) {
+            if (vectorS[i].LoopThreshold > Loopiterationmax ) {
                 cout<<endl << "!!!! Delete objekt " << i+1 << " because of infinitv loop" << endl << endl;
                 vector<Initialseed>::iterator iterdelete = vectorS.begin() + i ;
                 //deque<Initialseed>::iterator iterdelete = vectorS.begin() + i;
@@ -956,7 +986,7 @@ int main( )
             //Initialseed newobject = Initialseed(frame);
             Initialseed newobject = Initialseed(frame);
         
-            if(newobject.checkThreshold(frame)){
+            if(newobject.checkThreshold(frame_Blur)){
                 cout<< endl << "New segment sucessfully found" << endl;
                 vectorS.push_back(newobject);
             }
@@ -965,7 +995,7 @@ int main( )
         
 //-------------define the button
         
-        int keycode = waitKey(100); // equal to  waitKey(10);  //延时10ms
+        int keycode = waitKey(0); // equal to  waitKey(10);  //延时10ms
         
         if(keycode  == ' ')   //32是空格键的ASCII值
             waitKey(0);
@@ -995,7 +1025,7 @@ int main( )
                 
                 Initialseed newobject = Initialseed(frame);
 
-                if (newobject.checkThreshold(frame)){
+                if (newobject.checkThreshold(frame_Blur)){
                     cout<< endl << "New segment sucessfully found" << endl;
                     vectorS.push_back(newobject);
                     i++;

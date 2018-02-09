@@ -66,7 +66,7 @@ Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vecto
             //if(nextseed.x >0 && nextseed.x<(MatIn.cols-1) && nextseed.y>0 && nextseed.y<(MatIn.rows-1))
             //if ( nextseed.x  >0 && nextseed.x  < (MatIn.cols-1) && nextseed.y <(MatIn.rows-1) && nextseed.y >0 )
 
-            if (nextseed.x < 1 || nextseed.y < 1 || nextseed.x > (MatIn.cols-2) || (nextseed.y > MatIn.rows-2))
+            if (nextseed.x < 0 || nextseed.y < 0 || nextseed.x > (MatIn.cols-1) || (nextseed.y > MatIn.rows-1))
                 continue;
             
             if(MatLabel.at<uchar>(nextseed) != 255 )
@@ -88,7 +88,7 @@ Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vecto
 
     //regioncenter  = centerpoint(seedtogether);
     
-    Mat element = getStructuringElement(MORPH_RECT, Size(2*elementSize+1,2*elementSize+1));
+    Mat element = getStructuringElement(MORPH_RECT, Size(2*elementSize+1, 2*elementSize+1));
     dilate(Segment,Segment, element);
     dilate(Segment,Segment, element);
     erode(Segment,Segment, element);
@@ -153,7 +153,7 @@ double Regiongrowing:: differenceValue(Mat MatIn, Point oneseed, Point nextseed,
     double B_diff2 = abs(B_nextseed - MatIn.at<Vec3b>(oneseed)[0]);
     double G_diff2 = abs(G_nextseed - MatIn.at<Vec3b>(oneseed)[1]);
     double R_diff2 = abs(R_nextseed - MatIn.at<Vec3b>(oneseed)[2]);
-    double d2 = (B_diff2 + G_diff2 + R_diff2)/3;
+    double d2 = (B_diff2 + G_diff2 + R_diff2)/3.0;
     
     // y - a
 //    double B_diff3 = (B_oneseed - MatIn.at<Vec3b>(nextseed)[0])*(B_oneseed - MatIn.at<Vec3b>(nextseed)[0]);
@@ -162,11 +162,12 @@ double Regiongrowing:: differenceValue(Mat MatIn, Point oneseed, Point nextseed,
     double B_diff3 = abs(B_oneseed - MatIn.at<Vec3b>(nextseed)[0]);
     double G_diff3 = abs(G_oneseed - MatIn.at<Vec3b>(nextseed)[1]);
     double R_diff3 = abs(R_oneseed - MatIn.at<Vec3b>(nextseed)[2]);
-    double d3 = (B_diff3 + G_diff3 + R_diff3)/3;
+    double d3 = (B_diff3 + G_diff3 + R_diff3)/3.0;
     //printf("d3 : %f \n", d3);
     
     //double d = sqrt(d1 + d2 + d3);
-    double d =  (d1 + d2 + d3);
+    //double d =  (d1 + d2 + d3)/3.0;
+    double d = d1;
     //printf("d: %f \n", d);
     return d;
 }

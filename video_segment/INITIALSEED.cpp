@@ -244,9 +244,7 @@ bool Initialseed :: checkThreshold(Mat frame){
     while ((iterationnum <Threshoditerationmax) && (!repeat_thres)) {
         
         
-        Mat Mattest_Blur;
-        GaussianBlur(Frame, Mattest_Blur, Size(3,3), 0, 0);
-
+        Mat Mattest_Blur = Frame.clone();
         Mattest = RTest.RegionGrow(Frame, Mattest_Blur , this->differencegrow, this->initialseedvektor);
         
         Matcounter = RTest.FindCounter(Mattest, Frame, this->color);
