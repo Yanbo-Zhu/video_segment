@@ -959,13 +959,13 @@ int main( )
             Scalestream.open(saveScaletxt,ios::out|ios::app);  Scalestream.setf(ios::fixed, ios::floatfield);  // 设定为 fixed 模式，以小数点表示浮点数
             Scalestream.precision(6);
             Scalestream << indexFrame << " " <<scaleFreaturematch <<" "<< scaleOP<< " " <<  averageScaleoneFrame <<endl;
-            //Scalestream.close();
+            Scalestream.close();
             
             ofstream AccumScalestream;
             AccumScalestream.open(saveScaletxt,ios::out|ios::app);  AccumScalestream.setf(ios::fixed, ios::floatfield);  // 设定为 fixed 模式，以小数点表示浮点数
             AccumScalestream.precision(6);
             AccumScalestream << indexFrame << " " <<AccumscaleFM <<" "<< AccumscaleOP<< " " <<  AccumscaleRG <<endl;
-            //AccumScalestream.close();
+            AccumScalestream.close();
             
             
         }
@@ -1095,7 +1095,6 @@ int main( )
 //    outputtext2.close();
     
     Scalestream.close();
-    AccumScalestream.close();
     
     vc.release();
     vwRG.release();
