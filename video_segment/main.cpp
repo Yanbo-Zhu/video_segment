@@ -44,13 +44,14 @@ using namespace cv::xfeatures2d;
 int FPSfacotr = 6 ;
 
 // region growing
-int considerNum = 10;
-int multipleScaleDiff = 10;
-
+int considerNum = 7;
+int multipleScaleDiff = 7;
 double Areadifferencefactor = 0.2 ;
+
 double confidenceintervalfactor = 1.04 ;
-int Loopiterationmax = 20;
+int Loopiterationmax = 15;
 double thresholdstep = 0.1;
+double touchbordernum = 10;
 
 Size kernelsize(3,3);
 #define EPSILON 1e-13   // arrcuracy value
@@ -96,7 +97,7 @@ void TrackBarFunc(int ,void(*))
 
 int main( )
 {
-    
+
 //--------------some default seed points when i choose 2 during modechoose
 // Point (x,y )  x= column  y = row
     
@@ -107,7 +108,7 @@ int main( )
     defaultseed[1].push_back(Point(215,240)); // light blue roof left
     defaultseed[2].push_back(Point(530,234)); // white boot
     //defaultseed[3].push_back(Point(491,356)); // black roof bottem threshold: 8
-    double defaultThreshold[] = {6, 11, 12 ,4} ;
+    double defaultThreshold[] = {8, 11, 12 ,4} ;
     
 //    //skew_descend
 //    vector<vector<Point>> defaultseed(4);
@@ -123,15 +124,12 @@ int main( )
     //VideoCapture vc;
     //vc.open( "/Users/yanbo/Desktop/source/Rotation_50m.mp4");
     char path[] = "/Users/yanbo/Desktop/source/" ;
-    string videofilename = "skew_descend";
-    //string videofilename = "70_20_descend";
-    //string videofilename = "70_20_descend";
+    //string videofilename = "skew_descend";
+    string videofilename = "70_20_descend";
     //string videofilename = "swiss_rotation";
     string videoInputpath;
-    videoInputpath.assign(path);
-    videoInputpath.append(videofilename);
-    videoInputpath.append(".mp4");
-
+    videoInputpath.assign(path);  videoInputpath.append(videofilename);   videoInputpath.append(".mp4");
+    
     vc.open(videoInputpath);
     
     if (!vc.isOpened())
@@ -155,20 +153,20 @@ int main( )
     
 //-------------------------------------- VideoWriter Region growing ----------------
 
-    char *savePath = new char[50];
+    //char *savePath = new char[50];
+    char savePath[50] ;
     strcpy(savePath,path);
-    strcat(savePath,"output/");
-    strcat(savePath,videofilename.c_str());
-    strcat(savePath,"_output_2");     // savePath::  /Users/yanbo/Desktop/source/output/70_20_descend_output
+    strcat(savePath,"output/");  strcat(savePath, videofilename.c_str());
+    
+    string outputindex = "_output_2";
+    strcat(savePath, outputindex.c_str());     // savePath::  /Users/yanbo/Desktop/source/output/70_20_descend_output
     cout<< "savePath: " << savePath <<endl;
+    
     cout<<endl;
-    
     char savePathvideoRG[50] ;
-    strcpy(savePathvideoRG,savePath);
-    strcat(savePathvideoRG, "_RG");
-    strcat(savePathvideoRG, ".mov");
+    strcpy(savePathvideoRG,savePath); strcat(savePathvideoRG, "_RG");   strcat(savePathvideoRG, ".mov");  // 这句换前后 path 内的值会变为 NUll 如果用 char *savePath = new char[50] 的话
     remove(savePathvideoRG);
-    
+
     //char const *savePathvideo = "/Users/yanbo/Desktop/source/output/output2.txt";
 //    if(remove(savePathvideo)==0)
 //    {
@@ -197,9 +195,7 @@ int main( )
 //---------------- Three method Videowriter
     
     char savePathvideo3m[50] ;
-    strcpy(savePathvideo3m,savePath);
-    strcat(savePathvideo3m,"_threemethod");
-    strcat(savePathvideo3m, ".mov");
+    strcpy(savePathvideo3m,savePath);   strcat(savePathvideo3m,"_threemethod");   strcat(savePathvideo3m, ".mov");
     remove(savePathvideo3m);
     
     //char const *savePathvideo = "/Users/yanbo/Desktop/source/output/output2.txt";
@@ -220,9 +216,7 @@ int main( )
 //---------------- optical tracking path Videowriter
     
     char savePathvideoOP[50] ;
-    strcpy(savePathvideoOP,savePath);
-    strcat(savePathvideoOP,"_OP");
-    strcat(savePathvideoOP, ".mov");
+    strcpy(savePathvideoOP,savePath);   strcat(savePathvideoOP,"_OP"); strcat(savePathvideoOP, ".mov");
     remove(savePathvideoOP);
     
     //char const *savePathvideo = "/Users/yanbo/Desktop/source/output/output2.txt";
@@ -241,7 +235,10 @@ int main( )
     }
     
 //------------------------------------------------------
+    
     Mat firstFrame;
+    int fitstframeindex = vc.get(CV_CAP_PROP_POS_FRAMES);
+    printf("\n---------------------------IndexFrame: %d -----------------------------------\n\n", fitstframeindex);
     vc.read(firstFrame);
     Mat firstFrame_blur = firstFrame.clone();
     GaussianBlur(firstFrame, firstFrame_blur, kernelsize,0,0);
@@ -299,14 +296,13 @@ int main( )
     double initialpixelrelation;
     initialpixelrelation = distance/ pixeld;
     cout<< " The relation: " << initialpixelrelation << " m/pixel \n" <<endl;
-    
 
 //-----------------------------finding first seed point---------------
     
     cout<<"How many initial segment do you want: " <<endl;
     int Segmentinitialnum;
-    cin >> Segmentinitialnum;
-    //Segmentnum  = 1;
+    //cin >> Segmentinitialnum;
+    Segmentinitialnum  = 1;
     
     Initialseed s[Segmentinitialnum];
     vector<Initialseed>  vectorS;
@@ -316,13 +312,13 @@ int main( )
     int i =0;
     while( i < Segmentinitialnum)
     {
-        printf("\n********************Setting for object %d ***************\n", i+1);
+        printf("\n***********Setting for object %d **********\n", i+1);
         cout<<"Plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points"<<endl;
         int mode;
         cin >> mode;
         s[i] = Initialseed(mode, firstFrame, i, defaultThreshold, defaultseed);
         
-        if(s[i].checkThreshold(firstFrame_blur)){
+        if(s[i].checkThreshold(firstFrame_blur, initialpixelrelation)){
             cout<< "Object " << i+1 << " was created successfully "<<endl;
             vectorS.push_back( s[i] );
             i++;
@@ -330,42 +326,73 @@ int main( )
     }
     
 //------------------create text for recording the inital seed point before RG
-    //char const *savePathtxt = "/Users/yanbo/Desktop/source/output/output2.txt";
-    string savePathtxt;
-    savePathtxt.assign(savePath);
-    savePathtxt.append(".txt");
+    //char const *savePathtxt = "/Users/yanbo/Desktop/source/txt/~.txt";
+    string Pathtxt;
+    Pathtxt.assign(path);  Pathtxt.append("txt/");  Pathtxt.append(videofilename);   Pathtxt.append(outputindex);
+    //cout<< "Pathtxt: " << Pathtxt<<endl;
     
-    ofstream outputtext;
-    outputtext.open(savePathtxt,ios::out|ios::trunc);
-    if (!outputtext.is_open())
+    string saveInitaltxt;
+    saveInitaltxt.assign(Pathtxt);  saveInitaltxt.append("_initial.txt");
+    
+    ofstream initialstream;
+    initialstream.open(saveInitaltxt,ios::out|ios::trunc);
+    
+    if (!initialstream.is_open())
     {
         cout << "Failed to open outputtext file! \n" << endl;
         return 1;
     }
     
-    outputtext << "Pixel-real distance relation: " << endl ;
+    initialstream << "Pixel-real distance relation: " << endl ;
     for(size_t i=0; i< relationpointvektor.size(); i++)
     {
-        outputtext << "Row: " << relationpointvektor[i].y << " Column: "  << relationpointvektor[i].x << endl;
+        initialstream << "Row: " << relationpointvektor[i].y << " Column: "  << relationpointvektor[i].x << endl;
     }
-    outputtext << "Pixeldistance: " << pixeld << " Real distance: " << distance <<endl;
-    outputtext << "The relation: " << initialpixelrelation << " m/pixel \n" << endl;
+    initialstream << "Pixeldistance: " << pixeld << " Real distance: " << distance <<endl  << "The relation: " << initialpixelrelation << " m/pixel \n" << endl;
     relationpointvektor.clear();
     
     for( int i=0; i< Segmentinitialnum; i++)
     {
-        outputtext << "Objekt: " << i+1 << endl;
-        outputtext << "Initial Threshold: " << s[i].differencegrow << endl;
-        outputtext << "Row  Column " << endl;
+        initialstream << "Objekt: " << i+1 << endl << "Initial Threshold: " << s[i].differencegrow << endl << "Row  Column " << endl;
         for(size_t j=0;j<s[i].initialseedvektor.size();j++)
         {
-            outputtext << s[i].initialseedvektor[j].y << "  " << s[i].initialseedvektor[j].x << endl ;
+            initialstream << s[i].initialseedvektor[j].y << "  " << s[i].initialseedvektor[j].x << endl ;
         }
-        outputtext << "\n";
+        initialstream << "\n";
     }
-    outputtext << flush;
-    outputtext.close();
+    initialstream << flush;
+    initialstream.close();
 
+    //------------------txt:  Scale value per frame for three methods
+
+    string saveScaletxt;
+    saveScaletxt.assign(Pathtxt);  saveScaletxt.append("_SingleScale.txt");
+    
+    ofstream Scalestream;  // Scalestream 在 ！stop 循环中 第一个循环还可以打开， 第二个循环这个ofstream文件就不能打开了
+    Scalestream.open(saveScaletxt,ios::out|ios::trunc);
+    if (!Scalestream.is_open())
+    {
+        cout << "Failed to open Scale txt file! \n" << endl;
+        return 1;
+    }
+    Scalestream << videofilename << outputindex << endl << "Scale per frame" << endl;
+    Scalestream << "Frameindex  FM  OP  RG" << endl;
+    
+    //------------------txt:  accumulated Scale value per frame for three methods
+    
+    string saveACScaletxt;
+    saveACScaletxt.assign(Pathtxt);  saveACScaletxt.append("_AccumScale.txt");
+    
+    ofstream AccumScalestream;  // Scalestream 在 ！stop 循环中 第一个循环还可以打开， 第二个循环这个ofstream文件就不能打开了
+    AccumScalestream.open(saveACScaletxt,ios::out|ios::trunc);
+    if (!AccumScalestream.is_open())
+    {
+        cout << "Failed to open AccumScales txt file! \n" << endl;
+        return 1;
+    }
+    AccumScalestream << videofilename << outputindex << endl << "Accumulated Scale value" << endl;
+    AccumScalestream << "Frameindex  FM  OP  RG" << endl;
+    
 //------------------- creating Trackbar
     totalFrame = vc.get(CV_CAP_PROP_FRAME_COUNT);  //获取总帧数
     frameRate = vc.get(CV_CAP_PROP_FPS);   //获取帧率
@@ -395,7 +422,6 @@ int main( )
     
     while(!stop)
     {
-        
         Mat frame;//定义一个Mat变量，用于存储每一帧的图像
         
         int Segmentnum;
@@ -403,7 +429,7 @@ int main( )
         vector<double> templateScaleSameframe;
         //Mat MatOut(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
         
-        cout <<"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
+        //cout <<"\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"<<endl;
         
         Segmentnum = vectorS.size();
         //cout<<"                  Amount of Segments: " << Segmentnum <<endl;
@@ -412,7 +438,7 @@ int main( )
         if (all_threshold_notchange){    // if threshold for this frame did not change, read the next frame
             
             indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
-            printf("\n----------------IndexFrame: %d -----------------\n", indexFrame);
+            printf("\n---------------------------IndexFrame: %d -----------------------------------\n\n", indexFrame);
             bSuccess = vc.read(frame); // read a new frame from video
             frame_backup = frame.clone();
             
@@ -434,7 +460,7 @@ int main( )
             }
             
             indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
-            printf("\n-----------------IndexFrame: %d ------------------\n", indexFrame);
+            printf("\n---------------------------IndexFrame: %d -----------------------------------\n\n", indexFrame);
 
             bSuccess = vc.read(frame);
         }
@@ -454,13 +480,13 @@ int main( )
 
 //----------------- add the text(frame index number) to written video frame
         
-        vector<string> text; // RG frameindex time relation
+        vector<string> text; // RG: frameindex time relation
         vector<string> scaletext; // three methods
         vector<string> seedtext;  // RG
         vector<string> Thresholdtext; // RG
-        vector<string> timetext; // three methods  time and pixel relation
+        vector<string> timetext; // three methods: time and pixel relation
         vector<string> optext; // Optical flow / Scale/ frame index / time
-        vector<string> pixelrelatext; // three methods pixel relation
+        vector<string> pixelrelatext; // three methods / pixel relation
         
         char Buffer[60];
         char Scalechar[70];
@@ -549,6 +575,7 @@ int main( )
         
 // -------------------------------
         cout<< "Region growing" ;
+        
         start_RG = clock();
         Mat frame_Blur = frame.clone();
         GaussianBlur(frame, frame_Blur, kernelsize,0,0);
@@ -561,26 +588,6 @@ int main( )
         Mat framethreemethode = frame.clone(); //
         Mat MatOut;
         Mat Matallsegment(frame.size(),CV_8UC3,Scalar(0,0,0));
-        
-//        for (int i = 0; i< frame_Blur.rows; i++){
-//            double B = frame_Blur.at<Vec3b>(0, i)[0];
-//             double G = frame_Blur.at<Vec3b>(0, i)[1];
-//             double R = frame_Blur.at<Vec3b>(0, i)[2];
-//
-//            double B1 = frame_Blur.at<Vec3b>(1, i)[0];
-//            double G1 = frame_Blur.at<Vec3b>(1, i)[1];
-//            double R1 = frame_Blur.at<Vec3b>(1, i)[2];
-//
-//            double B2 = frame_Blur.at<Vec3b>(2, i)[0];
-//            double G2 = frame_Blur.at<Vec3b>(2, i)[1];
-//            double R2 = frame_Blur.at<Vec3b>(2, i)[2];
-//
-//            double B3 = frame_Blur.at<Vec3b>(3, i)[0];
-//            double G3 = frame_Blur.at<Vec3b>(3, i)[1];
-//            double R3 = frame_Blur.at<Vec3b>(3, i)[2];
-//
-//            cout<<"intensity " << (B+G+R)/3.0 << "  " << (B1+G1+R1)/3.0 << "  " << (B2+G2+R2)/3.0 << "  " << (B3+G3+R3)/3.0  << endl;
-//        }
         
 // ------------
        
@@ -609,8 +616,10 @@ int main( )
         
             for( int i=0; i<Segmentnum; i++)
             {
-                printf("\n** Objekt %d Information ****************", i+1);
-                printf("\n** Cyele index for Threshold: %d\n", vectorS[i].LoopThreshold);
+
+                
+                printf("\n*** Objekt %d Information ****************", i+1);
+                printf("\n*** Cyele index for Threshold: %d\n", vectorS[i].LoopThreshold);
                 MatOut = R[i].RegionGrow(frame, frame_Blur , vectorS[i].differencegrow, vectorS[i].initialseedvektor);
                 
              // If true, the function finds an optimal affine transformation with no additional restrictions (6 degrees of freedom). Otherwise, the class of transformations to choose from is limited to combinations of translation, rotation, and uniform scaling (5 degrees of freedom).
@@ -621,8 +630,14 @@ int main( )
                 
                 addWeighted(Matallsegment, 1, MatOut, 1, 0.0, Matallsegment);
 
-                Mat Matoutbackup = MatOut.clone();
-                FramewithCounter = R[i].FindCounter(Matoutbackup, FramewithCounter, vectorS[i].color);
+                FramewithCounter = R[i].FindCounter(MatOut, FramewithCounter, vectorS[i].color);
+                
+                //double scale = ( (C[i].EWlong/vectorS[i].data[0].back()) + (C[i].EWshort/vectorS[i].data[1].back()) )/2 ;
+                double scale = sqrt( ( R[i].EWlong* R[i].EWshort)/(vectorS[i].data[0].back() * vectorS[i].data[1].back()) );
+                //double scale = sqrt( R[i].Area / vectorS[i].data[6].back() );
+
+                double Realarea = R[i].Area * relationRG * relationRG;
+                double scaleRealarea =  Realarea / vectorS[i].data[5].back() ;
                 
                 //cout << "EWlong: " << R[i].EWlong<< endl;
                 //cout << "EWshort: " << R[i].EWshort<< endl;
@@ -631,15 +646,13 @@ int main( )
                 //cout << "Rectangle width: "  << C[i].rectanglewidth <<endl;
                 //cout << "Rectangle width * pixelrelation : "  << C[i].rectanglewidth  * pixelrelation <<endl;
                 //cout << "Rectangle height: "  << C[i].rectangleheight <<endl;
-                cout << "contour area: "  << R[i].Area << endl;
                 printf("Threshold: %.8f \n", vectorS[i].differencegrow );
+                cout << "Object area: "  << R[i].Area << endl;
+                cout << "Real area: "  << Realarea << endl;
                
-                //double scale = ( (C[i].EWlong/vectorS[i].data[0].back()) + (C[i].EWshort/vectorS[i].data[1].back()) )/2 ;
-                double scale = sqrt( ( R[i].EWlong* R[i].EWshort)/(vectorS[i].data[0].back() * vectorS[i].data[1].back()) );
-                double scaleArea = sqrt( R[i].Area / vectorS[i].data[6].back() );
-                //cout<< "EWlong[indexFrame-1] " << EWlong[indexFrame-1] << " EWlong[indexFrame-2] "<< EWlong[indexFrame-2] << endl;
                 //printf("Scale (index %d to %d): %lf \n", indexFrame, indexFrame-1, scale );
                 cout<< "Scale (index " << indexFrame << " to " << indexFrame-1<< "): " << scale <<endl;
+                cout<< "scaleRealarea (index " << indexFrame << " to " << indexFrame-1<< "): " << scaleRealarea <<endl;
                 cout<< endl;
                 
                 templateScaleSameframe.push_back(scale);
@@ -649,7 +662,7 @@ int main( )
                 double G_Centre = frame.at<Vec3b>(R[i].cntr)[1];
                 double R_Centre = frame.at<Vec3b>(R[i].cntr)[2];
                 
-                sprintf(Buffer, "%d: (%d,%d)/intensity: %.2f/Scale: %.5f", i+1, R[i].cntr.y, R[i].cntr.x, (B_Centre + G_Centre + R_Centre) /3.0 , scale);
+                sprintf(Buffer, "%d: (%d,%d)/intensity: %.2f/Scale: %.5f / Real Area: %.2f", i+1, R[i].cntr.y, R[i].cntr.x, (B_Centre + G_Centre + R_Centre) /3.0 , scale, R[i].Area * relationRG * relationRG );
                 seedtext.push_back(Buffer);
                 
                 FramewithCounter = putStats(seedtext, FramewithCounter, vectorS[i].color, ptrTopLeft, 't');
@@ -659,52 +672,54 @@ int main( )
             
         //---------computeing the average scale and average Scale Difference
                 
-                double averageScale = averagevalue(considerNum, vectorS[i].data[3]);
-                //cout <<"Average Scale of previous "<< considerNum <<" frames: " << averageScale<< endl;
-                
-//                vector<double>::iterator iter;
-//                cout<< "ScaleDifference.size(): " << vectorS[i].data[4].size() << endl;
-//                cout << "ScaleDifference vector = " << endl;;
-//                for (iter= vectorS[i].data[4].begin(); iter != vectorS[i].data[4].end(); iter++)  {cout << *iter << " ";}
-//                cout << endl;
-  
-                double averageScaleDifference = averagedifference(considerNum, vectorS[i].data[4]);
+                double averageScale = averagevalue(considerNum, vectorS[i].data[2]);
+                double averageScaleDifference = averagedifference(considerNum, vectorS[i].data[3]);
+                double ScaleDifference = scale -  averageScale;
+                //                vector<double>::iterator iter;
+                //                cout<< "ScaleDifference.size(): " << vectorS[i].data[4].size() << endl;
+                //                cout << "ScaleDifference vector = " << endl;;
+                //                for (iter= vectorS[i].data[4].begin(); iter != vectorS[i].data[4].end(); iter++)  {cout << *iter << " ";}
+                //                cout << endl;
                 
                 cout << multipleScaleDiff <<"* Average ScaleDifference of previous "<< considerNum <<" frames: " <<multipleScaleDiff * averageScaleDifference<< endl;
-                
-                double ScaleDifference = scale -  averageScale;
-                printf("ScaleDifference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, ScaleDifference );
+                printf("ScaleDifference (index %d to %d): %.8f = （%.8f-%.8f）\n", indexFrame, indexFrame-1, ScaleDifference, scale, averageScale);
                 cout<< endl;
                 
         // ---------- average Ratio and average Ratio Difference
                 
-                double averageRatio = averagevalue(considerNum, vectorS[i].data[2]);
-                double averageRatioDifference = averagedifference(considerNum, vectorS[i].data[5]);
-                double RatioDifference = R[i].Ratio - averageRatio;
+//                double averageRatio = averagevalue(considerNum, vectorS[i].data[2]);
+//                double averageRatioDifference = averagedifference(considerNum, vectorS[i].data[5]);
+//                double RatioDifference = R[i].Ratio - averageRatio;
 //                printf("Ratio Difference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, RatioDifference );
+        
+        // ----------  real Area
+        
+                double averageScaleRA = averagevalue(considerNum, vectorS[i].data[6]);
+                double averageScaleRADifference = averagedifference(considerNum, vectorS[i].data[7]);
+                double ScaleRADifference = scaleRealarea - averageScaleRA;
+                
+                cout << multipleScaleDiff <<"* Average Real AreaScale Difference of previous "<< considerNum <<" frames: " <<multipleScaleDiff * averageScaleRADifference<< endl;
+                printf("ScaleDifference (index %d to %d): %.8f = （%.8f-%.8f）\n", indexFrame, indexFrame-1, ScaleRADifference, scaleRealarea, averageScaleRA);
+                cout<< endl;
                 
         //------------ Area Difference
-                double Areadiffernce = R[i].Area - vectorS[i].data[6].back();
+                double Areadiffernce = R[i].Area - vectorS[i].data[4].back();
                 printf("Area Difference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, Areadiffernce );
-                cout<< Areadifferencefactor << "* Area in last frame : " <<  Areadifferencefactor *(vectorS[i].data[6].back())  << endl ;
-    
-//                cout<< "RGThreshold vector Size: " << vectorS[i].RGThreshold.size() << endl;
-//                cout << "RGThreshold vector = " << endl;;
-//                for (iter = vectorS[i].RGThreshold.begin(); iter != vectorS[i].RGThreshold.end(); iter++) {
-//                    cout << *iter << " ";
-//                }
+                cout<< Areadifferencefactor << "* Area in last frame : " <<  Areadifferencefactor *(vectorS[i].data[4].back())  << endl ;
                 
         //--------- update the thereshlod value for region growing if scale varies largely
                 //cout<< 0.2*vectorS[i].data[6].back() <<endl;
+                cout<<endl;
                 
                 double newthreshold;
-                if ( abs(Areadiffernce) <=  Areadifferencefactor *(vectorS[i].data[6].back()) )
+                //if ( abs(Areadiffernce) <=  Areadifferencefactor *(vectorS[i].data[4].back()) )
+                if ( abs(ScaleRADifference) <=  multipleScaleDiff * averageScaleRADifference )
                 {
                     //printf("the Area of segment %d is stable (Area difference is smaller 0.2* Area in last frame) \n", i+1);
                     
                     if (abs(ScaleDifference) > multipleScaleDiff * averageScaleDifference ) {
                         
-                        if ( ScaleDifference > 0.0){
+                        if ( ScaleDifference > 0.0 ){
                             newthreshold = vectorS[i].differencegrow - (thresholdstep / pow(2, vectorS[i].LoopThreshold - 1));
                             printf("!!!!!!!!!!!Update/ the threshlod value will be decreased/ Segment is too lagre (scale difference positive) \n");
                         }
@@ -713,7 +728,6 @@ int main( )
                             printf("!!!!!!!!!!!Update/ the threshlod value will be increased/ Segment is too small (scale difference negative) \n");
                         }
 
-                        
                         printf("New RG_Threshlod: %f \n", newthreshold);
             
                         vector<double>::iterator iterfind;
@@ -721,12 +735,12 @@ int main( )
                         iterfind  = find_if(vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), [newthreshold](double b) { return fabs(newthreshold - b) < EPSILON; });
                         
                         if(iterfind == vectorS[i].RGThreshold.end()){
-                            cout << "New RG_Threshlod ist not available in RG_Threshlod vector. Using New RG_Threshlod for next loop" << endl;
                             vectorS[i].RGThreshold.push_back(newthreshold);
                             vectorS[i].differencegrow = newthreshold;
+                            cout << "New RG_Threshlod ist not available in RG_Threshlod vector. Using New RG_Threshlod " << vectorS[i].differencegrow <<" for next loop" << endl;
                         }
                         else {
-                            cout << "New RG_Threshlod ist already available in RG_Threshlod vector. Using old RG_Threshlod for next loop  " << endl;
+                            cout << "New RG_Threshlod ist already available in RG_Threshlod vector. Using old RG_Threshlod " << vectorS[i].differencegrow <<" for next loop  " << endl;
                             vectorS[i].LoopThreshold = vectorS[i].LoopThreshold + 1;
                             //cout << "s[i].LoopThreshold: " << s[i].LoopThreshold  << endl;
                             
@@ -735,9 +749,7 @@ int main( )
                                 break;
                             }
                         }
-                        
-                        printf("RG_Threshold for next loop %f \n", vectorS[i].differencegrow);
-
+                    
                         //vc.set(CV_CAP_PROP_POS_FRAMES, indexFrame);  // 此处ser frame index 会引起死机
                         vectorS[i].threshold_notchange = false;
                     }
@@ -757,13 +769,16 @@ int main( )
                             while(test_threshold_notchange){
                                 vectorS[i].data[0].push_back(R[i].EWlong);   // Green line. long axis
                                 vectorS[i].data[1].push_back(R[i].EWshort);    // lightly blue line . short axis
-                                vectorS[i].data[2].push_back(R[i].Ratio);
-                                vectorS[i].data[3].push_back(scale);
-                                vectorS[i].data[4].push_back(ScaleDifference);
-                                vectorS[i].data[5].push_back(RatioDifference);
-                                vectorS[i].data[6].push_back(R[i].Area);
-                                vectorS[i].data[7].push_back(scaleArea);
                                 
+                                vectorS[i].data[2].push_back(scale);
+                                vectorS[i].data[3].push_back(ScaleDifference);
+                                
+                                vectorS[i].data[4].push_back(R[i].Area);
+                                vectorS[i].data[5].push_back(Realarea);
+                                
+                                vectorS[i].data[6].push_back(scaleRealarea);
+                                vectorS[i].data[7].push_back(ScaleRADifference);
+
                                 vectorS[i].preSegment  = MatOut.clone();
                                 vectorS[i].initialseedvektor.clear();
                                 //s[i].initialseedvektor.push_back(R[i].regioncenter);
@@ -779,31 +794,32 @@ int main( )
                     
                     //cout<<"Area of segment " << i+1 <<" is unstable" << endl;
                     
-                    if (Areadiffernce <0){
-                    printf("!!!!!!!!!!!Update / the current segment is too small\n");
+                    //if (Areadiffernce <0)
+                    if (ScaleRADifference <0)
+                    {
+                    printf("!!!!!!!!!!!Update /Area(negetive) varies too much / segment is too small\n");
                     newthreshold = vectorS[i].differencegrow + (thresholdstep / pow(2, vectorS[i].LoopThreshold - 1));
                     }
                     
                     else {
-                    printf("!!!!!!!!!!!Update threshlod value becasue segment is too large \n");
+                    printf("!!!!!!!!!!!Update / Area(positive) varies too much / segment is too large \n");
                     newthreshold = vectorS[i].differencegrow - (thresholdstep / pow(2, vectorS[i].LoopThreshold - 1));
                     }
                     
-                    cout<<"new RG_Threshold: " <<  newthreshold << endl;
+                    cout<<"New RG_Threshold: " <<  newthreshold << endl;
                   
                     vector<double>::iterator iterfind2;
                     iterfind2  = find_if(vectorS[i].RGThreshold.begin(), vectorS[i].RGThreshold.end(), [newthreshold](double b) { return fabs(newthreshold - b) < EPSILON; });
                     //iterfind2  = find_if(v.begin(),v.end(),dbl_cmp(10.5, 1E-8));
                     
                     if(iterfind2 == vectorS[i].RGThreshold.end()){
-                        cout << "New RG_Threshlod ist not available in RG_Threshlod vector. Using New RG_Threshlod for next loop" << endl;
                         vectorS[i].RGThreshold.push_back(newthreshold);
-                        vectorS[i].differencegrow = newthreshold;
-                        cout << endl;
+                        vectorS[i].differencegrow  = newthreshold;
+                        cout << "New RG_Threshlod ist not available in RG_Threshlod vector. Using New RG_Threshlod " << vectorS[i].differencegrow << " for next loop" << endl;
                     }
                     
                     else {
-                        cout << "New RG_Threshlod ist already available in RG_Threshlod vector. Using old RG_Threshlod for next loop  " << endl;
+                        cout << "New RG_Threshlod ist already available in RG_Threshlod vector. Using old RG_Threshlod " << vectorS[i].differencegrow << " for next loop  " << endl;
                         vectorS[i].LoopThreshold = vectorS[i].LoopThreshold + 1;
                         
                         if(vectorS[i].LoopThreshold > Loopiterationmax){
@@ -812,28 +828,19 @@ int main( )
                         }
                     }
                     
-                    printf("RG_Threshold for next loop %f \n", vectorS[i].differencegrow);
+                    //printf("RG_Threshold for next loop %f \n", vectorS[i].differencegrow);
                     
                     vectorS[i].threshold_notchange = false;
-                    
                 }
                 
+                cout<<endl;
                 
-                for(size_t j=0; j<R[i].seedtogether.size(); j++)
-                {
+                for(size_t j=0; j<R[i].seedtogether.size(); j++){
                     Matsegment.at<Vec3b>(R[i].seedtogether[j]) = vectorS[i].color;
                     //Matallsegment.at<Vec3b>(R[i].seedtogether[j]) = frame.at<Vec3b>(R[i].seedtogether[j]);
-                    
-                    
-                    if (R[i].seedtogether[j].x == 2 || R[i].seedtogether[j].y == 2 || R[i].seedtogether[j].x == (frame.cols-3) || (R[i].seedtogether[j].y == (frame.rows-3)) )
-                    {
-                        cout<< R[i].seedtogether[j] << endl;
-                        R[i].touchbordernum++;
-                    }
-                    //cout<< "R[i].touchbordernum++:" << R[i].touchbordernum++ << endl;
                 }
                 
-                cout<< "objekt " << i+1 << " touch num " << R[i].touchbordernum << endl;
+                cout<< "objekt:" << i+1 << " /Point number which touch border window: " << R[i].touchbordernum << endl;
                 
                 //Matsegment = putStats(Thresholdtext, Matsegment, vectorS[i].color, ptrBottomMiddle, 'b' );
                 FramewithCounter = putStats(Thresholdtext, FramewithCounter, vectorS[i].color, ptrBottomMiddle2, 'b' );
@@ -842,12 +849,16 @@ int main( )
                 
             }//segment big循环在这里截止
    
+  
+        
         end_RG = clock();
+        
         sprintf( Timechar+strlen(Timechar), "RG: %.5f", (double)(end_RG - start_RG) / CLOCKS_PER_SEC);
         timetext.push_back(Timechar);
         totoalRGtime +=(double)(end_RG - start_RG) / CLOCKS_PER_SEC;
         
    //------------------------ Scale of different Segment in the same Frame to build  gaussian model
+
         
         cout<< endl << "***build gaussian model (Scale of different objects in the same Frame)"  << endl;
        
@@ -865,16 +876,12 @@ int main( )
         });
         double stdev = sqrt(accum/(templateScaleSameframe.size()-1)); //方差 standard deviation
         cout<< "mean: " << mean <<  "/ stdev: " << stdev << endl;
-        
+        cout<< "Confidence Interval: " << mean - confidenceintervalfactor *stdev << " ~ " << mean + confidenceintervalfactor *stdev << endl;
         for (int i = 0 ; i< templateScaleSameframe.size(); i++){
-            
-            if (templateScaleSameframe[i] > (mean + confidenceintervalfactor *stdev) || templateScaleSameframe[i] < (mean - confidenceintervalfactor *stdev))
-            cout<< "the Scale of Segment " << i+1 << " is not qualified"<< endl;
-            
+            if (templateScaleSameframe[i] > (mean + confidenceintervalfactor *stdev) || templateScaleSameframe[i] < (mean - confidenceintervalfactor *stdev)) cout<< "the Scale of Segment " << i+1 << " is not qualified"<< endl;
             else cout<< "the Scale of Segment " << i+1 << " is qualified"<< endl;
         }
         
-
     //--------------------------
         
         // Frameindex
@@ -896,13 +903,14 @@ int main( )
             all_threshold_notchange = all_threshold_notchange && vectorS[i].threshold_notchange;
         }
         
-        //  --  update Pixelrelation
+        //  --  update any infomation of 3 method
         if (all_threshold_notchange){    // if threshold for this frame did not change,  next frame will be read in next loop
             
+            // for RG averageScale
             double averageScaleoneFrame = 0.0;
             for( int i=0; i<Segmentnum; i++)
             {
-                averageScaleoneFrame += vectorS[i].data[7].back();
+                averageScaleoneFrame += vectorS[i].data[2].back();
             }
             
             cout<< endl << "****************" <<endl;
@@ -911,13 +919,6 @@ int main( )
             
             sprintf(Scalechar+strlen(Scalechar), "RG: %.7f", averageScaleoneFrame);
             scaletext.push_back(Scalechar);
-            
-            // pixelrelation for 3 method
-            relationRG /= averageScaleoneFrame;
-            cout<< "Pixelrelation: " << relationRG << "m/pixel"<<endl;
-            
-            relationOP /= scaleOP;
-            relationFM /= scaleFreaturematch;
             
             //for optical flow and freature match
             preFrame = frame.clone();
@@ -943,9 +944,30 @@ int main( )
             sprintf(Totoaltimechar +strlen(Totoaltimechar), "RG: %.5f", totoalRGtime);
             timetext.push_back(Totoaltimechar);
             
-            // pixel relation three menthod
+            
+            // pixelrelation for 3 method
+            relationRG /= averageScaleoneFrame;
+            cout<< "Pixelrelation: " << relationRG << "m/pixel"<<endl;
+            relationOP /= scaleOP;
+            relationFM /= scaleFreaturematch;
+        
             sprintf(pixelrela, "Pixel relation/ FM: %.6f/ OP: %.6f/ RG: %.6f", relationFM, relationOP,  relationRG);
             timetext.push_back(pixelrela);
+            
+            //ofstream
+            ofstream Scalestream;
+            Scalestream.open(saveScaletxt,ios::out|ios::app);  Scalestream.setf(ios::fixed, ios::floatfield);  // 设定为 fixed 模式，以小数点表示浮点数
+            Scalestream.precision(6);
+            Scalestream << indexFrame << " " <<scaleFreaturematch <<" "<< scaleOP<< " " <<  averageScaleoneFrame <<endl;
+            //Scalestream.close();
+            
+            ofstream AccumScalestream;
+            AccumScalestream.open(saveScaletxt,ios::out|ios::app);  AccumScalestream.setf(ios::fixed, ios::floatfield);  // 设定为 fixed 模式，以小数点表示浮点数
+            AccumScalestream.precision(6);
+            AccumScalestream << indexFrame << " " <<AccumscaleFM <<" "<< AccumscaleOP<< " " <<  AccumscaleRG <<endl;
+            //AccumScalestream.close();
+            
+            
         }
         
         framethreemethode = putStats(timetext,framethreemethode, Vec3b(0,0,200), ptrBottomMiddle3, 'b' );
@@ -960,11 +982,10 @@ int main( )
         
         moveWindow(windowNameRG, 700, 0); // int x = column, int y= row
         imshow(windowNameRG, FramewithCounter);  //显示图像
+        
         // ---   Trackbar activate
         //TrackBarFunc(0,0);
         //controlRate++; // for trackbar !!!!!!
-
-        //imshow ("Matsegment", Matsegment);
 
         vwRG << FramewithCounter;
         vw3method << framethreemethode;
@@ -972,8 +993,8 @@ int main( )
 //-------------delete the unuseful segment
         
         for( int i=0; i<vectorS.size(); i++){
-            if (vectorS[i].LoopThreshold > Loopiterationmax ) {
-                cout<<endl << "!!!! Delete objekt " << i+1 << " because of infinitv loop" << endl << endl;
+            if (vectorS[i].LoopThreshold > Loopiterationmax || R[i].touchbordernum >= 1) {
+                cout<<endl << "!!!! Delete objekt " << i+1 << " because of infinitv loop or object touch border of window" << endl << endl;
                 vector<Initialseed>::iterator iterdelete = vectorS.begin() + i ;
                 //deque<Initialseed>::iterator iterdelete = vectorS.begin() + i;
                 vectorS.erase(iterdelete);
@@ -986,7 +1007,7 @@ int main( )
             //Initialseed newobject = Initialseed(frame);
             Initialseed newobject = Initialseed(frame);
         
-            if(newobject.checkThreshold(frame_Blur)){
+            if(newobject.checkThreshold(frame_Blur, relationRG)){
                 cout<< endl << "New segment sucessfully found" << endl;
                 vectorS.push_back(newobject);
             }
@@ -997,7 +1018,7 @@ int main( )
         
         int keycode = waitKey(0); // equal to  waitKey(10);  //延时10ms
         
-        if(keycode  == ' ')   //32是空格键的ASCII值
+        if(keycode  == ' ')   //32是空格键的ASCII值 暂停
             waitKey(0);
         
         if(keycode  == 27)  // 27 = ASCII ESC
@@ -1025,7 +1046,7 @@ int main( )
                 
                 Initialseed newobject = Initialseed(frame);
 
-                if (newobject.checkThreshold(frame_Blur)){
+                if (newobject.checkThreshold(frame_Blur, relationRG)){
                     cout<< endl << "New segment sucessfully found" << endl;
                     vectorS.push_back(newobject);
                     i++;
@@ -1065,13 +1086,16 @@ int main( )
         relationpointvektor.clear();
         
     }
-    
+
     cout << "Video plays over(outside loop)" << endl;
     
-    ofstream outputtext2;
-    outputtext2.open(savePathtxt,ios::out|ios::app);
+//    ofstream outputtext2;
+//    outputtext2.open(savePathtxt,ios::out|ios::app);
     //outputtext2 << "Duration: " << totaltime << "s" << endl;
-    outputtext2.close();
+//    outputtext2.close();
+    
+    Scalestream.close();
+    AccumScalestream.close();
     
     vc.release();
     vwRG.release();
@@ -1181,15 +1205,13 @@ double averagevalue(int num, vector<double> array){
     vector<double>::reverse_iterator it;
     
     if (array.size()< num){
-        for(it = array.rbegin(); it!= array.rend(); it++)
-        {
+        for(it = array.rbegin(); it!= array.rend(); it++){
             average = (average + *it)/2.0;
         }
     }
     
     else {
-        for(it = array.rbegin(); it!= array.rbegin() + num; it++)
-        {
+        for(it = array.rbegin(); it!= array.rbegin() + num; it++){
             average = (average + *it)/2.0;
         }
     }
@@ -1204,15 +1226,13 @@ double averagedifference(int num, vector<double> array){
 //    }
     
     if (array.size()< num ){
-        for(it = array.rbegin(); it!= array.rend(); it++)
-        {
+        for(it = array.rbegin(); it!= array.rend(); it++){
             average = (average + abs(*it))/2.0;
         }
     }
     
     else {
-        for(it = array.rbegin(); it!= array.rbegin() + num; it++)
-        {
+        for(it = array.rbegin(); it!= array.rbegin() + num; it++){
             average = (average + abs(*it))/2.0;
         }
     }
@@ -1231,7 +1251,7 @@ void on_MouseHandle(int event, int x, int y, int flags, void* param)
     {
         //左键按下消息
         Point g_pt = Point(x, y);
-        cout<<"Row: "<<y<<", Column: "<< x <<endl;
+        cout<<"Row: "<<y<<", eColumn: "<< x <<endl;
         line(image, g_pt, g_pt, Scalar(0, 0, 255),4,8,0);
         relationpointvektor.push_back(g_pt);
     }

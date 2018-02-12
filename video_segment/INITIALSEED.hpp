@@ -39,8 +39,9 @@ private:
     double thresholdvalue;
     Point g_pt;
     #define Point_mark_window " Drawing Point "
-    int Threshoditerationmax = 500;
-    double initialScalediff = 0.007;
+    int Threshoditerationmax = 300;
+    double initialScalediff = 0.01;
+    double thresholdstep = 0.1;
 
     
 public:
@@ -61,7 +62,7 @@ public:
     
     void newseed(Mat firstFrame);
     void randomseed(Mat firstFrame, int width, int height);
-    bool checkThreshold(Mat Frame);
+    bool checkThreshold(Mat Frame, double relation);
     
 };
 

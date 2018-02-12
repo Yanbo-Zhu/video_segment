@@ -133,8 +133,8 @@ void Opticalflow:: matchedpairs(Mat preframe , Mat nextframe, vector<vector<Poin
     vector<float> err2;
     
     // ----   为了计算相邻两帧间的homography matrix
-    gridpoint(gridnum, preframe, features_pre);
-    //goodFeaturesToTrack(preframe_gray, features_pre, currentmaxnum, qLevel, minDist, Mat(),3,true, 0.04);
+    //gridpoint(gridnum, preframe, features_pre);
+    goodFeaturesToTrack(preframe_gray, features_pre, currentmaxnum, qLevel, minDist, Mat(),3,true, 0.04);
     
     calcOpticalFlowPyrLK(preframe, nextframe, features_pre, features_next, status2, err2);
     

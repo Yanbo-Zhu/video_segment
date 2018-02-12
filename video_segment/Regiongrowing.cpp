@@ -25,7 +25,7 @@ Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vecto
     
     seedtogether.clear();
     seedtogether = seedset;
-    
+
     //生长方向顺序数据
     //int DIR[8][2]={{-1,-1},{-1,0},{-1,1},{0,-1},{0,1},{1,-1},{1,0},{1,1}};
     int DIR[4][2] = {{1,0},{-1,0},{0,1},{0,-1}};
@@ -44,6 +44,12 @@ Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vecto
     while (!seedset.empty()) {
         
         Point oneseed = seedset.back(); //fetch one seed from seedvektor
+        
+        //if (R[i].seedtogether[j].x == 0 || R[i].seedtogether[j].y == 0 || R[i].seedtogether[j].x == (frame.cols-1) || (R[i].seedtogether[j].y == (frame.rows-1)) )
+        if (oneseed.x <= 2 || oneseed.y <= 2 || oneseed.x >= (MatIn.cols-3) || oneseed.y >= (MatIn.rows-3)){
+            //cout<< R[i].seedtogether[j] << endl;
+            this->touchbordernum++;
+        }
         
         seedset.pop_back(); // delete this one seed from seedvektor
         
@@ -108,9 +114,11 @@ double Regiongrowing:: differenceValue(Mat MatIn, Point oneseed, Point nextseed,
         Point ANeighbour;
         ANeighbour.x = oneseed.x + DIR[iNum][0];
         ANeighbour.y = oneseed.y + DIR[iNum][1];
-        B_oneseed = B_oneseed + MatIn.at<Vec3b>(ANeighbour)[0];
-        G_oneseed = G_oneseed + MatIn.at<Vec3b>(ANeighbour)[1];
-        R_oneseed = R_oneseed + MatIn.at<Vec3b>(ANeighbour)[2];
+        if (ANeighbour.x >= 0 && ANeighbour.y >=0 && ANeighbour.x <= (MatIn.cols-1) &&  ANeighbour.y <= (MatIn.rows-1)){
+            B_oneseed = B_oneseed + MatIn.at<Vec3b>(ANeighbour)[0];
+            G_oneseed = G_oneseed + MatIn.at<Vec3b>(ANeighbour)[1];
+            R_oneseed = R_oneseed + MatIn.at<Vec3b>(ANeighbour)[2];
+        }
     }
     
     B_oneseed = B_oneseed/ (double)rowofDIR;
@@ -127,9 +135,13 @@ double Regiongrowing:: differenceValue(Mat MatIn, Point oneseed, Point nextseed,
         Point BNeighbour;
         BNeighbour.x = oneseed.x + DIR[iNum][0];
         BNeighbour.y = oneseed.y + DIR[iNum][1];
-        B_nextseed = B_nextseed+ MatIn.at<Vec3b>(BNeighbour)[0];
-        G_nextseed = G_nextseed+ MatIn.at<Vec3b>(BNeighbour)[1];
-        R_nextseed = R_nextseed+ MatIn.at<Vec3b>(BNeighbour)[2];
+        if (BNeighbour.x >= 0 && BNeighbour.y >=0 && BNeighbour.x <= (MatIn.cols-1) &&  BNeighbour.y <= (MatIn.rows-1)){
+            B_nextseed = B_nextseed+ MatIn.at<Vec3b>(BNeighbour)[0];
+            G_nextseed = G_nextseed+ MatIn.at<Vec3b>(BNeighbour)[1];
+            R_nextseed = R_nextseed+ MatIn.at<Vec3b>(BNeighbour)[2];
+        }
+        
+
     }
     
     B_nextseed = B_nextseed/ (double)rowofDIR;
@@ -167,7 +179,7 @@ double Regiongrowing:: differenceValue(Mat MatIn, Point oneseed, Point nextseed,
     
     //double d = sqrt(d1 + d2 + d3);
     //double d =  (d1 + d2 + d3)/3.0;
-    double d = d1;
+    double d = d1*3;
     //printf("d: %f \n", d);
     return d;
 }
@@ -196,17 +208,39 @@ Regiongrowing:: ~Regiongrowing(){
 
 
 //------------------ 原counter 的 function
-Mat Regiongrowing::FindCounter (Mat segment , Mat frame, Vec3b color)
+Mat Regiongrowing::FindCounter (Mat Segment , Mat frame, Vec3b color)
 {
+    Mat segment = Segment.clone();
     Mat Frame = frame.clone();
     Mat MatoutGray;
     
     cvtColor(segment,MatoutGray,CV_BGR2GRAY);
-    threshold(MatoutGray,MatoutGray,20,255,THRESH_BINARY);
+    //int iVal255 = countNonZero(MatoutGray);
+    threshold(MatoutGray, MatoutGray, 1,255,THRESH_BINARY);
     
     vector<Vec4i> hierarchy;
     vector<vector<Point> > contours;
     findContours(MatoutGray, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+    
+    
+//    // 计算矩
+//    vector<Moments> mu(contours.size() );
+//    for(unsigned int i = 0; i < contours.size(); i++ )
+//    { mu[i] = moments( contours[i], false ); }
+//
+//    //  计算中心矩
+//    vector<Point2f> mc( contours.size() );
+//    for( unsigned int i = 0; i < contours.size(); i++ )
+//    { mc[i] = Point2f( static_cast<float>(mu[i].m10/mu[i].m00), static_cast<float>(mu[i].m01/mu[i].m00 ));
+//        cout<< mc[i]<< endl;
+//    }
+    
+//    // 通过m00计算轮廓面积并且和OpenCV函数
+//    for(unsigned  int i = 0; i< contours.size(); i++ )
+//    {
+//        printf(" >通过m00计算出轮廓[%d]的面积: (M_00) = %.2f \n OpenCV函数计算出的面积=%.2f , 长度: %.2f \n\n", i, mu[i].m00, contourArea(contours[i]), arcLength( contours[i], true ) );
+//    }
+
     
     // 多边形逼近轮廓 + 获取矩形边界框
     vector<vector<Point> > contours_poly( contours.size() );
@@ -221,10 +255,17 @@ Mat Regiongrowing::FindCounter (Mat segment , Mat frame, Vec3b color)
         minEnclosingCircle( contours_poly[i], center[i], radius[i] );//对给定的 2D点集，寻找最小面积的包围圆形
     }
     
+
     for (size_t i = 0; i < contours.size(); i++)
     {
         // Calculate the area of each contour
         Area = contourArea(contours[i]);  // 面积就是包含了多少像素点
+        
+        // 逼近多边形曲线
+//        vector<Point> approx;
+//        approxPolyDP(contours[i], approx, 3, true);
+//        double areaapproxPolyDP = contourArea(approx);
+//        cout<< "areaapproxPolyDP: " << areaapproxPolyDP << endl;
         
         // Ignore contours that are too small or too large
         //if (area < 1e2 || 1e5 < area) continue;

@@ -42,7 +42,7 @@ public:
     //Point regioncenter ;
     vector<Point> seedtogether;
     ~Regiongrowing();
-    double touchbordernum = 0.0;
+    int touchbordernum = 0;
     
     //--- 原 Counter
     Mat FindCounter (Mat MatOut , Mat Frame, Vec3b color);

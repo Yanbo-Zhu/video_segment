@@ -43,7 +43,7 @@ void Initialseed :: randomseed(Mat firstFrame, int width, int height)
     
     printf( "New random seed : (Row: %d, Column: %d) / ",   newrandomseed.y, newrandomseed.x );
     
-    differencegrow = 8;
+    differencegrow = 4;
 }
 
 void Initialseed :: modechoose(int x, Mat firstFrame, int objektindex,  double defaultTH[], vector<vector<Point>> defaultSD)
@@ -223,11 +223,11 @@ void Initialseed :: DrawLine( Mat &img, Point pt, Vec3b color )
     //line(img, pt, pt, Scalar(rng.uniform(0, 255), rng.uniform(0, 255), rng.uniform(0, 255)),6,8,0); //随机颜色
     int thickness = 6;
     int lineType = 8;
-    line(img, pt, pt, color,thickness,lineType,0);
+    line(img, pt, pt, color,thickness, lineType,0);
     //line(img, pt, pt, Scalar(0,0,255),thickness,lineType,0); //随机颜色
 }
 
-bool Initialseed :: checkThreshold(Mat frame){
+bool Initialseed :: checkThreshold(Mat frame, double relation){
 
     Mat Frame = frame.clone();
     int width = Frame.cols;
@@ -248,16 +248,16 @@ bool Initialseed :: checkThreshold(Mat frame){
         Mattest = RTest.RegionGrow(Frame, Mattest_Blur , this->differencegrow, this->initialseedvektor);
         
         Matcounter = RTest.FindCounter(Mattest, Frame, this->color);
-        imshow("Contour of Segment", Matcounter);
+        imshow("New object", Matcounter);
         waitKey(100);
         
-        cout<< "iterationnum: " << iterationnum <<"/ Area: " << RTest.Area <<"/ Threshold: "<< this->differencegrow << endl;
+        //cout<< "iterationnum: " << iterationnum <<"/ Area: " << RTest.Area <<"/ Threshold: "<< this->differencegrow << endl;
         
         Thresholdstack.push_back(this->differencegrow) ;
 
-        if (RTest.Area < (width*height/300)) this->differencegrow = (this->differencegrow + 0.1);  // (Width*Height/300) = 2000   (Width*Height/50 )= 10000
+        if (RTest.Area < (width*height/300)) this->differencegrow = (this->differencegrow + thresholdstep);  // (Width*Height/300) = 2000   (Width*Height/50 )= 10000
         else if (RTest.Area <= (width*height/40) ) break;
-        else  this->differencegrow = (this->differencegrow - 0.1);
+        else  this->differencegrow = (this->differencegrow - thresholdstep);
 
         iterationnum++;
 
@@ -273,32 +273,33 @@ bool Initialseed :: checkThreshold(Mat frame){
     }
 
     if(iterationnum >=Threshoditerationmax || repeat_thres){
-        cout<< "This new random initial point can not become a available seed point " << endl;
+        cout<< "This new random point can not become a available seed point " << endl;
         threshold_qualified = false;
     }
 
     else{
         // create new object sucessfully
+        cout<< "iterationnum: " << iterationnum <<"/ Area: " << RTest.Area <<"/ Threshold: "<< this->differencegrow << endl;
         this->LoopThreshold = 1;
 
-        this->data[0].push_back(RTest.EWlong);    // Green line. long axis
+        data[0].push_back(RTest.EWlong);    // Green line. long axis
         this->data[1].push_back(RTest.EWshort);   // lightly blue line . short axis
-        this->data[2].push_back(RTest.Ratio);
-        this->data[3].push_back(1.0); // scale
-        this->data[4].push_back(initialScalediff); // ScaleDifference
-        this->data[5].push_back(0.0); // RatioDifference
-        this->data[6].push_back(RTest.Area);  // Area
-        this->data[7].push_back(1.0);  // scaleArea
+     
+        this->data[2].push_back(1.0); // scale
+        this->data[3].push_back(initialScalediff); // ScaleDifference
+        
+        this->data[4].push_back(RTest.Area);  // Area
+        this->data[5].push_back(RTest.Area * relation * relation);  // Realarea
+        
+        this->data[6].push_back(1.0); // Scale Realarea
+        this->data[7].push_back(initialScalediff); // Realarea ScaleDifference ?? 刚开始设为多少
         
         this->preSegment  = Mattest.clone();
         this->initialseedvektor.clear();
         this->initialseedvektor.push_back(RTest.cntr);
         this->threshold_notchange = true;
-
-        //waitKey(0);
     }
-
-    destroyWindow("Contour of Segment");
+    //destroyWindow("Contour of Segment");
     
     return threshold_qualified;
 }
