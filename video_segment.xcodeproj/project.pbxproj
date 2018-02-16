@@ -10,7 +10,6 @@
 		4C1D6FB620261ECA00E54DF5 /* libopencv_xfeatures2d.3.3.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1D6FB520261ECA00E54DF5 /* libopencv_xfeatures2d.3.3.0.dylib */; };
 		4C97F3BB2028919C00E359AC /* Function.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C97F3B92028919C00E359AC /* Function.cpp */; };
 		4CC87C762025EAE3000DF832 /* Opticalflow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CC87C742025EAE3000DF832 /* Opticalflow.cpp */; };
-		4CF41B47203628BE00E68FE3 /* libopencv_ximgproc.3.3.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4CF41B46203628BE00E68FE3 /* libopencv_ximgproc.3.3.0.dylib */; };
 		A906D5C71F978BE9009FB5DA /* COUNTER.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A906D5C51F978BE9009FB5DA /* COUNTER.cpp */; };
 		A922A5071F7453E70072A454 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A922A5061F7453E70072A454 /* main.cpp */; };
 		A9847E301F7AB75A00C93A01 /* INITIALSEED.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A9847E2E1F7AB75A00C93A01 /* INITIALSEED.cpp */; };
@@ -35,7 +34,6 @@
 		4C97F3BA2028919C00E359AC /* Function.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Function.hpp; sourceTree = "<group>"; };
 		4CC87C742025EAE3000DF832 /* Opticalflow.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Opticalflow.cpp; sourceTree = "<group>"; };
 		4CC87C752025EAE3000DF832 /* Opticalflow.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Opticalflow.hpp; sourceTree = "<group>"; };
-		4CF41B46203628BE00E68FE3 /* libopencv_ximgproc.3.3.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_ximgproc.3.3.0.dylib; path = "../../../../../../Applications/software/opencv-3.3.0/build/lib/libopencv_ximgproc.3.3.0.dylib"; sourceTree = "<group>"; };
 		A906D5C51F978BE9009FB5DA /* COUNTER.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = COUNTER.cpp; sourceTree = "<group>"; };
 		A906D5C61F978BE9009FB5DA /* COUNTER.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = COUNTER.hpp; sourceTree = "<group>"; };
 		A922A5031F7453E60072A454 /* video_segment */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = video_segment; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -51,7 +49,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4CF41B47203628BE00E68FE3 /* libopencv_ximgproc.3.3.0.dylib in Frameworks */,
 				4C1D6FB620261ECA00E54DF5 /* libopencv_xfeatures2d.3.3.0.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -73,7 +70,6 @@
 		A922A4FA1F7453E60072A454 = {
 			isa = PBXGroup;
 			children = (
-				4CF41B46203628BE00E68FE3 /* libopencv_ximgproc.3.3.0.dylib */,
 				4C1D6FB520261ECA00E54DF5 /* libopencv_xfeatures2d.3.3.0.dylib */,
 				4C97F3B120287A8900E359AC /* other */,
 				A922A5051F7453E60072A454 /* video_segment */,

@@ -29,7 +29,6 @@
 //#include <opencv2/xfeatures2d/nonfree.hpp>
 //#include "opencv2/features2d/features2d.hpp"
 #include <opencv2/ximgproc.hpp>
-//#include "slic.hpp"
 
 #include "INITIALSEED.hpp"
 #include "Regiongrowing.hpp"
@@ -291,7 +290,7 @@ int main( )
 
     imshow( Pixel_realtion_window , firstframeBackup );
     waitKey(1);
-    destroyWindow(Pixel_realtion_window);
+    //destroyWindow(Pixel_realtion_window);
     //destroyAllWindows();
  
     cout<< " Please input the real distance (m) for this line"<<endl;
@@ -565,7 +564,7 @@ int main( )
                 cout<< "Input points again for update pixel0distance relation" <<endl;
                 
                 namedWindow( Pixel_realtion_window );
-                setMouseCallback(Pixel_realtion_window,on_MouseHandle,(void*)&frameBackup);
+                setMouseCallback(Pixel_realtion_window, on_MouseHandle, (void*)&frameBackup);
                 
                 while(1)
                 {
