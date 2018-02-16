@@ -125,7 +125,6 @@ void Initialseed :: modechoose(int x, Mat firstFrame, int objektindex,  double d
             cout << differencegrow << endl;
             break;
             
-
         default:
             cout<< "Wrong number input during choosing Method" << endl;
             exit(0);
@@ -172,7 +171,6 @@ void Initialseed :: drawpoint(Mat Frame, vector<Point> initialseedvektor)
 {
     for(size_t i=0; i<initialseedvektor.size();i++)
     {
-        
         Scalar colorvalue = Frame.at<Vec3b>(initialseedvektor[i]);
         double intensity = (Frame.at<Vec3b>(initialseedvektor[i])[0] + Frame.at<Vec3b>(initialseedvektor[i])[1] + Frame.at<Vec3b>(initialseedvektor[i])[2]) / 3.0;
         //Vec3b colorvalue = image.at<Vec3b>(Point(x, y));
@@ -268,18 +266,19 @@ bool Initialseed :: checkThreshold(Mat frame, double relation){
             cout << "New Threshlod ist already available Threshlod vector. " << endl;
             repeat_thres = true;
         }
-
         //cout<< "Threshold: " << this->differencegrow <<endl;
     }
 
     if(iterationnum >=Threshoditerationmax || repeat_thres){
-        cout<< "This new random point can not become a available seed point " << endl;
+        cout<< endl << "This new random point can not become a available seed point " << endl;
         threshold_qualified = false;
     }
 
     else{
         // create new object sucessfully
-        cout<< "iterationnum: " << iterationnum <<"/ Area: " << RTest.Area <<"/ Threshold: "<< this->differencegrow << endl;
+        threshold_qualified = true;
+        cout<< endl << "New object sucessfully found" << endl;
+        cout<< "iterationnum: " << iterationnum <<"/ pixel Area: " << RTest.Area << "/ Real Area: " <<  RTest.Area * relation * relation <<"/ Threshold: "<< this->differencegrow << endl;
         this->LoopThreshold = 1;
 
         data[0].push_back(RTest.EWlong);    // Green line. long axis

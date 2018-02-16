@@ -44,6 +44,7 @@ private:
 public:
     void trackpath(Mat preframe , Mat nextframe, Mat output, vector<vector<Point2f> >& points, vector<Point2f>& initial);
     void matchedpairs(Mat preframe , Mat nextframe, vector<vector<Point2f> >& matchedpairs);
+    void relationtrack(Mat preframe , Mat nextframe, vector<vector<Point2f> >& relationparis);
 };
 
 #endif /* Opticalflow_hpp */

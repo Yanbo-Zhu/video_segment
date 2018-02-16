@@ -28,6 +28,8 @@
 #include <opencv2/xfeatures2d.hpp>
 //#include <opencv2/xfeatures2d/nonfree.hpp>
 //#include "opencv2/features2d/features2d.hpp"
+#include <opencv2/ximgproc.hpp>
+//#include "slic.hpp"
 
 #include "INITIALSEED.hpp"
 #include "Regiongrowing.hpp"
@@ -38,6 +40,7 @@
 using namespace cv;
 using namespace std;
 using namespace cv::xfeatures2d;
+using namespace cv::ximgproc;
 
 //-------global variable
 
@@ -45,7 +48,7 @@ int FPSfacotr = 6 ;
 
 // region growing
 int considerNum = 7;
-int multipleScaleDiff = 7;
+int multipleScaleDiff = 10;
 double Areadifferencefactor = 0.2 ;
 
 double confidenceintervalfactor = 1.04 ;
@@ -55,12 +58,13 @@ double touchbordernum = 10;
 
 Size kernelsize(3,3);
 #define EPSILON 1e-13   // arrcuracy value
-vector<Point> relationpointvektor;
+vector<Point2f> relationpointvektor;
 clock_t  clockBegin, clockEnd;
 //#define windowNameRG String(XXX) //播放窗口名称
 
 // Opical flow
 vector<vector<Point2f> > points(2);    // point0为特征点的原来位置，point1为特征点的新位置  point0:the points which his flow needs to be found.  point1: calculated new positions of input features in the second image.
+vector<vector<Point2f> > relationpairs(2);
 vector<Point2f> initial;    // 初始化跟踪点的位置
 
 //----- global function
@@ -68,15 +72,15 @@ Mat putStats(vector<string> stats, Mat frame,Vec3b color,Point* origin, char wor
 double averagevalue(int num, vector<double> array);
 double averagedifference(int num, vector<double> array);
 void on_MouseHandle(int event, int x, int y, int flags, void* param);
-double pixeldistance(Mat& img, vector<Point> pv);
+double pixeldistance(Mat& img, vector<Point2f> pv);
 
 void Featurematch(Mat preframe , Mat nextframe, vector<Point2f>& obj_last, vector<Point2f>& obj_next);
 //double decomposematrix(Mat H);
 
-
 //setting for trackbar
 char const *windowNameRG = "Region growing ";
 char const *windowNameOP = "Optical flow";
+char const *windowNameGT = "Ground truth";
 
 char const *trackBarName="Frame index";    //trackbar控制条名称
 double totalFrame=1.0;     //视频总帧数
@@ -240,9 +244,10 @@ int main( )
     int fitstframeindex = vc.get(CV_CAP_PROP_POS_FRAMES);
     printf("\n---------------------------IndexFrame: %d -----------------------------------\n\n", fitstframeindex);
     vc.read(firstFrame);
+    Mat frame = firstFrame.clone();
     Mat firstFrame_blur = firstFrame.clone();
     GaussianBlur(firstFrame, firstFrame_blur, kernelsize,0,0);
-    Mat preFrame = firstFrame.clone();
+    Mat preFrame ;//= firstFrame.clone();
     //Mat preallsegment(firstFrame.size(),CV_8UC3,Scalar(0,0,0));
     
     //vc.set(CV_CAP_PROP_POS_FRAMES, 1);
@@ -265,6 +270,7 @@ int main( )
 //    {
 //        imshow( Pixel_realtion_window, firstframeBackup );
 //        if( waitKey( 10 ) == 13 ) break;//按下enter键，程序退出
+//            if (relationpointvektor.size() == 2) break;
 //    }
 //
 //    //cout<< "relationpoint vektor size= " << relationpointvektor.size() <<endl;
@@ -278,12 +284,14 @@ int main( )
 //    relationpointvektor.push_back(Point(584,222));
 //    relationpointvektor.push_back(Point(497,268));
 
+    relationpairs[0].assign(relationpointvektor.begin(), relationpointvektor.end()); // for Ground truth 
+    
     double pixeld = pixeldistance(firstframeBackup, relationpointvektor);
     cout<< "Pixeldistance: " << pixeld <<endl;
 
     imshow( Pixel_realtion_window , firstframeBackup );
     waitKey(1);
-    //destroyWindow(Pixel_realtion_window);
+    destroyWindow(Pixel_realtion_window);
     //destroyAllWindows();
  
     cout<< " Please input the real distance (m) for this line"<<endl;
@@ -293,8 +301,7 @@ int main( )
     distance = 100;
     cout<<  distance << endl;
     
-    double initialpixelrelation;
-    initialpixelrelation = distance/ pixeld;
+    double initialpixelrelation = distance/ pixeld;
     cout<< " The relation: " << initialpixelrelation << " m/pixel \n" <<endl;
 
 //-----------------------------finding first seed point---------------
@@ -312,20 +319,19 @@ int main( )
     int i =0;
     while( i < Segmentinitialnum)
     {
-        printf("\n***********Setting for object %d **********\n", i+1);
+        printf("\n********************Setting for object %d **********\n", i+1);
         cout<<"Plaese choose method. \n tap 1, choose seeds by logging the threshold value. \n tap 2, choose seeds by clicking in orignal image. \n tap 3, choose seeds by default position of points"<<endl;
         int mode;
         cin >> mode;
         s[i] = Initialseed(mode, firstFrame, i, defaultThreshold, defaultseed);
         
         if(s[i].checkThreshold(firstFrame_blur, initialpixelrelation)){
-            cout<< "Object " << i+1 << " was created successfully "<<endl;
             vectorS.push_back( s[i] );
             i++;
         }
     }
     
-//------------------create text for recording the inital seed point before RG
+    //--------tet: the inital seed point before RG
     //char const *savePathtxt = "/Users/yanbo/Desktop/source/txt/~.txt";
     string Pathtxt;
     Pathtxt.assign(path);  Pathtxt.append("txt/");  Pathtxt.append(videofilename);   Pathtxt.append(outputindex);
@@ -363,35 +369,65 @@ int main( )
     initialstream << flush;
     initialstream.close();
 
-    //------------------txt:  Scale value per frame for three methods
-
+    //--------txt:  Scale value per frame
     string saveScaletxt;
     saveScaletxt.assign(Pathtxt);  saveScaletxt.append("_SingleScale.txt");
     
     ofstream Scalestream;  // Scalestream 在 ！stop 循环中 第一个循环还可以打开， 第二个循环这个ofstream文件就不能打开了
     Scalestream.open(saveScaletxt,ios::out|ios::trunc);
-    if (!Scalestream.is_open())
-    {
+    if (!Scalestream.is_open()){
         cout << "Failed to open Scale txt file! \n" << endl;
         return 1;
     }
-    Scalestream << videofilename << outputindex << endl << "Scale per frame" << endl;
-    Scalestream << "Frameindex  FM  OP  RG" << endl;
+    Scalestream << videofilename << outputindex << endl << "Scale per frame" << endl;  Scalestream << "Frameindex  FM  OP  RG" << endl;
     
-    //------------------txt:  accumulated Scale value per frame for three methods
-    
+    //-------txt:  accumulated Scale value
     string saveACScaletxt;
     saveACScaletxt.assign(Pathtxt);  saveACScaletxt.append("_AccumScale.txt");
     
-    ofstream AccumScalestream;  // Scalestream 在 ！stop 循环中 第一个循环还可以打开， 第二个循环这个ofstream文件就不能打开了
+    ofstream AccumScalestream;  //
     AccumScalestream.open(saveACScaletxt,ios::out|ios::trunc);
-    if (!AccumScalestream.is_open())
-    {
+    if (!AccumScalestream.is_open()){
         cout << "Failed to open AccumScales txt file! \n" << endl;
         return 1;
     }
-    AccumScalestream << videofilename << outputindex << endl << "Accumulated Scale value" << endl;
-    AccumScalestream << "Frameindex  FM  OP  RG" << endl;
+    AccumScalestream << videofilename << outputindex << endl << "Accumulated scale value" << endl;   AccumScalestream << "Frameindex  FM  OP  RG" << endl;
+    
+    //------txt:  Total time
+    string saveACTimetxt;
+    saveACTimetxt.assign(Pathtxt);  saveACTimetxt.append("_TotalTime.txt");
+    
+    ofstream TotalTimestream;
+    TotalTimestream.open(saveACTimetxt,ios::out|ios::trunc);
+    if (!TotalTimestream.is_open()){
+        cout << "Failed to open AccumScales txt file! \n" << endl;
+        return 1;
+    }
+    TotalTimestream << videofilename << outputindex << endl << "Total running time" << endl;   TotalTimestream << "Frameindex  FM  OP  RG" << endl;
+    
+    //--------txt:  time per frame
+    string saveSingleTimetxt;
+    saveSingleTimetxt.assign(Pathtxt);  saveSingleTimetxt.append("_SingleTime.txt");
+    
+    ofstream SingleTimestream;
+    SingleTimestream.open(saveSingleTimetxt,ios::out|ios::trunc);
+    if (!SingleTimestream.is_open()){
+        cout << "Failed to open AccumScales txt file! \n" << endl;
+        return 1;
+    }
+    SingleTimestream << videofilename << outputindex << endl << "Running time per frame" << endl;   SingleTimestream << "Frameindex  FM  OP  RG" << endl;
+    
+    //--------txt:  pixel-realdistance relation
+    string saverealtiontxt;
+    saverealtiontxt.assign(Pathtxt);  saverealtiontxt.append("_relation.txt");
+    
+    ofstream Relationstream;
+    Relationstream.open(saverealtiontxt,ios::out|ios::trunc);
+    if (!Relationstream.is_open()){
+        cout << "Failed to open AccumScales txt file! \n" << endl;
+        return 1;
+    }
+    Relationstream << videofilename << outputindex << endl << "Pixel-real Distance relation per frame" << endl;   Relationstream << "Frameindex  FM  OP  RG  GT" << endl;
     
 //------------------- creating Trackbar
     totalFrame = vc.get(CV_CAP_PROP_FRAME_COUNT);  //获取总帧数
@@ -416,14 +452,14 @@ int main( )
     double AccumscaleRG = 1.0, AccumscaleOP = 1.0, AccumscaleFM = 1.0;
     clock_t start_RG, end_RG, start_OP, end_OP, start_FM, end_FM;
     
-    double relationRG = initialpixelrelation , relationOP = initialpixelrelation, relationFM = initialpixelrelation;
+    double relationRG = initialpixelrelation , relationOP = initialpixelrelation, relationFM = initialpixelrelation, relationGT = 0.0;
     
     //start = clock();
     
     while(!stop)
     {
-        Mat frame;//定义一个Mat变量，用于存储每一帧的图像
-        
+        //Mat frame;//定义一个Mat变量，用于存储每一帧的图像
+
         int Segmentnum;
         
         vector<double> templateScaleSameframe;
@@ -437,6 +473,7 @@ int main( )
         
         if (all_threshold_notchange){    // if threshold for this frame did not change, read the next frame
             
+            preFrame = frame.clone();
             indexFrame = vc.get(CV_CAP_PROP_POS_FRAMES);
             printf("\n---------------------------IndexFrame: %d -----------------------------------\n\n", indexFrame);
             bSuccess = vc.read(frame); // read a new frame from video
@@ -487,6 +524,7 @@ int main( )
         vector<string> timetext; // three methods: time and pixel relation
         vector<string> optext; // Optical flow / Scale/ frame index / time
         vector<string> pixelrelatext; // three methods / pixel relation
+        vector<string> GTrelationtext; // Ground truth image/ pixel relation / frame index
         
         char Buffer[60];
         char Scalechar[70];
@@ -512,6 +550,59 @@ int main( )
         
         Point ptBottomMiddle3(frame.cols/2, frame.rows); //  for time value (three methode in same frame )
         Point* ptrBottomMiddle3 = &ptBottomMiddle3;
+        
+// --------  Ground turth for pixel-distance relation
+        cout<< "Ground turth for pixel-distance relation" <<endl;
+        Mat GToutput = frame.clone();
+        
+        Opticalflow GT;
+        
+        if(all_threshold_notchange){
+            
+            if (indexFrame!=0 && indexFrame%10 == 0){
+                Mat frameBackup;
+                frame.copyTo(frameBackup);
+                cout<< "Input points again for update pixel0distance relation" <<endl;
+                
+                namedWindow( Pixel_realtion_window );
+                setMouseCallback(Pixel_realtion_window,on_MouseHandle,(void*)&frameBackup);
+                
+                while(1)
+                {
+                    imshow( Pixel_realtion_window, frameBackup );
+                    //if( waitKey( 10 ) == 13 ) break;//按下enter键，程序退出
+                    if (relationpointvektor.size() == 2) break;
+                }
+                
+                relationpairs[1].assign(relationpointvektor.begin(), relationpointvektor.end()); // for Ground truth
+                destroyWindow(Pixel_realtion_window);
+                relationpointvektor.clear();
+            }
+            
+            else GT.relationtrack(preFrame, frame, relationpairs) ;
+      
+            double newpixeld = pixeldistance(GToutput, relationpairs[1]);
+            
+            relationpairs[0].assign(relationpairs[1].begin(), relationpairs[1].end());
+
+            relationGT = distance/newpixeld ;
+            cout<< "GT relation: " << relationGT << "m/pixel" << endl;
+            sprintf( Buffer, "Frame: %d/ GT relation: %.5f", indexFrame, relationGT);
+            GTrelationtext.push_back(Buffer);
+            GToutput = putStats(GTrelationtext, GToutput, Vec3b(0,0,190), ptrBottomMiddle, 'b' );
+            
+            moveWindow(windowNameGT, 100, 450); // int x = column, int y= row
+            imshow(windowNameGT, GToutput);  //显示图像
+        }
+        
+//        if(all_threshold_notchange){
+//            OP.trackpath(preFrame, frame, OPoutput, points, initial);
+//            swap(points[1], points[0]);
+//        }
+//
+//        sprintf(Timechar+strlen(Timechar), "OP: %.5f/ ", (double)(end_OP - start_OP) / CLOCKS_PER_SEC);
+        
+        cout<<endl;
 
 // --------  Feature detection and classic matching method
         start_FM = clock();
@@ -522,16 +613,16 @@ int main( )
         
         Mat H_Featurematch = findHomography( obj_last, obj_next ,CV_RANSAC );
         //cout<<"Homography matrix:" <<endl << H_Featurematch <<endl << endl;
-        double scaleFreaturematch = decomposematrix(H_Featurematch);
-        cout<< "Scale (Freaturematch):" << scaleFreaturematch << endl;
+        double scaleFM = decomposematrix(H_Featurematch);
+        cout<< "Scale (Freaturematch):" << scaleFM << endl;
         
         sprintf( Buffer, "Frame %d", indexFrame);
         scaletext.push_back(Buffer);
         
-        sprintf(Scalechar , "Scale (index %d to %d)/ FM: %.7f/ ", indexFrame, indexFrame-1, scaleFreaturematch);
+        sprintf(Scalechar , "Scale (index %d to %d)/ FM: %.7f/ ", indexFrame, indexFrame-1, scaleFM);
         end_FM = clock();
         
-        sprintf(Timechar, "Time of Frameindex %d/ FM: %.5f/ ",indexFrame, (double)(end_FM - start_FM) / CLOCKS_PER_SEC);
+        sprintf(Timechar, "Time of frameindex %d/ FM: %.5f/ ",indexFrame, (double)(end_FM - start_FM) / CLOCKS_PER_SEC);
         
         cout<<endl;
         
@@ -573,7 +664,47 @@ int main( )
         
         cout<<endl;
         
-// -------------------------------
+// -----------------Superpixel SLIC
+//        cout<< "Superpixel" <<endl;
+//        Mat mask, labels, frameSP_Blur;
+//        
+//        Mat frameSP = frame.clone();
+//        GaussianBlur(frame, frameSP_Blur, kernelsize,0,0);
+//        cvtColor(frameSP_Blur, frameSP_Blur, COLOR_RGB2Lab);
+//        
+//        Ptr<SuperpixelSLIC> slic = createSuperpixelSLIC(frameSP_Blur, SLIC, 110, 10.0);  // region_size = sqrt(area) , number_slic*region_size^2 = window area
+//        
+//        slic->iterate();//迭代次数，默认为10
+//        slic->enforceLabelConnectivity(); //default is 25
+//        slic->getLabelContourMask(mask);//获取超像素的边界
+//        slic->getLabels(labels);//获取labels
+//        int number_slic = slic->getNumberOfSuperpixels();//获取超像素的数量
+//        cout<< number_slic << endl;
+//        
+//        //Ptr<SuperpixelSEEDS> seeds = createSuperpixelSEEDS(frame.cols, frame.rows, frame.channels(), 1000, 15, 2, 5, true);
+//        //seeds->iterate(frame);//迭代次数，默认为4
+//        //seeds->getLabels(labels);//获取labels
+//        //seeds->getLabelContourMask(mask);;//获取超像素的边界
+//        //int number_seeds = seeds->getNumberOfSuperpixels();//获取超像素的数量
+//        
+//        //Ptr<SuperpixelLSC> lsc = createSuperpixelLSC(frame);
+////        lsc->iterate();//迭代次数，默认为4
+////        lsc->enforceLabelConnectivity();
+////        lsc->getLabels(labels);//获取labels
+////        lsc->getLabelContourMask(mask);;//获取超像素的边界
+////        int number_lsc = lsc->getNumberOfSuperpixels();//获取超像素的数量
+//        
+//        frameSP.setTo(Scalar(255, 255, 255), mask);
+//        
+//        imshow("test", frameSP);
+//        //imshow("mask", mask);
+//        //labels.convertTo(labels, CV_8UC1, 255/ (number_slic - 1));
+//        labels.convertTo(labels, CV_64FC1, 1.0/(number_slic-1));
+//        //imshow("Labels", labels);
+//        //cout<< labels<< endl;
+        
+        cout<<endl;
+// -----------------Region growing--------------
         cout<< "Region growing" ;
         
         start_RG = clock();
@@ -617,7 +748,6 @@ int main( )
             for( int i=0; i<Segmentnum; i++)
             {
 
-                
                 printf("\n*** Objekt %d Information ****************", i+1);
                 printf("\n*** Cyele index for Threshold: %d\n", vectorS[i].LoopThreshold);
                 MatOut = R[i].RegionGrow(frame, frame_Blur , vectorS[i].differencegrow, vectorS[i].initialseedvektor);
@@ -662,7 +792,7 @@ int main( )
                 double G_Centre = frame.at<Vec3b>(R[i].cntr)[1];
                 double R_Centre = frame.at<Vec3b>(R[i].cntr)[2];
                 
-                sprintf(Buffer, "%d: (%d,%d)/intensity: %.2f/Scale: %.5f / Real Area: %.2f", i+1, R[i].cntr.y, R[i].cntr.x, (B_Centre + G_Centre + R_Centre) /3.0 , scale, R[i].Area * relationRG * relationRG );
+                sprintf(Buffer, "%d: (%d,%d)/intensity: %.2f/Scale: %.5f / Real Area: %.2f", i+1, R[i].cntr.y, R[i].cntr.x, (B_Centre + G_Centre + R_Centre) /3.0 , scale, Realarea );
                 seedtext.push_back(Buffer);
                 
                 FramewithCounter = putStats(seedtext, FramewithCounter, vectorS[i].color, ptrTopLeft, 't');
@@ -698,19 +828,18 @@ int main( )
                 double averageScaleRADifference = averagedifference(considerNum, vectorS[i].data[7]);
                 double ScaleRADifference = scaleRealarea - averageScaleRA;
                 
-                cout << multipleScaleDiff <<"* Average Real AreaScale Difference of previous "<< considerNum <<" frames: " <<multipleScaleDiff * averageScaleRADifference<< endl;
-                printf("ScaleDifference (index %d to %d): %.8f = （%.8f-%.8f）\n", indexFrame, indexFrame-1, ScaleRADifference, scaleRealarea, averageScaleRA);
+                cout << multipleScaleDiff <<"* Average RealArea Scale Difference of previous "<< considerNum <<" frames: " <<multipleScaleDiff * averageScaleRADifference<< endl;
+                printf("Scale RealArea Difference (index %d to %d): %.8f = （%.8f-%.8f）\n", indexFrame, indexFrame-1, ScaleRADifference, scaleRealarea, averageScaleRA);
                 cout<< endl;
                 
         //------------ Area Difference
-                double Areadiffernce = R[i].Area - vectorS[i].data[4].back();
-                printf("Area Difference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, Areadiffernce );
-                cout<< Areadifferencefactor << "* Area in last frame : " <<  Areadifferencefactor *(vectorS[i].data[4].back())  << endl ;
+//                double Areadiffernce = R[i].Area - vectorS[i].data[4].back();
+//                printf("Area Difference (index %d to %d): %.8lf \n", indexFrame, indexFrame-1, Areadiffernce );
+//                cout<< Areadifferencefactor << "* Area in last frame : " <<  Areadifferencefactor *(vectorS[i].data[4].back())  << endl ;
                 
         //--------- update the thereshlod value for region growing if scale varies largely
                 //cout<< 0.2*vectorS[i].data[6].back() <<endl;
-                cout<<endl;
-                
+        
                 double newthreshold;
                 //if ( abs(Areadiffernce) <=  Areadifferencefactor *(vectorS[i].data[4].back()) )
                 if ( abs(ScaleRADifference) <=  multipleScaleDiff * averageScaleRADifference )
@@ -920,11 +1049,8 @@ int main( )
             sprintf(Scalechar+strlen(Scalechar), "RG: %.7f", averageScaleoneFrame);
             scaletext.push_back(Scalechar);
             
-            //for optical flow and freature match
-            preFrame = frame.clone();
-            
             // accumulated Scale for op/fm /rg
-            AccumscaleFM *= scaleFreaturematch;
+            AccumscaleFM *= scaleFM;
             sprintf(Acscale, "Accumulated Sclae/ FM: %.7f/ ", AccumscaleFM);
             
             AccumscaleOP *= scaleOP;
@@ -949,25 +1075,41 @@ int main( )
             relationRG /= averageScaleoneFrame;
             cout<< "Pixelrelation: " << relationRG << "m/pixel"<<endl;
             relationOP /= scaleOP;
-            relationFM /= scaleFreaturematch;
+            relationFM /= scaleFM;
         
-            sprintf(pixelrela, "Pixel relation/ FM: %.6f/ OP: %.6f/ RG: %.6f", relationFM, relationOP,  relationRG);
+            sprintf(pixelrela, "Pixel relation/ FM: %.6f/ OP: %.6f/ RG: %.6f/ GT: %.6f", relationFM, relationOP,  relationRG, relationGT);
             timetext.push_back(pixelrela);
             
             //ofstream
             ofstream Scalestream;
             Scalestream.open(saveScaletxt,ios::out|ios::app);  Scalestream.setf(ios::fixed, ios::floatfield);  // 设定为 fixed 模式，以小数点表示浮点数
             Scalestream.precision(6);
-            Scalestream << indexFrame << " " <<scaleFreaturematch <<" "<< scaleOP<< " " <<  averageScaleoneFrame <<endl;
+            Scalestream << indexFrame << " " <<scaleFM <<" "<< scaleOP<< " " <<  averageScaleoneFrame <<endl;
             Scalestream.close();
             
             ofstream AccumScalestream;
-            AccumScalestream.open(saveScaletxt,ios::out|ios::app);  AccumScalestream.setf(ios::fixed, ios::floatfield);  // 设定为 fixed 模式，以小数点表示浮点数
+            AccumScalestream.open(saveACScaletxt,ios::out|ios::app);  AccumScalestream.setf(ios::fixed, ios::floatfield);
             AccumScalestream.precision(6);
             AccumScalestream << indexFrame << " " <<AccumscaleFM <<" "<< AccumscaleOP<< " " <<  AccumscaleRG <<endl;
             AccumScalestream.close();
             
+            ofstream TotalTimestream;
+            TotalTimestream.open(saveACTimetxt,ios::out|ios::app);  TotalTimestream.setf(ios::fixed, ios::floatfield);
+            TotalTimestream.precision(6);
+            TotalTimestream << indexFrame << " " <<totoalFMtime <<" "<< totoalOPtime<< " " <<  totoalRGtime <<endl;
+            TotalTimestream.close();
             
+            ofstream SingleTimestream;
+            SingleTimestream.open(saveSingleTimetxt,ios::out|ios::app);  SingleTimestream.setf(ios::fixed, ios::floatfield);
+            SingleTimestream.precision(6);
+            SingleTimestream << indexFrame << " " << (double)(end_FM - start_FM) / CLOCKS_PER_SEC <<" "<< (double)(end_OP - start_OP) / CLOCKS_PER_SEC << " " <<  (double)(end_RG - start_RG) / CLOCKS_PER_SEC <<endl;
+            SingleTimestream.close();
+            
+            ofstream Relationstream;
+            Relationstream.open(saverealtiontxt,ios::out|ios::app);  Relationstream.setf(ios::fixed, ios::floatfield);
+            Relationstream.precision(6);
+            Relationstream << indexFrame << " " << relationFM << " " << relationOP << " " << relationRG << " " << relationGT <<endl;
+            Relationstream.close();
         }
         
         framethreemethode = putStats(timetext,framethreemethode, Vec3b(0,0,200), ptrBottomMiddle3, 'b' );
@@ -1008,7 +1150,6 @@ int main( )
             Initialseed newobject = Initialseed(frame);
         
             if(newobject.checkThreshold(frame_Blur, relationRG)){
-                cout<< endl << "New segment sucessfully found" << endl;
                 vectorS.push_back(newobject);
             }
         }
@@ -1047,7 +1188,6 @@ int main( )
                 Initialseed newobject = Initialseed(frame);
 
                 if (newobject.checkThreshold(frame_Blur, relationRG)){
-                    cout<< endl << "New segment sucessfully found" << endl;
                     vectorS.push_back(newobject);
                     i++;
                 }
@@ -1068,12 +1208,13 @@ int main( )
             {
                 imshow( Pixel_realtion_window, FramewithCounterBackup );
                 if( waitKey( 10 ) == 13 ) break;//按下enter键，程序退出
+                if (relationpointvektor.size() == 2) break;
             }
             
-            if (relationpointvektor.size() != 2){
-                cout<< "\n!!!!!!!You did not mark 2 points. Porgramm breaks"  <<endl;
-                return 0;
-            }
+//            if (relationpointvektor.size() != 2){
+//                cout<< "\n!!!!!!!You did not mark 2 points. Porgramm breaks"  <<endl;
+//                return 0;
+//            }
             
             double pixeld = pixeldistance(FramewithCounterBackup, relationpointvektor);
             cout<< "Pixeldistance: " << pixeld <<endl;
@@ -1082,8 +1223,9 @@ int main( )
             imshow( Pixel_realtion_window, FramewithCounterBackup );
             waitKey(0);
             destroyWindow(Pixel_realtion_window);
+            relationpointvektor.clear();
         }
-        relationpointvektor.clear();
+        
         
     }
 
@@ -1250,18 +1392,25 @@ void on_MouseHandle(int event, int x, int y, int flags, void* param)
     {
         //左键按下消息
         Point g_pt = Point(x, y);
-        cout<<"Row: "<<y<<", eColumn: "<< x <<endl;
+        cout<<"Row: "<<y<<", Column: "<< x <<endl;
         line(image, g_pt, g_pt, Scalar(0, 0, 255),4,8,0);
         relationpointvektor.push_back(g_pt);
     }
 }
 
-double pixeldistance(Mat& img, vector<Point> pv)
+double pixeldistance(Mat& img, vector<Point2f> pv)
 {
-    double a = pv[0].x - pv[1].x;
-    double b = pv[0].y - pv[1].y;
-    line(img, pv[0], pv[1], Scalar(0, 0, 255),2,8,0);//随机颜色
-    return(sqrt(a*a+b*b)); // a^2 not equal to a*a. a^2 has differnt meaning in Opencv
+    if(pv.size() == 2){
+        double a = pv[0].x - pv[1].x;
+        double b = pv[0].y - pv[1].y;
+        line(img, pv[0], pv[1], Scalar(0, 0, 210),2,8,0); //随机颜色
+        return(sqrt(a*a+b*b)); // a^2 not equal to a*a. a^2 has differnt meaning in Opencv
+    }
+    
+    else{
+        cout<< "vector (pixel-relation) size is not 2" <<endl;
+        return 0 ;
+    }
 }
 
 void Featurematch(Mat preframe , Mat nextframe, vector<Point2f>& obj_last, vector<Point2f>& obj_next){

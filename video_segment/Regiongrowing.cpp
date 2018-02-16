@@ -140,7 +140,6 @@ double Regiongrowing:: differenceValue(Mat MatIn, Point oneseed, Point nextseed,
             G_nextseed = G_nextseed+ MatIn.at<Vec3b>(BNeighbour)[1];
             R_nextseed = R_nextseed+ MatIn.at<Vec3b>(BNeighbour)[2];
         }
-        
 
     }
     
@@ -179,6 +178,7 @@ double Regiongrowing:: differenceValue(Mat MatIn, Point oneseed, Point nextseed,
     
     //double d = sqrt(d1 + d2 + d3);
     //double d =  (d1 + d2 + d3)/3.0;
+    //double d =  (d1 + d2 + d3);
     double d = d1*3;
     //printf("d: %f \n", d);
     return d;
