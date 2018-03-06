@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4C1C5BB1203667BC001AD1CD /* libopencv_ximgproc.3.3.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1C5BB0203667BC001AD1CD /* libopencv_ximgproc.3.3.0.dylib */; };
 		4C1D6FB620261ECA00E54DF5 /* libopencv_xfeatures2d.3.3.0.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4C1D6FB520261ECA00E54DF5 /* libopencv_xfeatures2d.3.3.0.dylib */; };
 		4C97F3BB2028919C00E359AC /* Function.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4C97F3B92028919C00E359AC /* Function.cpp */; };
 		4CC87C762025EAE3000DF832 /* Opticalflow.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4CC87C742025EAE3000DF832 /* Opticalflow.cpp */; };
@@ -29,6 +30,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		4C1C5BB0203667BC001AD1CD /* libopencv_ximgproc.3.3.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_ximgproc.3.3.0.dylib; path = "../../../../../../Applications/software/opencv-3.3.0/build/lib/libopencv_ximgproc.3.3.0.dylib"; sourceTree = "<group>"; };
 		4C1D6FB520261ECA00E54DF5 /* libopencv_xfeatures2d.3.3.0.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopencv_xfeatures2d.3.3.0.dylib; path = "../../../../../../Applications/software/opencv-3.3.0/build/lib/libopencv_xfeatures2d.3.3.0.dylib"; sourceTree = "<group>"; };
 		4C97F3B92028919C00E359AC /* Function.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Function.cpp; sourceTree = "<group>"; };
 		4C97F3BA2028919C00E359AC /* Function.hpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.h; path = Function.hpp; sourceTree = "<group>"; };
@@ -49,6 +51,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4C1C5BB1203667BC001AD1CD /* libopencv_ximgproc.3.3.0.dylib in Frameworks */,
 				4C1D6FB620261ECA00E54DF5 /* libopencv_xfeatures2d.3.3.0.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -70,6 +73,7 @@
 		A922A4FA1F7453E60072A454 = {
 			isa = PBXGroup;
 			children = (
+				4C1C5BB0203667BC001AD1CD /* libopencv_ximgproc.3.3.0.dylib */,
 				4C1D6FB520261ECA00E54DF5 /* libopencv_xfeatures2d.3.3.0.dylib */,
 				4C97F3B120287A8900E359AC /* other */,
 				A922A5051F7453E60072A454 /* video_segment */,
@@ -437,6 +441,7 @@
 					"/Users/zhu/Documents/opencv-3.3.0/build/lib",
 				);
 				OTHER_LDFLAGS = (
+					"-lopencv_surface_matching",
 					"-lopencv_calib3d",
 					"-lopencv_core",
 					"-lopencv_features2d",
@@ -469,6 +474,7 @@
 					"/Users/zhu/Documents/opencv-3.3.0/build/lib",
 				);
 				OTHER_LDFLAGS = (
+					"-lopencv_surface_matching",
 					"-lopencv_calib3d",
 					"-lopencv_core",
 					"-lopencv_features2d",

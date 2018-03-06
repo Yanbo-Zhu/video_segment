@@ -123,7 +123,6 @@ void Opticalflow:: matchedpairs(Mat preframe , Mat nextframe, vector<vector<Poin
     Mat preframe_gray;
     cvtColor(preframe, preframe_gray, COLOR_BGR2GRAY);
     cvtColor(nextframe, nextframe_gray, COLOR_BGR2GRAY);
-    //OpenCV2版为： cvtColor(frame, gray, CV_BGR2GRAY);
     
     // ------- 为了计算相邻两帧间的homography matrix
     
@@ -159,11 +158,7 @@ void Opticalflow:: matchedpairs(Mat preframe , Mat nextframe, vector<vector<Poin
 
 void Opticalflow:: relationtrack(Mat preframe , Mat nextframe, vector<vector<Point2f> >& relationparis){
     
-//    Mat nextframe_gray;
-//    Mat preframe_gray;
-//    cvtColor(preframe, preframe_gray, COLOR_BGR2GRAY);
-//    cvtColor(nextframe, nextframe_gray, COLOR_BGR2GRAY);
-    
+
     //vector<Point2f> relation_pre; relation_pre.assign(relationparis[0].begin(), relationparis[0].end()) ;
     vector<Point2f> relation_next; // relation_next.assign(relationparis[1].begin(), relationparis[1].end());
     vector<uchar> status;
@@ -171,17 +166,12 @@ void Opticalflow:: relationtrack(Mat preframe , Mat nextframe, vector<vector<Poi
     
     calcOpticalFlowPyrLK(preframe, nextframe, relationparis[0], relation_next, status, err);
     
-    //Mat Frame = nextframe.clone();
     for(size_t i=0; i<relation_next.size();i++)
     {
         //Scalar colorvalue = Frame.at<Vec3b>(relation_next[i]);
         double intensity = (nextframe.at<Vec3b>(relation_next[i])[0] + nextframe.at<Vec3b>(relation_next[i])[1] + nextframe.at<Vec3b>(relation_next[i])[2]) / 3.0;
-        //Vec3b colorvalue = image.at<Vec3b>(Point(x, y));
         printf("Point %d: (Row: %f, Column: %f) / Intensity: %f\n",  int(i)+1,  relation_next[i].y, relation_next[i].x, intensity);
 
-//        int thickness = 3;
-//        int lineType = 8;
-//        line(Frame, relation_next[i], relation_next[i], Scalar(0,0,200),thickness, lineType,0);
     }
     
     relationparis[1].assign(relation_next.begin(), relation_next.end());

@@ -8,7 +8,7 @@
 
 #include "Regiongrowing.hpp"
 
-Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vector<Point> seedset) //iGrowPoint: seeds 为种子点的判断条件，iGrowJudge: growing condition 为生长条件
+Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vector<Point> seedset)
 {
 
     Mat Segment(MatIn.size(),CV_8UC3,Scalar(0,0,0));
@@ -23,8 +23,7 @@ Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vecto
         //seedtogether.push_back(seedset[i])
     }
     
-    seedtogether.clear();
-    seedtogether = seedset;
+    seedtogether.clear();    seedtogether = seedset;
 
     //生长方向顺序数据
     //int DIR[8][2]={{-1,-1},{-1,0},{-1,1},{0,-1},{0,1},{1,-1},{1,0},{1,1}};
@@ -32,15 +31,11 @@ Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vecto
     double rowofDIR= sizeof(DIR)/sizeof(DIR[0]);
     
     // calculate the initial B G R value
-    double B = 0.0;
-    double G = 0.0;
-    double R = 0.0;
+    double B = 0.0, G = 0.0, R = 0.0;
     
-    B = MatBlur.at<Vec3b>(seedset.back())[0];
-    G = MatBlur.at<Vec3b>(seedset.back())[1];
-    R = MatBlur.at<Vec3b>(seedset.back())[2];
+    B = MatBlur.at<Vec3b>(seedset.back())[0];   G = MatBlur.at<Vec3b>(seedset.back())[1]; R = MatBlur.at<Vec3b>(seedset.back())[2];
     
-    //-----------------------------------------------------------------------
+    //------------------
     while (!seedset.empty()) {
         
         Point oneseed = seedset.back(); //fetch one seed from seedvektor
@@ -53,14 +48,10 @@ Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vecto
         
         seedset.pop_back(); // delete this one seed from seedvektor
         
-        //cout << "size of seedset: " << seedset.size() << "\n" << endl;
-        
         MatLabel.at<uchar>(oneseed) = 255;
         Segment.at<Vec3b>(oneseed) = MatIn.at<Vec3b>(oneseed);
         
-        B = (B+MatBlur.at<Vec3b>(oneseed)[0])/2.0;
-        G = (G+MatBlur.at<Vec3b>(oneseed)[1])/2.0;
-        R = (R+MatBlur.at<Vec3b>(oneseed)[2])/2.0;
+        B = (B+MatBlur.at<Vec3b>(oneseed)[0])/2.0;  G = (G+MatBlur.at<Vec3b>(oneseed)[1])/2.0;  R = (R+MatBlur.at<Vec3b>(oneseed)[2])/2.0;
         
         for(int iNum=0 ; iNum< rowofDIR ; iNum++)
         {
@@ -102,13 +93,11 @@ Mat Regiongrowing:: RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vecto
     return Segment;
 }
 
-//--------------------------  difference value duction ---------
+//  difference value duction
 double Regiongrowing:: differenceValue(Mat MatIn, Point oneseed, Point nextseed, int DIR[][2], double rowofDIR, double B, double G, double R)
 {
     // a: average value of all neighbour pixel to oneseed
-    double B_oneseed = 0.0;
-    double G_oneseed = 0.0;
-    double R_oneseed = 0.0;
+    double B_oneseed = 0.0,  G_oneseed = 0.0, R_oneseed = 0.0;
     for(int iNum=0; iNum< rowofDIR ; iNum++)
     {
         Point ANeighbour;
@@ -127,9 +116,7 @@ double Regiongrowing:: differenceValue(Mat MatIn, Point oneseed, Point nextseed,
     //printf("BGR_ONESEED : %f, %f, %f \n", B_oneseed, G_oneseed, R_oneseed );
     
     //b : average value of all neighbour pixel to nextseed
-    double B_nextseed = 0.0;
-    double G_nextseed = 0.0;
-    double R_nextseed = 0.0;
+    double B_nextseed = 0.0,  G_nextseed = 0.0,  R_nextseed = 0.0;
     for(int iNum=0; iNum< rowofDIR ; iNum++)
     {
         Point BNeighbour;
@@ -184,7 +171,7 @@ double Regiongrowing:: differenceValue(Mat MatIn, Point oneseed, Point nextseed,
     return d;
 }
 
-//  --------- centerpoint of segment function
+// Centerpoint of segment function
 //Point Regiongrowing:: centerpoint(vector<Point> seedtogetherBackup){
 //    
 //    int x = 0;
@@ -207,7 +194,31 @@ Regiongrowing:: ~Regiongrowing(){
 }
 
 
-//------------------ 原counter 的 function
+//----------- 原counter 的 function
+
+Mat Regiongrowing::Matcounter(Mat Segment, Vec3b color)
+{
+    Mat segment = Segment.clone();
+    Mat Frame(Segment.size(), CV_8UC3, Scalar(0,0,0));
+    Mat MatoutGray;
+    
+    cvtColor(segment,MatoutGray,CV_BGR2GRAY);
+    //int iVal255 = countNonZero(MatoutGray);
+    threshold(MatoutGray, MatoutGray, 1,255,THRESH_BINARY);
+    
+    vector<Vec4i> hierarchy;
+    vector<vector<Point> > contours;
+    findContours(MatoutGray, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+
+    
+    for (size_t i = 0; i < contours.size(); i++)
+    {
+        drawContours(Frame, contours, static_cast<int>(i), color, 2, 8, hierarchy, 0);
+    }
+    
+    return Frame;
+}
+
 Mat Regiongrowing::FindCounter (Mat Segment , Mat frame, Vec3b color)
 {
     Mat segment = Segment.clone();
@@ -222,7 +233,7 @@ Mat Regiongrowing::FindCounter (Mat Segment , Mat frame, Vec3b color)
     vector<vector<Point> > contours;
     findContours(MatoutGray, contours, hierarchy, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
     
-    
+    Contourvector.assign(contours[0].begin(), contours[0].end());
 //    // 计算矩
 //    vector<Moments> mu(contours.size() );
 //    for(unsigned int i = 0; i < contours.size(); i++ )
@@ -241,7 +252,6 @@ Mat Regiongrowing::FindCounter (Mat Segment , Mat frame, Vec3b color)
 //        printf(" >通过m00计算出轮廓[%d]的面积: (M_00) = %.2f \n OpenCV函数计算出的面积=%.2f , 长度: %.2f \n\n", i, mu[i].m00, contourArea(contours[i]), arcLength( contours[i], true ) );
 //    }
 
-    
     // 多边形逼近轮廓 + 获取矩形边界框
     vector<vector<Point> > contours_poly( contours.size() );
     vector<Rect> boundRect( contours.size() );
@@ -324,13 +334,13 @@ void Regiongrowing::getOrientation(const vector<Point> &pts, Mat &img)
     //cout<< "p1  Row:" << p1.y << "   Column: " << p1.x <<endl;
     Point p2 = cntr - 0.02 * Point(static_cast<int>(eigen_vecs[1].x * eigen_val[1]), static_cast<int>(eigen_vecs[1].y * eigen_val[1]));
     
+    // 两个轴的长度
     double pixelabstand[2];
     pixelabstand[0] = drawAxis(img, cntr, p1, Scalar(0, 255, 0), 2.5); // Green line. long axis
     pixelabstand[1] = drawAxis(img, cntr, p2, Scalar(255, 255, 0), 3); // lightly blue line . short axis
     
-    //Ratio = pixelabstand[0]/ pixelabstand[1];
-    Ratio = eigen_val[0]/ eigen_val[1];
-    //cout<< "Ratio: " << Ratio <<endl;
+
+    Ratio = eigen_val[0]/ eigen_val[1];  //Ratio = pixelabstand[0]/ pixelabstand[1];
     
     double angle = atan2( - (eigen_vecs[0].y), eigen_vecs[0].x); // orientation in radians
     //cout<< "Eigenvektor long axis::   Vektor in Row-direction: " << eigen_vecs[0].y << " / Vektor in Column-direction: " << eigen_vecs[0].x <<endl;
@@ -371,7 +381,7 @@ double Regiongrowing::pixeldistance(Point p1, Point p2)
 {
     double a = p1.x - p2.x;
     double b = p1.y - p2.y;
-    return (sqrt((a*a)+(b*b))); // a^2 not equal to a*a. a^2 has differnt meaning in Opencv
+    return sqrt( (a*a)+(b*b) ); // a^2 not equal to a*a. a^2 has differnt meaning in Opencv
 }
 
 

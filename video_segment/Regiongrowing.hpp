@@ -30,7 +30,7 @@ private:
     double differenceValue(Mat MatIn, Point oneseed, Point nextseed, int DIR[][2], double rowofDIR, double B, double G, double R);
     //Point centerpoint(vector<Point> seedtogetherBackup);
     
-    // ------- 原 Contour
+    // ---- Contour
     double drawAxis(Mat&, Point, Point, Scalar, const float);
     void getOrientation(const vector<Point> &, Mat&);
     double pixeldistance(Point p1, Point p2);
@@ -39,13 +39,15 @@ private:
 public:
     
     Mat RegionGrow(Mat MatIn, Mat MatBlur , double iGrowJudge, vector<Point> seedset);
+    ~Regiongrowing();
     //Point regioncenter ;
     vector<Point> seedtogether;
-    ~Regiongrowing();
+   
     int touchbordernum = 0;
     
-    //--- 原 Counter
+    //--  Counter
     Mat FindCounter (Mat MatOut , Mat Frame, Vec3b color);
+    Mat Matcounter(Mat Segment, Vec3b color);
     double Ratio;
     double EWlong;
     double EWshort;
@@ -55,7 +57,8 @@ public:
     double rectanglewidth;
     double rectangleheight;
     double diagonallength;
+    
+    vector<Point> Contourvector; // ICP
 };
-
 
 #endif /* Regiongrowing_hpp */

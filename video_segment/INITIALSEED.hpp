@@ -26,19 +26,15 @@ using namespace cv;
 using namespace std;
 
 
-//Point const a[2] = {Point(100, 100),Point(300, 300) };
-
 class Initialseed
 {
     
 private:
     static void on_MouseHandle(int event, int x, int y, int flags, void* param);
     void on_Mouse(int event, int x, int y, int flags);
-    void DrawLine( Mat &img, Point pt, Vec3b color  );
     void drawpoint(Mat firstFrame, vector<Point> initialseedvektor);
     double thresholdvalue;
-    Point g_pt;
-    #define Point_mark_window " Drawing Point "
+    #define Point_mark_window "Drawing Point"
     int Threshoditerationmax = 300;
     double initialScalediff = 0.01;
     double thresholdstep = 0.1;
@@ -53,7 +49,10 @@ public:
     bool threshold_notchange = true;
     Vec3b color;
     vector < vector<double> >data;
-    Mat preSegment;
+    
+    Mat preSegment; // ICP and for all segment image 
+    Mat preCounter; // for rigidtrans
+    vector<Point> Contourvector; //icp
     
     Initialseed();
     Initialseed(Mat Frame);
@@ -65,7 +64,5 @@ public:
     bool checkThreshold(Mat Frame, double relation);
     
 };
-
-
 
 #endif /* INITIALSEED_hpp */

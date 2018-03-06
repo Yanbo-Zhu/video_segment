@@ -33,7 +33,7 @@ private:
     bool acceptTrackedPoint(int i, vector<uchar> status, vector<Point2f> pointvektor1, vector<Point2f> pointvektor2);
     void gridpoint(int num, Mat image, vector<Point2f>& output);
     
-    int maxCount = 100;    // 检测的最大特征数
+    //int maxCount = 100;    // 检测的最大特征数 被currentmaxnum代替了
     int gridnum = 9;
     int currentmaxnum= gridnum*gridnum;    //  current trackbarvalue
     
